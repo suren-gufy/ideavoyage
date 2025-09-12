@@ -196,25 +196,7 @@ export function SearchInterface({ onAnalysisComplete }: SearchInterfaceProps) {
           </Select>
         </div>
 
-        <Separator />
-
         <div className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Research Time Range</label>
-            <div className="flex gap-2 flex-wrap">
-              {["week", "month", "quarter", "year"].map((range) => (
-                <Button
-                  key={range}
-                  variant={timeRange === range ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setTimeRange(range as "week" | "month" | "quarter" | "year")}
-                  data-testid={`button-timerange-${range}`}
-                >
-                  Past {range === "quarter" ? "3 months" : range}
-                </Button>
-              ))}
-            </div>
-          </div>
 
           <div className="flex items-center justify-center">
             <Button 
