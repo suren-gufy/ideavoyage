@@ -6,9 +6,24 @@ import { TrendingUp, TrendingDown, Minus } from "lucide-react"
 export function SentimentChart() {
   // todo: remove mock functionality - sentiment data
   const sentimentData = [
-    { name: "Positive", value: 45, color: "hsl(var(--chart-2))" },
-    { name: "Neutral", value: 35, color: "hsl(var(--chart-3))" },
-    { name: "Negative", value: 20, color: "hsl(var(--destructive))" },
+    { 
+      name: "Enthusiastic", 
+      value: 45, 
+      color: "hsl(var(--chart-2))",
+      description: "Users excited about solutions and expressing strong interest"
+    },
+    { 
+      name: "Curious/Mixed", 
+      value: 35, 
+      color: "hsl(var(--chart-3))",
+      description: "Users asking questions, comparing options, or expressing moderate interest"
+    },
+    { 
+      name: "Frustrated", 
+      value: 20, 
+      color: "hsl(var(--destructive))",
+      description: "Users complaining about current solutions or expressing dissatisfaction"
+    },
   ]
 
   const timelineData = [
@@ -33,9 +48,9 @@ export function SentimentChart() {
 
   const renderSentimentIcon = (sentiment: string) => {
     switch (sentiment.toLowerCase()) {
-      case "positive":
+      case "enthusiastic":
         return <TrendingUp className="h-4 w-4 text-chart-2" />
-      case "negative":
+      case "frustrated":
         return <TrendingDown className="h-4 w-4 text-destructive" />
       default:
         return <Minus className="h-4 w-4 text-chart-3" />
@@ -69,15 +84,23 @@ export function SentimentChart() {
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <div className="flex justify-center gap-4 mt-4">
+          <div className="space-y-3 mt-4">
             {sentimentData.map((item) => (
               <div 
                 key={item.name} 
-                className="flex items-center gap-2"
-                data-testid={`sentiment-${item.name.toLowerCase()}`}
+                className="flex items-start gap-3 p-2 rounded-md bg-muted/30"
+                data-testid={`sentiment-${item.name.toLowerCase().replace(/[^a-z]/g, '')}`}
               >
-                {renderSentimentIcon(item.name)}
-                <span className="text-sm">{item.name}: {item.value}%</span>
+                <div className="flex items-center gap-2 min-w-0">
+                  {renderSentimentIcon(item.name)}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-sm">{item.name}</span>
+                      <span className="text-sm font-semibold">{item.value}%</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">{item.description}</p>
+                  </div>
+                </div>
               </div>
             ))}
           </div>

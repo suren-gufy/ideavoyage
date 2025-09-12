@@ -43,30 +43,30 @@ export function MetricsOverview() {
   // todo: remove mock functionality - metrics data
   const metrics = [
     {
-      title: "Total Posts Analyzed",
+      title: "Reddit Posts Analyzed",
       value: "2,847",
-      change: "+12% from last search",
+      change: "From 12 relevant subreddits",
       icon: MessageSquare,
       trend: "up" as const
     },
     {
-      title: "Sentiment Score",
-      value: "7.2/10",
-      change: "+0.4 points",
+      title: "Market Interest Level",
+      value: "High",
+      change: "Strong demand signals detected",
       icon: TrendingUp,
       trend: "up" as const
     },
     {
-      title: "Active Communities",
-      value: "15",
-      change: "5 new subreddits",
+      title: "Pain Points Found",
+      value: "23",
+      change: "Actionable user frustrations",
       icon: Users,
       trend: "neutral" as const
     },
     {
-      title: "Analysis Time",
-      value: "3.2s",
-      change: "Real-time processing",
+      title: "Research Timeframe",
+      value: "Past Month",
+      change: "Recent discussions analyzed",
       icon: Clock,
       trend: "neutral" as const
     }
