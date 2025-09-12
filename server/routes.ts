@@ -22,6 +22,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 Startup Idea: "${validatedData.idea}"
 Industry: ${validatedData.industry || "Not specified"}
 Target Market: ${validatedData.targetMarket || "Not specified"}
+Time Range: Analyze discussions from the past ${validatedData.timeRange || "month"}
 
 Please provide a JSON response with the following structure:
 {
@@ -37,8 +38,8 @@ Please provide a JSON response with the following structure:
     {"title": "Pain point 2", "frequency": 70, "urgency": "medium", "examples": ["Example quote 3", "Example quote 4"]}
   ],
   "app_ideas": [
-    {"title": "App idea 1", "description": "Description of the app", "market_validation": "Why this would work", "difficulty": "medium"},
-    {"title": "App idea 2", "description": "Description of the app", "market_validation": "Why this would work", "difficulty": "easy"}
+    {"title": "App idea 1", "description": "Description of the app", "market_validation": "high", "difficulty": "medium"},
+    {"title": "App idea 2", "description": "Description of the app", "market_validation": "medium", "difficulty": "easy"}
   ],
   "market_interest_level": "high",
   "total_posts_analyzed": 2847
@@ -49,7 +50,7 @@ Instructions:
 2. Suggest 5 relevant subreddits where this startup idea would be discussed
 3. Create realistic sentiment analysis data that adds up to 100%
 4. Identify 3-5 key pain points with realistic frequency scores and urgency levels
-5. Generate 3-4 app ideas related to this startup concept
+5. Generate 3-4 app ideas related to this startup concept with market_validation as "high", "medium", or "low"
 6. Assess overall market interest level (low/medium/high)
 7. Provide a realistic number for posts analyzed (1000-5000 range)
 
@@ -71,7 +72,23 @@ Make sure all subreddit names are realistic Reddit communities (without r/ prefi
         temperature: 0.7,
       });
 
-      const analysisResult = JSON.parse(completion.choices[0].message.content || "{}") as AnalysisResponse;
+      const rawContent = completion.choices[0].message.content || "{}";
+      
+      // Basic validation and error handling for OpenAI response
+      let analysisResult: AnalysisResponse;
+      try {
+        // Remove potential code fences if present
+        const cleanedContent = rawContent.replace(/```json\n?|\n?```/g, '').trim();
+        analysisResult = JSON.parse(cleanedContent) as AnalysisResponse;
+        
+        // Ensure required fields exist
+        if (!analysisResult.keywords || !analysisResult.subreddits) {
+          throw new Error("Missing required fields in AI response");
+        }
+      } catch (parseError) {
+        console.error("Failed to parse OpenAI response:", parseError);
+        throw new Error("Invalid response format from AI service");
+      }
       
       console.log("Analysis completed:", analysisResult);
       
