@@ -1,0 +1,152 @@
+Above-the-fold (hero)
+
+H1 (pick 1 to start A/B):
+
+Stop guessing. Validate your startup idea with real user evidence.
+
+Make something people want—prove it in minutes.
+
+Sub-headline:
+AI mines Reddit + public reviews and search trends to surface real pains, demand signals, competitors, and a go-to-market plan. Generate a FREE report now; upgrade for the full numbers & playbook.
+
+Primary CTA: Generate my free report
+Secondary CTA: See a sample report
+
+Trust strip (small text under CTAs):
+“Uses public data • Links to sources • Built on Lean/YC principles • No spam”
+(Keep the core value and CTA visible above the fold—most attention is spent here.) 
+TheeDigital
+
+The form (fast start, then progressive capture)
+
+Step 1 — minimal start (always visible)
+
+Describe your idea (1–3 sentences) (required)
+Placeholder: “AI meal-planning coach that builds weekly menus from pantry photos.”
+
+Keep only one required field to start; minimize cognitive load now, ask for extras later (progressive disclosure and multi-step forms tend to convert better than a big one-pager). 
+The Interaction Design Foundation
++1
+
+“Improve accuracy (optional)” accordion
+(Closed by default. Opens if they want to add context.)
+
+Target audience (chips) (optional) — e.g., “Gen-Z freelancers”, “New parents”, “SMBs”
+
+Industry (select) (optional)
+
+Target geography (select) (optional)
+
+Platform (multi-select) (optional) — Web / iOS / Android / Extension / B2B
+
+Main goal (radio) (optional) — Decide build/kill • Size demand • Find GTM angle
+
+Budget stage (select) (optional) — Self-funded • Pre-seed • Seed
+
+This is classic progressive disclosure: show essentials first, reveal advanced inputs on demand. 
+The Interaction Design Foundation
+
+Step 2 — capture during generation (inline panel appears after click)
+
+“We’re scanning sources… Where should we send the link & updates?”
+
+Email (required to save/share)
+
+Role (optional) — Founder / Indie hacker / PM / Agency
+
+Timeline (optional) — Now • This month • Exploring
+
+Two-step / staged forms reduce perceived effort and often lift completion; ask for email while motivation is high (progress bar visible). 
+CXL
+
+Hidden (auto): UTM params, referrer, device, ad creative id → pass to analytics & checkout for attribution and message-match. (Maintain strong ad→page “message match” to improve conversion and Quality Score.) 
+Unbounce
++1
+
+“What you’ll get” strip (immediately below hero)
+
+Four quick cards (with tiny UI thumbnails):
+
+Evidence chips — “e.g., 23 Reddit threads • 12 reviews • 41 keywords”
+
+Problem clusters — top pains & solution requests (with 2 linked quotes)
+
+Market signals — 12-month trend sparkline (24 months in paid)
+
+Action plan — 90-day GTM + risks (full in paid)
+
+Add subtle “Unlock the full numbers & playbook → $39” footers on each card.
+
+Social proof row (under the cards):
+
+If you have logos, show them; if not, use photo-backed testimonials. (High-profile client logos and authentic photo testimonials are among the most effective social proof types.) 
+CXL
+
+How it works (3 steps)
+
+1) Enter your idea → 2) We mine Reddit + reviews + trends → 3) You get a free report (upgrade for exact volumes, CPC, CAC/LTV simulator, 24-mo trends, full sources).
+(Keep copy short; link to a “Methodology” modal for details.)
+
+Free vs Paid table (make the value gap obvious)
+
+Free:
+• 2–3 full pain clusters (with 2 linked quotes)
+• Trend sparkline (bands, no exact numbers)
+• 1 competitor row (features summary)
+• Personas light + roadmap headings
+
+Paid ($39):
+• Exact search volumes, CPC, difficulty + 24-mo trend
+• CAC/LTV simulator + payback estimate
+• Full competitor matrix (pricing, sentiment, differentiators)
+• 90-day GTM plan + risks & kill-criteria
+• All sources & exports
+
+FAQ (conversion-oriented)
+
+Why not show all numbers for free? We keep costly data pulls for paid; free still shows real quotes & trend signals.
+
+What sources? Reddit + public reviews + Trends; links included.
+
+Is my idea private? We don’t share your prompt; excerpts are public-source quotes only.
+
+Refunds? If the paid report lacks enough data to decide, we’ll make it right.
+
+Footer trust & compliance
+
+“Stripe-secure checkout, wallets supported”
+
+Privacy, Terms, Contact
+
+(For checkout page itself, include trust cues and clear microcopy—visual security patterns matter for new brands.) 
+Baymard Institute
+
+Field list (required vs optional)
+
+Required at start:
+
+Idea (1–3 sentences)
+
+Required during generation (to save/share):
+
+Email
+
+Optional:
+
+Target audience, Industry, Geography, Platform, Goal, Budget stage, Role, Timeline
+
+Copy you can paste (hero & form)
+
+H1: Stop guessing. Validate your startup idea with real user evidence.
+
+H2: AI reads Reddit + public reviews and search trends to surface pains, demand, competitors, and a go-to-market plan. Generate a FREE report now; upgrade for exact numbers & the full playbook.
+
+CTA: Generate my free report
+
+Field label: Describe your idea (1–3 sentences)
+
+Accordion title: Improve accuracy (optional)
+
+Loading panel text: We’re scanning sources… Where should we send the report?
+
+Email helper: We only use this to save & send your report. No spam.
