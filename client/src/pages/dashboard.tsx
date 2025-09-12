@@ -36,7 +36,7 @@ export default function Dashboard() {
       <SearchInterface onAnalysisComplete={handleAnalysisComplete} />
       
       {/* Social proof - positioned for optimal credibility building */}
-      <div className="py-12 px-4 sm:px-6 lg:px-8">
+      <div className="py-12 px-2 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto text-center">
           <div className="flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-8 opacity-80">
             <div className="text-sm font-medium text-muted-foreground">Trusted by founders at</div>

@@ -98,9 +98,9 @@ export function SearchInterface({ onAnalysisComplete }: SearchInterfaceProps) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-4 sm:py-8 px-4">
+    <div className="max-w-4xl mx-auto py-4 sm:py-8 px-2 sm:px-4">
       <Card className="border-2 border-primary/20 shadow-xl bg-gradient-to-br from-card to-primary/5">
-        <CardContent className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+        <CardContent className="p-3 sm:p-6 space-y-4 sm:space-y-6">
           {/* Main idea input - Always visible above the fold */}
           <div className="space-y-2">
             <label className="text-lg font-medium">
