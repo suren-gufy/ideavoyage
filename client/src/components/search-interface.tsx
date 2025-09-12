@@ -29,7 +29,7 @@ export function SearchInterface({ onAnalysisComplete }: SearchInterfaceProps) {
   const [goal, setGoal] = useState("")
   const [role, setRole] = useState("")
   const [timeline, setTimeline] = useState("")
-  const [showOptionalFields, setShowOptionalFields] = useState(false)
+  const [showOptionalFields, setShowOptionalFields] = useState(true)
   const [showEmailCapture, setShowEmailCapture] = useState(false)
   const { toast } = useToast()
 
@@ -98,166 +98,124 @@ export function SearchInterface({ onAnalysisComplete }: SearchInterfaceProps) {
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
-      {/* Step 1: Minimal Start */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-lg font-medium">
-                Describe your idea (1–3 sentences)
+    <div className="w-full max-w-6xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
+      {/* Form Header */}
+      <div className="text-center space-y-6 mb-12">
+        <div className="inline-flex items-center gap-3 bg-gradient-to-r from-primary/10 to-[hsl(var(--neon-green))/10] px-6 py-3 rounded-full border border-primary/20">
+          <Sparkles className="h-6 w-6 text-primary animate-pulse" />
+          <span className="text-lg font-semibold bg-gradient-to-r from-primary to-[hsl(var(--neon-green))] bg-clip-text text-transparent">
+            Get Your Free Validation Report
+          </span>
+        </div>
+        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          Start with just your idea. Add details below to get more precise insights.
+        </p>
+      </div>
+
+      <Card className="border-2 border-primary/20 shadow-2xl bg-gradient-to-br from-card to-primary/5">
+        <CardContent className="p-6 sm:p-8 space-y-8">
+          {/* Main idea input - Always visible */}
+          <div className="space-y-4">
+            <div className="space-y-3">
+              <label className="text-xl font-bold flex items-center gap-2">
+                💡 Describe your idea (1–3 sentences) 
+                <span className="text-primary">*</span>
               </label>
               <Textarea
                 placeholder="AI meal-planning coach that builds weekly menus from pantry photos."
                 value={idea}
                 onChange={(e) => setIdea(e.target.value)}
                 data-testid="input-startup-idea"
-                className="min-h-[120px] text-base"
+                className="min-h-[120px] text-lg border-2 border-primary/30 focus:border-primary shadow-lg resize-none"
               />
             </div>
 
-            {/* Progressive Disclosure Accordion */}
-            <Collapsible open={showOptionalFields} onOpenChange={setShowOptionalFields}>
-              <CollapsibleTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="w-full justify-between p-3 h-auto text-sm border border-dashed"
-                  data-testid="toggle-optional-fields"
-                >
-                  <span>Improve accuracy (optional)</span>
-                  {showOptionalFields ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="space-y-4 mt-4">
-                {/* Target Audience */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Target audience</label>
-                  <div className="flex gap-2 flex-wrap">
-                    {["Gen-Z freelancers", "New parents", "SMBs", "College students", "Remote workers"].map((audience) => (
-                      <Button
-                        key={audience}
-                        variant={targetAudience === audience ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setTargetAudience(targetAudience === audience ? "" : audience)}
-                        data-testid={`chip-audience-${audience.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
-                      >
-                        {audience}
-                      </Button>
-                    ))}
-                  </div>
-                  <Input
-                    placeholder="Or describe your own..."
-                    value={targetAudience.includes("Gen-Z") || targetAudience.includes("New parents") || targetAudience.includes("SMBs") || targetAudience.includes("College") || targetAudience.includes("Remote") ? "" : targetAudience}
-                    onChange={(e) => setTargetAudience(e.target.value)}
-                    data-testid="input-custom-audience"
-                    className="text-sm"
-                  />
-                </div>
+            {/* Make optional fields more prominent - show by default */}
+            <div className="mt-8">
+              <div className="bg-gradient-to-r from-[hsl(var(--neon-green))/10] to-[hsl(var(--hot-pink))/10] rounded-xl p-6 border-2 border-[hsl(var(--neon-green))/20]">
+                <Collapsible open={showOptionalFields} onOpenChange={setShowOptionalFields}>
+                  <CollapsibleTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="lg" 
+                      className="w-full justify-between p-4 h-auto text-lg font-semibold border-2 border-[hsl(var(--neon-green))] bg-[hsl(var(--neon-green))/5] hover:bg-[hsl(var(--neon-green))/10]"
+                      data-testid="toggle-optional-fields"
+                    >
+                      <span className="flex items-center gap-3">
+                        🎯 Improve accuracy (recommended)
+                        <Badge variant="secondary" className="bg-[hsl(var(--neon-green))] text-white">
+                          Better results
+                        </Badge>
+                      </span>
+                      {showOptionalFields ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-6 mt-6">
+                    {/* Target Audience */}
+                    <div className="space-y-3">
+                      <label className="text-lg font-semibold">🎯 Target audience</label>
+                      <div className="flex gap-3 flex-wrap">
+                        {["Gen-Z freelancers", "New parents", "SMBs", "College students", "Remote workers"].map((audience) => (
+                          <Button
+                            key={audience}
+                            variant={targetAudience === audience ? "default" : "outline"}
+                            size="lg"
+                            onClick={() => setTargetAudience(targetAudience === audience ? "" : audience)}
+                            data-testid={`chip-audience-${audience.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
+                            className="border-2"
+                          >
+                            {audience}
+                          </Button>
+                        ))}
+                      </div>
+                      <Input
+                        placeholder="Or describe your own target audience..."
+                        value={targetAudience.includes("Gen-Z") || targetAudience.includes("New parents") || targetAudience.includes("SMBs") || targetAudience.includes("College") || targetAudience.includes("Remote") ? "" : targetAudience}
+                        onChange={(e) => setTargetAudience(e.target.value)}
+                        data-testid="input-custom-audience"
+                        className="text-lg border-2 border-muted-foreground/20 focus:border-primary"
+                      />
+                    </div>
 
-                {/* Industry */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Industry</label>
-                  <Select value={industry} onValueChange={setIndustry}>
-                    <SelectTrigger data-testid="select-industry">
-                      <SelectValue placeholder="Select your industry" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {industries.map((ind) => (
-                        <SelectItem key={ind} value={ind}>
-                          {ind}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Industry */}
+                      <div className="space-y-3">
+                        <label className="text-lg font-semibold">🏢 Industry</label>
+                        <Select value={industry} onValueChange={setIndustry}>
+                          <SelectTrigger data-testid="select-industry" className="h-12 text-lg border-2">
+                            <SelectValue placeholder="Select your industry" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {industries.map((ind) => (
+                              <SelectItem key={ind} value={ind}>
+                                {ind}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
 
-                {/* Target Geography */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Target geography</label>
-                  <Select value={country} onValueChange={setCountry}>
-                    <SelectTrigger data-testid="select-country">
-                      <SelectValue placeholder="Select target country" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {countries.map((country) => (
-                        <SelectItem key={country} value={country.toLowerCase().replace(/ /g, '-')}>
-                          {country}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Platform Multi-select */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Platform</label>
-                  <div className="flex gap-2 flex-wrap">
-                    {["Web", "iOS", "Android", "Extension", "B2B"].map((platformOption) => (
-                      <Button
-                        key={platformOption}
-                        variant={
-                          (platformOption === "Web" && (platform === "web-app" || platform === "both")) ||
-                          (platformOption === "iOS" && (platform === "mobile-app" || platform === "both")) ||
-                          (platformOption === "Android" && (platform === "mobile-app" || platform === "both"))
-                            ? "default" : "outline"
-                        }
-                        size="sm"
-                        onClick={() => {
-                          if (platformOption === "Web") {
-                            setPlatform(platform === "web-app" ? "mobile-app" : platform === "both" ? "mobile-app" : "web-app")
-                          } else if (platformOption === "iOS" || platformOption === "Android") {
-                            setPlatform(platform === "mobile-app" ? "web-app" : platform === "both" ? "web-app" : "mobile-app")
-                          }
-                        }}
-                        data-testid={`platform-${platformOption.toLowerCase()}`}
-                      >
-                        {platformOption}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Main Goal */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Main goal</label>
-                  <div className="space-y-2">
-                    {[
-                      { value: "decide", label: "Decide build/kill" },
-                      { value: "size", label: "Size demand" },
-                      { value: "gtm", label: "Find GTM angle" }
-                    ].map((goalOption) => (
-                      <label key={goalOption.value} className="flex items-center space-x-2">
-                        <input
-                          type="radio"
-                          name="goal"
-                          value={goalOption.value}
-                          checked={goal === goalOption.value}
-                          onChange={(e) => setGoal(e.target.checked ? goalOption.value : "")}
-                          className="text-primary"
-                        />
-                        <span className="text-sm">{goalOption.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Budget Stage */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Budget stage</label>
-                  <Select value={fundingMethod} onValueChange={(value) => setFundingMethod(value as "self-funded" | "bootstrapping" | "raising-capital")}>
-                    <SelectTrigger data-testid="select-funding">
-                      <SelectValue placeholder="Select budget stage" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="self-funded">Self-funded</SelectItem>
-                      <SelectItem value="bootstrapping">Pre-seed</SelectItem>
-                      <SelectItem value="raising-capital">Seed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
+                      {/* Geography */}
+                      <div className="space-y-3">
+                        <label className="text-lg font-semibold">🌍 Target geography</label>
+                        <Select value={country} onValueChange={setCountry}>
+                          <SelectTrigger data-testid="select-country" className="h-12 text-lg border-2">
+                            <SelectValue placeholder="Select target country" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {countries.map((country) => (
+                              <SelectItem key={country} value={country.toLowerCase().replace(/ /g, '-')}>
+                                {country}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              </div>
+            </div>
 
             {!showEmailCapture && !analyzeIdeaMutation.isPending && (
               <div className="flex items-center justify-center">
@@ -276,10 +234,10 @@ export function SearchInterface({ onAnalysisComplete }: SearchInterfaceProps) {
                   disabled={!idea.trim()}
                   data-testid="button-analyze"
                   size="lg"
-                  className="px-8 py-3 text-lg font-semibold"
+                  className="px-12 py-6 text-xl font-bold bg-gradient-to-r from-primary to-[hsl(var(--neon-green))] hover:from-primary/90 hover:to-[hsl(var(--neon-green))/90] shadow-2xl transform hover:scale-105 transition-all duration-200"
                 >
-                  <Sparkles className="h-5 w-5 mr-2" />
-                  Generate my free report
+                  <Sparkles className="h-6 w-6 mr-3" />
+                  🚀 Generate my free report
                 </Button>
               </div>
             )}
@@ -289,28 +247,30 @@ export function SearchInterface({ onAnalysisComplete }: SearchInterfaceProps) {
 
       {/* Step 2: Email Capture During Generation */}
       {showEmailCapture && (
-        <Card className="mt-6">
-          <CardContent className="pt-6">
-            <div className="space-y-4">
-              <div className="text-center space-y-2">
-                <div className="flex items-center justify-center gap-2">
-                  <div className="h-2 w-2 bg-primary rounded-full animate-pulse"></div>
-                  <span className="text-lg font-medium">We're scanning sources…</span>
+        <Card className="mt-8 border-2 border-[hsl(var(--hot-pink))/20] shadow-2xl bg-gradient-to-br from-card to-[hsl(var(--hot-pink))/5]">
+          <CardContent className="p-8">
+            <div className="space-y-6">
+              <div className="text-center space-y-4">
+                <div className="flex items-center justify-center gap-3">
+                  <div className="h-3 w-3 bg-[hsl(var(--hot-pink))] rounded-full animate-pulse"></div>
+                  <span className="text-2xl font-bold bg-gradient-to-r from-[hsl(var(--hot-pink))] to-primary bg-clip-text text-transparent">
+                    We're scanning sources…
+                  </span>
                 </div>
-                <p className="text-muted-foreground">Where should we send the link & updates?</p>
+                <p className="text-lg text-muted-foreground">Where should we send the link & updates?</p>
               </div>
               
-              <div className="space-y-4 max-w-md mx-auto">
-                <div className="space-y-2">
+              <div className="space-y-6 max-w-lg mx-auto">
+                <div className="space-y-3">
                   <Input
                     type="email"
                     placeholder="your-email@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     data-testid="input-email"
-                    className="text-center text-lg"
+                    className="text-center text-xl h-14 border-2 border-[hsl(var(--hot-pink))/30] focus:border-[hsl(var(--hot-pink))]"
                   />
-                  <p className="text-xs text-muted-foreground text-center">
+                  <p className="text-sm text-muted-foreground text-center">
                     We only use this to save & send your report. No spam.
                   </p>
                 </div>
@@ -319,7 +279,7 @@ export function SearchInterface({ onAnalysisComplete }: SearchInterfaceProps) {
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Role (optional)</label>
                     <Select value={role} onValueChange={setRole}>
-                      <SelectTrigger data-testid="select-role">
+                      <SelectTrigger data-testid="select-role" className="h-12">
                         <SelectValue placeholder="Select role" />
                       </SelectTrigger>
                       <SelectContent>
@@ -334,7 +294,7 @@ export function SearchInterface({ onAnalysisComplete }: SearchInterfaceProps) {
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Timeline (optional)</label>
                     <Select value={timeline} onValueChange={setTimeline}>
-                      <SelectTrigger data-testid="select-timeline">
+                      <SelectTrigger data-testid="select-timeline" className="h-12">
                         <SelectValue placeholder="Select timeline" />
                       </SelectTrigger>
                       <SelectContent>
@@ -351,10 +311,10 @@ export function SearchInterface({ onAnalysisComplete }: SearchInterfaceProps) {
                   disabled={!email.trim() || analyzeIdeaMutation.isPending}
                   data-testid="button-start-analysis"
                   size="lg"
-                  className="w-full"
+                  className="w-full py-6 text-xl font-bold bg-gradient-to-r from-[hsl(var(--hot-pink))] to-[hsl(var(--bright-orange))] hover:from-[hsl(var(--hot-pink))/90] hover:to-[hsl(var(--bright-orange))/90] shadow-2xl"
                 >
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  {analyzeIdeaMutation.isPending ? "Analyzing Reddit Discussions..." : "Start Analysis"}
+                  <Sparkles className="h-6 w-6 mr-3" />
+                  {analyzeIdeaMutation.isPending ? "Analyzing Reddit Discussions..." : "🚀 Start Analysis"}
                 </Button>
               </div>
             </div>
@@ -364,23 +324,23 @@ export function SearchInterface({ onAnalysisComplete }: SearchInterfaceProps) {
 
       {/* Loading States */}
       {analyzeIdeaMutation.isPending && (
-        <Card className="mt-6">
-          <CardContent className="pt-6">
-            <div className="space-y-3 p-4 bg-muted/50 rounded-lg">
-              <div className="flex items-center gap-2 text-sm">
-                <div className="h-2 w-2 bg-primary rounded-full animate-pulse"></div>
+        <Card className="mt-8 border-2 border-[hsl(var(--bright-orange))/20] shadow-2xl bg-gradient-to-br from-card to-[hsl(var(--bright-orange))/5]">
+          <CardContent className="p-8">
+            <div className="space-y-4 p-6 bg-muted/50 rounded-xl">
+              <div className="flex items-center gap-3 text-lg">
+                <div className="h-3 w-3 bg-primary rounded-full animate-pulse"></div>
                 AI is identifying relevant subreddits and communities...
               </div>
-              <div className="flex items-center gap-2 text-sm">
-                <div className="h-2 w-2 bg-primary rounded-full animate-pulse"></div>
+              <div className="flex items-center gap-3 text-lg">
+                <div className="h-3 w-3 bg-[hsl(var(--neon-green))] rounded-full animate-pulse"></div>
                 Analyzing discussions about "{idea.slice(0, 50)}..."
               </div>
-              <div className="flex items-center gap-2 text-sm">
-                <div className="h-2 w-2 bg-primary rounded-full animate-pulse"></div>
+              <div className="flex items-center gap-3 text-lg">
+                <div className="h-3 w-3 bg-[hsl(var(--hot-pink))] rounded-full animate-pulse"></div>
                 Extracting pain points and sentiment analysis...
               </div>
-              <div className="flex items-center gap-2 text-sm">
-                <div className="h-2 w-2 bg-primary rounded-full animate-pulse"></div>
+              <div className="flex items-center gap-3 text-lg">
+                <div className="h-3 w-3 bg-[hsl(var(--bright-orange))] rounded-full animate-pulse"></div>
                 Generating app ideas and market insights...
               </div>
             </div>
@@ -390,18 +350,18 @@ export function SearchInterface({ onAnalysisComplete }: SearchInterfaceProps) {
 
       {/* Information Preview */}
       {idea && !showEmailCapture && !analyzeIdeaMutation.isPending && !analyzeIdeaMutation.isSuccess && (
-        <Card className="mt-6">
-          <CardContent className="pt-6">
-            <div className="space-y-2 p-4 bg-muted/30 rounded-lg">
-              <p className="text-sm font-medium">AI will automatically research:</p>
-              <div className="flex gap-2 flex-wrap">
-                <Badge variant="secondary">Relevant subreddits</Badge>
-                <Badge variant="secondary">Keywords & topics</Badge>
-                <Badge variant="secondary">Pain points & frustrations</Badge>
-                <Badge variant="secondary">Solution requests</Badge>
-                <Badge variant="secondary">Market sentiment</Badge>
+        <Card className="mt-8 border-2 border-primary/20 shadow-xl">
+          <CardContent className="p-6">
+            <div className="space-y-4 p-6 bg-muted/30 rounded-xl">
+              <p className="text-lg font-semibold">🤖 AI will automatically research:</p>
+              <div className="flex gap-3 flex-wrap">
+                <Badge variant="secondary" className="text-base py-2 px-4">Relevant subreddits</Badge>
+                <Badge variant="secondary" className="text-base py-2 px-4">Keywords & topics</Badge>
+                <Badge variant="secondary" className="text-base py-2 px-4">Pain points & frustrations</Badge>
+                <Badge variant="secondary" className="text-base py-2 px-4">Solution requests</Badge>
+                <Badge variant="secondary" className="text-base py-2 px-4">Market sentiment</Badge>
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 Research areas automatically selected based on your idea and target audience
               </p>
             </div>
@@ -411,11 +371,11 @@ export function SearchInterface({ onAnalysisComplete }: SearchInterfaceProps) {
 
       {/* Success State */}
       {analyzeIdeaMutation.isSuccess && (
-        <Card className="mt-6">
-          <CardContent className="pt-6">
-            <div className="space-y-2 p-4 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800">
-              <p className="text-sm font-medium text-green-800 dark:text-green-200">Analysis Complete!</p>
-              <p className="text-xs text-green-700 dark:text-green-300">
+        <Card className="mt-8 border-2 border-[hsl(var(--neon-green))] shadow-2xl bg-gradient-to-br from-card to-[hsl(var(--neon-green))/5]">
+          <CardContent className="p-6">
+            <div className="space-y-4 p-6 bg-[hsl(var(--neon-green))/10] rounded-xl border border-[hsl(var(--neon-green))/20]">
+              <p className="text-xl font-bold text-[hsl(var(--neon-green))]">✅ Analysis Complete!</p>
+              <p className="text-lg text-muted-foreground">
                 Check the dashboard below for detailed insights about your startup idea.
               </p>
             </div>

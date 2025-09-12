@@ -15,124 +15,154 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-8 p-6">
-      <div className="text-center space-y-6 max-w-4xl mx-auto">
-        <div className="space-y-4">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight" data-testid="page-title">
-            Stop guessing. Validate your startup idea with real user evidence.
-          </h1>
-          <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
-            AI mines Reddit + public reviews and search trends to surface real pains, demand signals, competitors, and a go-to-market plan. Generate a <strong>FREE report</strong> now; upgrade for the full numbers & playbook.
-          </p>
+    <div className="min-h-screen">
+      {/* Hero Section with Gradient Background */}
+      <div className="relative bg-gradient-to-br from-primary/10 via-background to-[hsl(var(--hot-pink))/10] py-20 px-4 sm:px-6 lg:px-8">
+        <div className="absolute inset-0 bg-gradient-to-r from-[hsl(var(--primary))/5] to-[hsl(var(--neon-green))/5]"></div>
+        <div className="relative max-w-6xl mx-auto text-center space-y-8">
+          <div className="space-y-6">
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight" data-testid="page-title">
+              Stop guessing.{" "}
+              <span className="bg-gradient-to-r from-primary via-[hsl(var(--hot-pink))] to-[hsl(var(--neon-green))] bg-clip-text text-transparent">
+                Validate your startup idea
+              </span>{" "}
+              with real user evidence.
+            </h1>
+            <p className="text-xl sm:text-2xl text-muted-foreground leading-relaxed max-w-4xl mx-auto">
+              AI mines Reddit + public reviews and search trends to surface real pains, demand signals, competitors, and a go-to-market plan.{" "}
+              <strong className="text-[hsl(var(--neon-green))]">Generate a FREE report</strong> now; upgrade for the full numbers & playbook.
+            </p>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
+            <button 
+              className="bg-primary text-primary-foreground hover:bg-primary/90 px-10 py-4 rounded-xl font-bold text-xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-200 w-full sm:w-auto"
+              data-testid="cta-primary"
+            >
+              🚀 Generate my free report
+            </button>
+            <button 
+              className="border-2 border-primary/50 hover:border-primary text-primary hover:bg-primary/5 px-10 py-4 rounded-xl font-semibold text-xl backdrop-blur-sm w-full sm:w-auto"
+              data-testid="cta-secondary"
+            >
+              👀 See a sample report
+            </button>
+          </div>
+          
+          <div className="flex flex-wrap justify-center items-center gap-4 text-sm text-muted-foreground">
+            <span className="flex items-center gap-2">
+              ✅ Uses public data
+            </span>
+            <span className="flex items-center gap-2">
+              🔗 Links to sources
+            </span>
+            <span className="flex items-center gap-2">
+              🏆 Built on Lean/YC principles
+            </span>
+            <span className="flex items-center gap-2">
+              🚫 No spam
+            </span>
+          </div>
         </div>
-        
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <button 
-            className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-3 rounded-lg font-semibold text-lg"
-            data-testid="cta-primary"
-          >
-            Generate my free report
-          </button>
-          <button 
-            className="border border-border hover:bg-muted px-8 py-3 rounded-lg font-medium"
-            data-testid="cta-secondary"
-          >
-            See a sample report
-          </button>
-        </div>
-        
-        <p className="text-sm text-muted-foreground">
-          Uses public data • Links to sources • Built on Lean/YC principles • No spam
-        </p>
       </div>
 
       <SearchInterface onAnalysisComplete={handleAnalysisComplete} />
       
       {/* What you'll get section */}
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl font-semibold">What you'll get</h2>
-          <p className="text-muted-foreground">Real insights from actual user discussions and market data</p>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Evidence chips */}
-          <div className="border rounded-lg p-4 space-y-3">
-            <div className="space-y-2">
-              <div className="h-12 w-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-                <svg className="h-6 w-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              </div>
-              <h3 className="font-medium">Evidence chips</h3>
-              <p className="text-sm text-muted-foreground">
-                e.g., 23 Reddit threads • 12 reviews • 41 keywords
-              </p>
-            </div>
-            <div className="pt-2 border-t">
-              <p className="text-xs text-muted-foreground">
-                Unlock the full numbers & playbook → <span className="font-semibold">$39</span>
-              </p>
-            </div>
+      <div className="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-background to-primary/5">
+        <div className="max-w-6xl mx-auto space-y-12">
+          <div className="text-center space-y-6">
+            <h2 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-foreground via-primary to-[hsl(var(--hot-pink))] bg-clip-text text-transparent">
+              What you'll get
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Real insights from actual user discussions and market data
+            </p>
           </div>
-
-          {/* Problem clusters */}
-          <div className="border rounded-lg p-4 space-y-3">
-            <div className="space-y-2">
-              <div className="h-12 w-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
-                <svg className="h-6 w-6 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Evidence chips */}
+            <div className="relative group bg-card border-2 border-primary/20 hover:border-primary/50 rounded-2xl p-6 space-y-4 hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+              <div className="absolute top-4 right-4">
+                <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
               </div>
-              <h3 className="font-medium">Problem clusters</h3>
-              <p className="text-sm text-muted-foreground">
-                Top pains & solution requests (with 2 linked quotes)
-              </p>
-            </div>
-            <div className="pt-2 border-t">
-              <p className="text-xs text-muted-foreground">
-                Unlock the full numbers & playbook → <span className="font-semibold">$39</span>
-              </p>
-            </div>
-          </div>
-
-          {/* Market signals */}
-          <div className="border rounded-lg p-4 space-y-3">
-            <div className="space-y-2">
-              <div className="h-12 w-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
-                <svg className="h-6 w-6 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
+              <div className="space-y-4">
+                <div className="h-16 w-16 bg-gradient-to-br from-primary to-primary/70 rounded-2xl flex items-center justify-center shadow-lg">
+                  <span className="text-2xl">📊</span>
+                </div>
+                <h3 className="text-xl font-bold">Evidence chips</h3>
+                <p className="text-muted-foreground">
+                  e.g., <span className="text-primary font-semibold">23 Reddit threads</span> • <span className="text-[hsl(var(--neon-green))] font-semibold">12 reviews</span> • <span className="text-[hsl(var(--hot-pink))] font-semibold">41 keywords</span>
+                </p>
               </div>
-              <h3 className="font-medium">Market signals</h3>
-              <p className="text-sm text-muted-foreground">
-                12-month trend sparkline (24 months in paid)
-              </p>
-            </div>
-            <div className="pt-2 border-t">
-              <p className="text-xs text-muted-foreground">
-                Unlock the full numbers & playbook → <span className="font-semibold">$39</span>
-              </p>
-            </div>
-          </div>
-
-          {/* Action plan */}
-          <div className="border rounded-lg p-4 space-y-3">
-            <div className="space-y-2">
-              <div className="h-12 w-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
-                <svg className="h-6 w-6 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                </svg>
+              <div className="pt-4 border-t border-border/50">
+                <p className="text-sm font-medium text-[hsl(var(--bright-orange))]">
+                  Unlock the full numbers & playbook → <span className="font-bold text-lg">$39</span>
+                </p>
               </div>
-              <h3 className="font-medium">Action plan</h3>
-              <p className="text-sm text-muted-foreground">
-                90-day GTM + risks (full in paid)
-              </p>
             </div>
-            <div className="pt-2 border-t">
-              <p className="text-xs text-muted-foreground">
-                Unlock the full numbers & playbook → <span className="font-semibold">$39</span>
-              </p>
+
+            {/* Problem clusters */}
+            <div className="relative group bg-card border-2 border-[hsl(var(--hot-pink))/20] hover:border-[hsl(var(--hot-pink))/50] rounded-2xl p-6 space-y-4 hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+              <div className="absolute top-4 right-4">
+                <div className="w-2 h-2 bg-[hsl(var(--hot-pink))] rounded-full animate-pulse"></div>
+              </div>
+              <div className="space-y-4">
+                <div className="h-16 w-16 bg-gradient-to-br from-[hsl(var(--hot-pink))] to-[hsl(var(--hot-pink))/70] rounded-2xl flex items-center justify-center shadow-lg">
+                  <span className="text-2xl">💬</span>
+                </div>
+                <h3 className="text-xl font-bold">Problem clusters</h3>
+                <p className="text-muted-foreground">
+                  Top pains & solution requests (with <span className="text-[hsl(var(--hot-pink))] font-semibold">2 linked quotes</span>)
+                </p>
+              </div>
+              <div className="pt-4 border-t border-border/50">
+                <p className="text-sm font-medium text-[hsl(var(--bright-orange))]">
+                  Unlock the full numbers & playbook → <span className="font-bold text-lg">$39</span>
+                </p>
+              </div>
+            </div>
+
+            {/* Market signals */}
+            <div className="relative group bg-card border-2 border-[hsl(var(--neon-green))/20] hover:border-[hsl(var(--neon-green))/50] rounded-2xl p-6 space-y-4 hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+              <div className="absolute top-4 right-4">
+                <div className="w-2 h-2 bg-[hsl(var(--neon-green))] rounded-full animate-pulse"></div>
+              </div>
+              <div className="space-y-4">
+                <div className="h-16 w-16 bg-gradient-to-br from-[hsl(var(--neon-green))] to-[hsl(var(--neon-green))/70] rounded-2xl flex items-center justify-center shadow-lg">
+                  <span className="text-2xl">📈</span>
+                </div>
+                <h3 className="text-xl font-bold">Market signals</h3>
+                <p className="text-muted-foreground">
+                  <span className="text-[hsl(var(--neon-green))] font-semibold">12-month</span> trend sparkline (<span className="text-primary font-semibold">24 months</span> in paid)
+                </p>
+              </div>
+              <div className="pt-4 border-t border-border/50">
+                <p className="text-sm font-medium text-[hsl(var(--bright-orange))]">
+                  Unlock the full numbers & playbook → <span className="font-bold text-lg">$39</span>
+                </p>
+              </div>
+            </div>
+
+            {/* Action plan */}
+            <div className="relative group bg-card border-2 border-[hsl(var(--bright-orange))/20] hover:border-[hsl(var(--bright-orange))/50] rounded-2xl p-6 space-y-4 hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+              <div className="absolute top-4 right-4">
+                <div className="w-2 h-2 bg-[hsl(var(--bright-orange))] rounded-full animate-pulse"></div>
+              </div>
+              <div className="space-y-4">
+                <div className="h-16 w-16 bg-gradient-to-br from-[hsl(var(--bright-orange))] to-[hsl(var(--bright-orange))/70] rounded-2xl flex items-center justify-center shadow-lg">
+                  <span className="text-2xl">🚀</span>
+                </div>
+                <h3 className="text-xl font-bold">Action plan</h3>
+                <p className="text-muted-foreground">
+                  <span className="text-[hsl(var(--bright-orange))] font-semibold">90-day GTM</span> + risks (full in paid)
+                </p>
+              </div>
+              <div className="pt-4 border-t border-border/50">
+                <p className="text-sm font-medium text-[hsl(var(--bright-orange))]">
+                  Unlock the full numbers & playbook → <span className="font-bold text-lg">$39</span>
+                </p>
+              </div>
             </div>
           </div>
         </div>
