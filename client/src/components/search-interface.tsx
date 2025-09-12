@@ -19,15 +19,29 @@ interface SearchInterfaceProps {
 export function SearchInterface({ onAnalysisComplete }: SearchInterfaceProps) {
   const [idea, setIdea] = useState("")
   const [industry, setIndustry] = useState("")
-  const [targetMarket, setTargetMarket] = useState("")
+  const [targetAudience, setTargetAudience] = useState("")
+  const [country, setCountry] = useState("global")
+  const [platform, setPlatform] = useState<"web-app" | "mobile-app" | "both">("web-app")
+  const [fundingMethod, setFundingMethod] = useState<"self-funded" | "bootstrapping" | "raising-capital">("self-funded")
   const [timeRange, setTimeRange] = useState<"week" | "month" | "quarter" | "year">("month")
   const { toast } = useToast()
 
-  // todo: remove mock functionality - industry options
+  // Industry options
   const industries = [
     "FinTech", "HealthTech", "EdTech", "E-commerce", "SaaS", 
     "Social Media", "Gaming", "Food & Beverage", "Travel", 
     "Real Estate", "Fitness", "Productivity", "Entertainment"
+  ]
+
+  // Country options
+  const countries = [
+    "Global",
+    "United States", "Canada", "United Kingdom", "Germany", "France", "Italy", "Spain", "Netherlands", "Belgium", "Switzerland", "Austria", "Sweden", "Norway", "Denmark", "Finland", "Poland", "Czech Republic", "Hungary", "Romania", "Bulgaria", "Croatia", "Slovenia", "Slovakia", "Lithuania", "Latvia", "Estonia", "Ireland", "Portugal", "Greece", "Cyprus", "Malta", "Luxembourg",
+    "Australia", "New Zealand", "Japan", "South Korea", "Singapore", "Hong Kong", "Taiwan", "Malaysia", "Thailand", "Philippines", "Indonesia", "Vietnam", "India", "China", "Pakistan", "Bangladesh", "Sri Lanka", "Nepal", "Myanmar", "Cambodia", "Laos",
+    "Brazil", "Argentina", "Chile", "Colombia", "Peru", "Ecuador", "Bolivia", "Paraguay", "Uruguay", "Venezuela", "Mexico", "Guatemala", "Honduras", "El Salvador", "Nicaragua", "Costa Rica", "Panama", "Dominican Republic", "Haiti", "Jamaica", "Trinidad and Tobago", "Barbados",
+    "South Africa", "Nigeria", "Kenya", "Ghana", "Ethiopia", "Morocco", "Egypt", "Tunisia", "Algeria", "Libya", "Sudan", "Tanzania", "Uganda", "Zimbabwe", "Zambia", "Botswana", "Namibia", "Mauritius", "Seychelles",
+    "Russia", "Ukraine", "Belarus", "Moldova", "Georgia", "Armenia", "Azerbaijan", "Kazakhstan", "Uzbekistan", "Turkmenistan", "Tajikistan", "Kyrgyzstan", "Mongolia",
+    "Israel", "Turkey", "Saudi Arabia", "United Arab Emirates", "Qatar", "Kuwait", "Bahrain", "Oman", "Jordan", "Lebanon", "Iraq", "Iran", "Afghanistan"
   ]
 
   const analyzeIdeaMutation = useMutation({
@@ -63,12 +77,15 @@ export function SearchInterface({ onAnalysisComplete }: SearchInterfaceProps) {
       return
     }
     
-    console.log('Analysis triggered', { idea, industry, targetMarket, timeRange })
+    console.log('Analysis triggered', { idea, industry, targetAudience, country, platform, fundingMethod, timeRange })
     
     analyzeIdeaMutation.mutate({
       idea: idea.trim(),
       industry: industry || undefined,
-      targetMarket: targetMarket || undefined,
+      targetAudience: targetAudience || undefined,
+      country,
+      platform,
+      fundingMethod,
       timeRange,
     })
   }
@@ -122,15 +139,61 @@ export function SearchInterface({ onAnalysisComplete }: SearchInterfaceProps) {
           <div className="space-y-2">
             <label className="text-sm font-medium flex items-center gap-2">
               <Target className="h-4 w-4" />
-              Target Market
+              Target Audience <span className="text-muted-foreground text-xs">(optional)</span>
             </label>
             <Input
               placeholder="e.g., 'Young professionals', 'College students', 'Small business owners'"
-              value={targetMarket}
-              onChange={(e) => setTargetMarket(e.target.value)}
-              data-testid="input-target-market"
+              value={targetAudience}
+              onChange={(e) => setTargetAudience(e.target.value)}
+              data-testid="input-target-audience"
             />
           </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Target Country</label>
+            <Select value={country} onValueChange={setCountry}>
+              <SelectTrigger data-testid="select-country">
+                <SelectValue placeholder="Select target country" />
+              </SelectTrigger>
+              <SelectContent>
+                {countries.map((country) => (
+                  <SelectItem key={country} value={country.toLowerCase().replace(/ /g, '-')}>
+                    {country}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Platform</label>
+            <Select value={platform} onValueChange={(value) => setPlatform(value as "web-app" | "mobile-app" | "both")}>
+              <SelectTrigger data-testid="select-platform">
+                <SelectValue placeholder="Select platform" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="web-app">Web App</SelectItem>
+                <SelectItem value="mobile-app">Mobile App</SelectItem>
+                <SelectItem value="both">Both Web & Mobile</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Funding Method</label>
+          <Select value={fundingMethod} onValueChange={(value) => setFundingMethod(value as "self-funded" | "bootstrapping" | "raising-capital")}>
+            <SelectTrigger data-testid="select-funding">
+              <SelectValue placeholder="How are you planning to fund this?" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="self-funded">Self-funded</SelectItem>
+              <SelectItem value="bootstrapping">Bootstrapping</SelectItem>
+              <SelectItem value="raising-capital">Raising Capital</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <Separator />
@@ -199,7 +262,7 @@ export function SearchInterface({ onAnalysisComplete }: SearchInterfaceProps) {
               <Badge variant="secondary">Market sentiment</Badge>
             </div>
             <p className="text-xs text-muted-foreground">
-              Research areas automatically selected based on your idea and target market
+              Research areas automatically selected based on your idea and target audience
             </p>
           </div>
         )}

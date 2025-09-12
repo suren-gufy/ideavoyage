@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { SearchInterface } from "@/components/search-interface"
+import { ScoringCards } from "@/components/scoring-cards"
 import { MetricsOverview } from "@/components/metrics-overview"
 import { SentimentChart } from "@/components/sentiment-chart"
 import { PainPointsDisplay } from "@/components/pain-points-display"
@@ -16,9 +17,9 @@ export default function Dashboard() {
   return (
     <div className="space-y-8 p-6">
       <div className="space-y-2">
-        <h1 className="text-3xl font-semibold" data-testid="page-title">Reddit Idea Validator</h1>
+        <h1 className="text-3xl font-semibold" data-testid="page-title">Stop wasting time and money. Validate your startup idea</h1>
         <p className="text-muted-foreground">
-          Analyze Reddit discussions to validate your ideas and discover market opportunities
+          Get instant AI-powered analysis of Reddit discussions to validate your ideas and discover real market opportunities
         </p>
       </div>
 
@@ -26,6 +27,14 @@ export default function Dashboard() {
       
       {analysisResults && (
         <>
+          <div className="space-y-6">
+            <h2 className="text-xl font-medium">Startup Idea Scores</h2>
+            <ScoringCards 
+              overallScore={analysisResults.overall_score} 
+              viabilityScore={analysisResults.viability_score} 
+            />
+          </div>
+
           <div className="space-y-6">
             <h2 className="text-xl font-medium">Analysis Overview</h2>
             <MetricsOverview analysisData={analysisResults} />

@@ -21,7 +21,10 @@ export type User = typeof users.$inferSelect;
 export const analyzeIdeaSchema = z.object({
   idea: z.string().min(10, "Please provide a more detailed description of your idea"),
   industry: z.string().optional(),
-  targetMarket: z.string().optional(),
+  targetAudience: z.string().optional(),
+  country: z.string().default("global"),
+  platform: z.enum(["web-app", "mobile-app", "both"]).default("web-app"),
+  fundingMethod: z.enum(["self-funded", "bootstrapping", "raising-capital"]).default("self-funded"),
   timeRange: z.enum(["week", "month", "quarter", "year"]).default("month"),
 });
 
@@ -54,6 +57,8 @@ export const analysisResponseSchema = z.object({
   app_ideas: z.array(appIdeaSchema),
   market_interest_level: z.enum(["low", "medium", "high"]),
   total_posts_analyzed: z.number(),
+  overall_score: z.number().min(1).max(10),
+  viability_score: z.number().min(1).max(10),
 });
 
 export type AnalyzeIdeaRequest = z.infer<typeof analyzeIdeaSchema>;
