@@ -7,13 +7,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
+import { useMutation } from "@tanstack/react-query"
+import { apiRequest } from "@/lib/queryClient"
+import { useToast } from "@/hooks/use-toast"
+import type { AnalyzeIdeaRequest, AnalysisResponse } from "@shared/schema"
 
-export function SearchInterface() {
+interface SearchInterfaceProps {
+  onAnalysisComplete?: (results: AnalysisResponse) => void;
+}
+
+export function SearchInterface({ onAnalysisComplete }: SearchInterfaceProps) {
   const [idea, setIdea] = useState("")
   const [industry, setIndustry] = useState("")
   const [targetMarket, setTargetMarket] = useState("")
-  const [timeRange, setTimeRange] = useState("month")
-  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [timeRange, setTimeRange] = useState<"week" | "month" | "quarter" | "year">("month")
+  const { toast } = useToast()
 
   // todo: remove mock functionality - industry options
   const industries = [
@@ -22,16 +30,47 @@ export function SearchInterface() {
     "Real Estate", "Fitness", "Productivity", "Entertainment"
   ]
 
+  const analyzeIdeaMutation = useMutation({
+    mutationFn: async (data: AnalyzeIdeaRequest): Promise<AnalysisResponse> => {
+      const response = await apiRequest("/api/analyze", "POST", data)
+      return response as unknown as AnalysisResponse
+    },
+    onSuccess: (results) => {
+      console.log('Analysis completed successfully:', results)
+      onAnalysisComplete?.(results)
+      toast({
+        title: "Analysis Complete!",
+        description: `Found ${results.subreddits.length} relevant subreddits and ${results.pain_points.length} key pain points.`,
+      })
+    },
+    onError: (error) => {
+      console.error('Analysis failed:', error)
+      toast({
+        title: "Analysis Failed",
+        description: "There was an error analyzing your startup idea. Please try again.",
+        variant: "destructive",
+      })
+    },
+  })
+
   const handleAnalyze = () => {
-    if (!idea.trim()) return
+    if (!idea.trim()) {
+      toast({
+        title: "Missing Information",
+        description: "Please describe your startup idea first.",
+        variant: "destructive",
+      })
+      return
+    }
     
-    setIsAnalyzing(true)
     console.log('Analysis triggered', { idea, industry, targetMarket, timeRange })
     
-    // todo: remove mock functionality - simulate AI analysis
-    setTimeout(() => {
-      setIsAnalyzing(false)
-    }, 3000)
+    analyzeIdeaMutation.mutate({
+      idea: idea.trim(),
+      industry: industry || undefined,
+      targetMarket: targetMarket || undefined,
+      timeRange,
+    })
   }
 
   return (
@@ -105,7 +144,7 @@ export function SearchInterface() {
                   key={range}
                   variant={timeRange === range ? "default" : "outline"}
                   size="sm"
-                  onClick={() => setTimeRange(range)}
+                  onClick={() => setTimeRange(range as "week" | "month" | "quarter" | "year")}
                   data-testid={`button-timerange-${range}`}
                 >
                   Past {range === "quarter" ? "3 months" : range}
@@ -117,47 +156,59 @@ export function SearchInterface() {
           <div className="flex items-center justify-center">
             <Button 
               onClick={handleAnalyze}
-              disabled={!idea.trim() || isAnalyzing}
+              disabled={!idea.trim() || analyzeIdeaMutation.isPending}
               data-testid="button-analyze"
               size="lg"
               className="w-full md:w-auto"
             >
               <Sparkles className="h-4 w-4 mr-2" />
-              {isAnalyzing ? "Analyzing Reddit Discussions..." : "Analyze Market Opportunity"}
+              {analyzeIdeaMutation.isPending ? "Analyzing Reddit Discussions..." : "Analyze Market Opportunity"}
             </Button>
           </div>
 
-          {isAnalyzing && (
+          {analyzeIdeaMutation.isPending && (
             <div className="space-y-3 p-4 bg-muted/50 rounded-lg">
               <div className="flex items-center gap-2 text-sm">
                 <div className="h-2 w-2 bg-primary rounded-full animate-pulse"></div>
-                Identifying relevant subreddits and communities...
+                AI is identifying relevant subreddits and communities...
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <div className="h-2 w-2 bg-primary rounded-full animate-pulse"></div>
-                Searching discussions about {idea.slice(0, 50)}...
+                Analyzing discussions about "{idea.slice(0, 50)}..."
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <div className="h-2 w-2 bg-primary rounded-full animate-pulse"></div>
-                Analyzing sentiment and extracting pain points...
+                Extracting pain points and sentiment analysis...
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <div className="h-2 w-2 bg-primary rounded-full animate-pulse"></div>
+                Generating app ideas and market insights...
               </div>
             </div>
           )}
         </div>
 
-        {idea && !isAnalyzing && (
+        {idea && !analyzeIdeaMutation.isPending && !analyzeIdeaMutation.isSuccess && (
           <div className="space-y-2 p-4 bg-muted/30 rounded-lg">
             <p className="text-sm font-medium">AI will automatically research:</p>
             <div className="flex gap-2 flex-wrap">
-              {/* todo: remove mock functionality - predicted research areas */}
-              <Badge variant="secondary">r/personalfinance</Badge>
-              <Badge variant="secondary">r/budgeting</Badge>
-              <Badge variant="secondary">r/ynab</Badge>
-              <Badge variant="secondary">r/financialplanning</Badge>
-              <Badge variant="secondary">r/povertyfinance</Badge>
+              <Badge variant="secondary">Relevant subreddits</Badge>
+              <Badge variant="secondary">Keywords & topics</Badge>
+              <Badge variant="secondary">Pain points & frustrations</Badge>
+              <Badge variant="secondary">Solution requests</Badge>
+              <Badge variant="secondary">Market sentiment</Badge>
             </div>
             <p className="text-xs text-muted-foreground">
               Research areas automatically selected based on your idea and target market
+            </p>
+          </div>
+        )}
+
+        {analyzeIdeaMutation.isSuccess && (
+          <div className="space-y-2 p-4 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800">
+            <p className="text-sm font-medium text-green-800 dark:text-green-200">Analysis Complete!</p>
+            <p className="text-xs text-green-700 dark:text-green-300">
+              Check the dashboard below for detailed insights about your startup idea.
             </p>
           </div>
         )}
