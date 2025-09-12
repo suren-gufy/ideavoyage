@@ -98,11 +98,11 @@ export function SearchInterface({ onAnalysisComplete }: SearchInterfaceProps) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-8 px-4">
+    <div className="max-w-4xl mx-auto py-4 sm:py-8 px-4">
       <Card className="border-2 border-primary/20 shadow-xl bg-gradient-to-br from-card to-primary/5">
-        <CardContent className="p-6 space-y-6">
+        <CardContent className="p-4 sm:p-6 space-y-4 sm:space-y-6">
           {/* Main idea input - Always visible above the fold */}
-          <div className="space-y-3">
+          <div className="space-y-2">
             <label className="text-lg font-medium">
               Describe your idea (1–3 sentences)
             </label>
@@ -250,7 +250,7 @@ export function SearchInterface({ onAnalysisComplete }: SearchInterfaceProps) {
             </Collapsible>
 
           {!showEmailCapture && !analyzeIdeaMutation.isPending && (
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
               <Button 
                 onClick={() => {
                   if (!idea.trim()) {

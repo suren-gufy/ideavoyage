@@ -18,11 +18,11 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen">
       {/* Hero Section with Gradient Background */}
-      <div className="relative bg-gradient-to-br from-primary/10 via-background to-[hsl(var(--hot-pink))/10] py-20 px-4 sm:px-6 lg:px-8">
+      <div className="relative bg-gradient-to-br from-primary/10 via-background to-[hsl(var(--hot-pink))/10] py-8 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8">
         <div className="absolute inset-0 bg-gradient-to-r from-[hsl(var(--primary))/5] to-[hsl(var(--neon-green))/5]"></div>
-        <div className="relative max-w-6xl mx-auto text-center space-y-8">
+        <div className="relative max-w-6xl mx-auto text-center space-y-4 sm:space-y-6 lg:space-y-8">
           <div className="space-y-6">
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight" data-testid="page-title">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight" data-testid="page-title">
               Stop guessing.{" "}
               <span className="bg-gradient-to-r from-primary via-[hsl(var(--hot-pink))] to-[hsl(var(--neon-green))] bg-clip-text text-transparent">
                 Validate your startup idea
