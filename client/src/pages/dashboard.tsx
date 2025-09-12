@@ -5,6 +5,7 @@ import { MetricsOverview } from "@/components/metrics-overview"
 import { SentimentChart } from "@/components/sentiment-chart"
 import { PainPointsDisplay } from "@/components/pain-points-display"
 import { AppIdeasGenerator } from "@/components/app-ideas-generator"
+import { MethodologyModal } from "@/components/methodology-modal"
 import type { AnalysisResponse } from "@shared/schema"
 
 export default function Dashboard() {
@@ -175,7 +176,10 @@ export default function Dashboard() {
             <h2 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-foreground via-primary to-[hsl(var(--hot-pink))] bg-clip-text text-transparent">
               How it works
             </h2>
-            <p className="text-xl text-muted-foreground">Get validated insights in three simple steps</p>
+            <div className="space-y-3">
+              <p className="text-xl text-muted-foreground">Get validated insights in three simple steps</p>
+              <MethodologyModal />
+            </div>
           </div>
         
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
