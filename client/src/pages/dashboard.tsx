@@ -53,6 +53,20 @@ export default function Dashboard() {
 
       <SearchInterface onAnalysisComplete={handleAnalysisComplete} />
       
+      {/* Social proof - positioned for optimal credibility building */}
+      <div className="py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto text-center">
+          <div className="flex justify-center items-center gap-8 opacity-80">
+            <div className="text-sm font-medium text-muted-foreground">Trusted by founders at</div>
+            <div className="flex items-center gap-6">
+              <div className="px-3 py-1 border border-primary/20 rounded text-xs font-medium bg-primary/5">YC Startups</div>
+              <div className="px-3 py-1 border border-[hsl(var(--neon-green))/20] rounded text-xs font-medium bg-[hsl(var(--neon-green))/5]">Indie Hackers</div>
+              <div className="px-3 py-1 border border-[hsl(var(--hot-pink))/20] rounded text-xs font-medium bg-[hsl(var(--hot-pink))/5]">Product Hunt</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
       {/* What you'll get section */}
       <div className="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-background to-primary/5">
         <div className="max-w-6xl mx-auto space-y-12">
@@ -152,17 +166,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Social proof row */}
-        <div className="text-center space-y-4">
-          <div className="flex justify-center items-center gap-8 opacity-60">
-            <div className="text-sm font-medium">Trusted by founders at</div>
-            <div className="flex items-center gap-6">
-              <div className="px-3 py-1 border rounded text-xs font-medium">YC Startups</div>
-              <div className="px-3 py-1 border rounded text-xs font-medium">Indie Hackers</div>
-              <div className="px-3 py-1 border rounded text-xs font-medium">Product Hunt</div>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* How it works - VIBRANT REDESIGN */}
