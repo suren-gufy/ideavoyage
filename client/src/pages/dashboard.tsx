@@ -38,9 +38,9 @@ export default function Dashboard() {
       {/* Social proof - positioned for optimal credibility building */}
       <div className="py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto text-center">
-          <div className="flex justify-center items-center gap-8 opacity-80">
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-8 opacity-80">
             <div className="text-sm font-medium text-muted-foreground">Trusted by founders at</div>
-            <div className="flex items-center gap-6">
+            <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6">
               <div className="px-3 py-1 border border-primary/20 rounded text-xs font-medium bg-primary/5">YC Startups</div>
               <div className="px-3 py-1 border border-[hsl(var(--neon-green))/20] rounded text-xs font-medium bg-[hsl(var(--neon-green))/5]">Indie Hackers</div>
               <div className="px-3 py-1 border border-[hsl(var(--hot-pink))/20] rounded text-xs font-medium bg-[hsl(var(--hot-pink))/5]">Product Hunt</div>
