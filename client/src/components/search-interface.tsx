@@ -29,7 +29,7 @@ export function SearchInterface({ onAnalysisComplete }: SearchInterfaceProps) {
   const [goal, setGoal] = useState("")
   const [role, setRole] = useState("")
   const [timeline, setTimeline] = useState("")
-  const [showOptionalFields, setShowOptionalFields] = useState(true)
+  const [showOptionalFields, setShowOptionalFields] = useState(false)
   const [showEmailCapture, setShowEmailCapture] = useState(false)
   const { toast } = useToast()
 
@@ -115,19 +115,30 @@ export function SearchInterface({ onAnalysisComplete }: SearchInterfaceProps) {
             />
           </div>
 
-          {/* Improve accuracy section - Always visible by default */}
-          <div className="bg-gradient-to-r from-[hsl(var(--neon-green))/10] to-[hsl(var(--hot-pink))/10] rounded-lg p-4 border border-[hsl(var(--neon-green))/20]">
-            <div className="flex items-center gap-2 mb-4">
-              <Target className="h-4 w-4 text-[hsl(var(--neon-green))]" />
-              <span className="text-sm font-semibold text-[hsl(var(--neon-green))]">
-                Improve accuracy (optional)
-              </span>
-              <Badge variant="secondary" className="bg-[hsl(var(--neon-green))] text-white text-xs">
-                Better results
-              </Badge>
-            </div>
+          {/* Improve accuracy section - Progressive disclosure */}
+          <Collapsible open={showOptionalFields} onOpenChange={setShowOptionalFields}>
+            <CollapsibleTrigger asChild>
+              <Button
+                variant="ghost"
+                className="w-full justify-between p-3 h-auto bg-gradient-to-r from-[hsl(var(--neon-green))/5] to-[hsl(var(--hot-pink))/5] hover:from-[hsl(var(--neon-green))/10] hover:to-[hsl(var(--hot-pink))/10] border border-[hsl(var(--neon-green))/20] rounded-lg"
+                data-testid="toggle-optional-fields"
+              >
+                <div className="flex items-center gap-2">
+                  <Target className="h-4 w-4 text-[hsl(var(--neon-green))]" />
+                  <span className="text-sm font-semibold text-[hsl(var(--neon-green))]">
+                    Improve accuracy (optional)
+                  </span>
+                  <Badge variant="secondary" className="bg-[hsl(var(--neon-green))] text-white text-xs">
+                    +15% accuracy
+                  </Badge>
+                </div>
+                {showOptionalFields ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-4">
+              <div className="bg-gradient-to-r from-[hsl(var(--neon-green))/10] to-[hsl(var(--hot-pink))/10] rounded-lg p-4 border border-[hsl(var(--neon-green))/20]">
 
-            <div className="space-y-4">
+              <div className="space-y-4">
               {/* Target Audience - Free text with suggestions */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Target audience</label>
@@ -254,8 +265,10 @@ export function SearchInterface({ onAnalysisComplete }: SearchInterfaceProps) {
                   </Select>
                 </div>
               </div>
+              </div>
             </div>
-          </div>
+            </CollapsibleContent>
+            </Collapsible>
 
           {!showEmailCapture && !analyzeIdeaMutation.isPending && (
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
@@ -273,11 +286,10 @@ export function SearchInterface({ onAnalysisComplete }: SearchInterfaceProps) {
                 }}
                 disabled={!idea.trim()}
                 data-testid="button-analyze"
-                size="lg"
-                className="px-8 py-3 text-lg font-semibold bg-gradient-to-r from-primary to-[hsl(var(--neon-green))] hover:from-primary/90 hover:to-[hsl(var(--neon-green))/90] shadow-xl"
+                className="px-12 py-6 text-xl font-bold bg-gradient-to-r from-primary via-[hsl(var(--neon-green))] to-primary hover:from-primary/90 hover:via-[hsl(var(--neon-green))/90] hover:to-primary/90 shadow-2xl border-2 border-primary/20 hover:border-primary/40 transform hover:scale-105 transition-all duration-200 animate-pulse"
               >
-                <Sparkles className="h-5 w-5 mr-2" />
-                Generate my free report
+                <Sparkles className="h-6 w-6 mr-3 animate-spin" />
+                🚀 Generate my FREE report
               </Button>
               <button
                 onClick={() => {
