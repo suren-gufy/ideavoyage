@@ -267,10 +267,9 @@ export function SearchInterface({ onAnalysisComplete }: SearchInterfaceProps) {
                 }}
                 disabled={!idea.trim()}
                 data-testid="button-analyze"
-                className="px-6 sm:px-12 py-4 sm:py-6 text-lg sm:text-xl font-bold bg-gradient-to-r from-primary via-[hsl(var(--neon-green))] to-primary hover:from-primary/90 hover:via-[hsl(var(--neon-green))/90] hover:to-primary/90 shadow-2xl border-2 border-primary/20 hover:border-primary/40 transform hover:scale-105 transition-all duration-200 animate-pulse w-full sm:w-auto"
+                className="px-8 py-4 text-lg font-semibold bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 w-full sm:w-auto"
               >
-                <Sparkles className="h-6 w-6 mr-3 animate-spin" />
-                🚀 Generate my FREE report
+                Validate my Startup Idea
               </Button>
               <button
                 onClick={() => {
