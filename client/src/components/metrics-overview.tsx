@@ -1,5 +1,6 @@
 import { TrendingUp, MessageSquare, Users, Clock } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import type { AnalysisResponse } from "@shared/schema"
 
 interface MetricCardProps {
   title: string
@@ -39,9 +40,44 @@ function MetricCard({ title, value, change, icon: Icon, trend = "neutral" }: Met
   )
 }
 
-export function MetricsOverview() {
-  // todo: remove mock functionality - metrics data
-  const metrics = [
+interface MetricsOverviewProps {
+  analysisData?: AnalysisResponse;
+}
+
+export function MetricsOverview({ analysisData }: MetricsOverviewProps) {
+  const metrics = analysisData ? [
+    {
+      title: "Reddit Posts Analyzed",
+      value: analysisData.total_posts_analyzed.toLocaleString(),
+      change: `From ${analysisData.subreddits.length} relevant subreddits`,
+      icon: MessageSquare,
+      trend: "up" as const
+    },
+    {
+      title: "Market Interest Level",
+      value: analysisData.market_interest_level.charAt(0).toUpperCase() + analysisData.market_interest_level.slice(1),
+      change: analysisData.market_interest_level === "high" ? "Strong demand signals detected" : 
+             analysisData.market_interest_level === "medium" ? "Moderate interest shown" : 
+             "Limited interest observed",
+      icon: TrendingUp,
+      trend: (analysisData.market_interest_level === "high" ? "up" : 
+             analysisData.market_interest_level === "medium" ? "neutral" : "down") as const
+    },
+    {
+      title: "Pain Points Found",
+      value: analysisData.pain_points.length.toString(),
+      change: "Actionable user frustrations",
+      icon: Users,
+      trend: "neutral" as const
+    },
+    {
+      title: "Keywords Generated",
+      value: analysisData.keywords.length.toString(),
+      change: "Research topics identified",
+      icon: Clock,
+      trend: "neutral" as const
+    }
+  ] : [
     {
       title: "Reddit Posts Analyzed",
       value: "2,847",

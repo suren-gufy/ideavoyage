@@ -60,14 +60,13 @@ Make sure all subreddit names are realistic Reddit communities (without r/ prefi
         messages: [
           {
             role: "system",
-            content: "You are an expert market researcher specializing in Reddit community analysis. Provide detailed, realistic market research data in the exact JSON format requested."
+            content: "You are an expert market researcher specializing in Reddit community analysis. Always respond with valid JSON in the exact format requested. Do not include any text outside the JSON structure."
           },
           {
             role: "user",
             content: prompt
           }
         ],
-        response_format: { type: "json_object" },
         max_tokens: 2000,
         temperature: 0.7,
       });

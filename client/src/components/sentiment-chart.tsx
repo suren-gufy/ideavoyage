@@ -3,9 +3,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TrendingUp, TrendingDown, Minus } from "lucide-react"
 
-export function SentimentChart() {
-  // todo: remove mock functionality - sentiment data
-  const sentimentData = [
+interface SentimentChartProps {
+  sentimentData?: Array<{
+    value: number;
+    name: string;
+    color: string;
+    description: string;
+  }>;
+}
+
+export function SentimentChart({ sentimentData: propSentimentData }: SentimentChartProps) {
+  const sentimentData = propSentimentData || [
     { 
       name: "Enthusiastic", 
       value: 45, 

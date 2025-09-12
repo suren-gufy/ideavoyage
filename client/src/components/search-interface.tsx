@@ -32,7 +32,7 @@ export function SearchInterface({ onAnalysisComplete }: SearchInterfaceProps) {
 
   const analyzeIdeaMutation = useMutation({
     mutationFn: async (data: AnalyzeIdeaRequest): Promise<AnalysisResponse> => {
-      const response = await apiRequest("/api/analyze", "POST", data)
+      const response = await apiRequest("POST", "/api/analyze", data)
       return response as unknown as AnalysisResponse
     },
     onSuccess: (results) => {

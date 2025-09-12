@@ -21,12 +21,34 @@ interface AppIdea {
   basedOnPainPoints: string[]
 }
 
-export function AppIdeasGenerator() {
+interface AppIdeasGeneratorProps {
+  appIdeas?: Array<{
+    title: string;
+    description: string;
+    market_validation: string;
+    difficulty: "easy" | "medium" | "hard";
+  }>;
+}
+
+export function AppIdeasGenerator({ appIdeas: propAppIdeas }: AppIdeasGeneratorProps) {
   const [selectedIdea, setSelectedIdea] = useState<string | null>(null)
   const [generatingNew, setGeneratingNew] = useState(false)
 
-  // todo: remove mock functionality - app ideas data
-  const appIdeas: AppIdea[] = [
+  // Convert API app ideas to local format or use mock data
+  const appIdeas: AppIdea[] = propAppIdeas ? propAppIdeas.map((idea, index) => ({
+    id: index.toString(),
+    title: idea.title,
+    description: idea.description,
+    targetAudience: "General users", 
+    marketOpportunity: idea.market_validation === "high" ? 85 : idea.market_validation === "medium" ? 70 : 55,
+    feasibility: idea.difficulty === "easy" ? 90 : idea.difficulty === "medium" ? 75 : 60,
+    competitiveness: 70,
+    category: "AI-Generated",
+    features: ["Core functionality", "User-friendly interface", "Mobile-first design"],
+    potentialRevenue: idea.market_validation === "high" ? "$2-5M ARR" : "$500K-2M ARR",
+    timeToMarket: idea.difficulty === "easy" ? "2-3 months" : idea.difficulty === "medium" ? "3-6 months" : "6-12 months",
+    basedOnPainPoints: ["AI-identified pain points"]
+  })) : [
     {
       id: "1",
       title: "SimpleBudget",

@@ -22,12 +22,35 @@ interface PainPoint {
   }>
 }
 
-export function PainPointsDisplay() {
+interface PainPointsDisplayProps {
+  painPoints?: Array<{
+    title: string;
+    frequency: number;
+    urgency: "low" | "medium" | "high";
+    examples: string[];
+  }>;
+}
+
+export function PainPointsDisplay({ painPoints: propPainPoints }: PainPointsDisplayProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
 
-  // todo: remove mock functionality - pain points data
-  const painPoints: PainPoint[] = [
+  // Convert API pain points to local format or use mock data
+  const painPoints: PainPoint[] = propPainPoints ? propPainPoints.map((pp, index) => ({
+    id: index.toString(),
+    title: pp.title,
+    description: pp.examples[0] || "No description available",
+    frequency: pp.frequency,
+    severity: pp.urgency,
+    category: "General", 
+    relatedSubreddits: ["personalfinance", "budgeting"],
+    examplePosts: pp.examples.slice(0, 3).map((example, i) => ({
+      title: example,
+      subreddit: "personalfinance",
+      upvotes: Math.floor(Math.random() * 300) + 50,
+      url: "#"
+    }))
+  })) : [
     {
       id: "1",
       title: "Budgeting apps are too complex",
