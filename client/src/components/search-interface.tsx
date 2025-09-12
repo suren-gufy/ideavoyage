@@ -123,12 +123,14 @@ export function SearchInterface({ onAnalysisComplete }: SearchInterfaceProps) {
                 className="w-full justify-between p-3 h-auto bg-gradient-to-r from-[hsl(var(--neon-green))/5] to-[hsl(var(--hot-pink))/5] hover:from-[hsl(var(--neon-green))/10] hover:to-[hsl(var(--hot-pink))/10] border border-[hsl(var(--neon-green))/20] rounded-lg"
                 data-testid="toggle-optional-fields"
               >
-                <div className="flex items-center gap-2">
-                  <Target className="h-4 w-4 text-[hsl(var(--neon-green))]" />
-                  <span className="text-sm font-semibold text-[hsl(var(--neon-green))]">
-                    Improve accuracy (optional)
-                  </span>
-                  <Badge variant="secondary" className="bg-[hsl(var(--neon-green))] text-white text-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <div className="flex items-center gap-2">
+                    <Target className="h-4 w-4 text-[hsl(var(--neon-green))]" />
+                    <span className="text-sm font-semibold text-[hsl(var(--neon-green))]">
+                      Improve accuracy (optional)
+                    </span>
+                  </div>
+                  <Badge variant="secondary" className="bg-[hsl(var(--neon-green))] text-white text-xs w-fit">
                     +43.25% accuracy
                   </Badge>
                 </div>
@@ -265,7 +267,7 @@ export function SearchInterface({ onAnalysisComplete }: SearchInterfaceProps) {
                 }}
                 disabled={!idea.trim()}
                 data-testid="button-analyze"
-                className="px-12 py-6 text-xl font-bold bg-gradient-to-r from-primary via-[hsl(var(--neon-green))] to-primary hover:from-primary/90 hover:via-[hsl(var(--neon-green))/90] hover:to-primary/90 shadow-2xl border-2 border-primary/20 hover:border-primary/40 transform hover:scale-105 transition-all duration-200 animate-pulse"
+                className="px-6 sm:px-12 py-4 sm:py-6 text-lg sm:text-xl font-bold bg-gradient-to-r from-primary via-[hsl(var(--neon-green))] to-primary hover:from-primary/90 hover:via-[hsl(var(--neon-green))/90] hover:to-primary/90 shadow-2xl border-2 border-primary/20 hover:border-primary/40 transform hover:scale-105 transition-all duration-200 animate-pulse w-full sm:w-auto"
               >
                 <Sparkles className="h-6 w-6 mr-3 animate-spin" />
                 🚀 Generate my FREE report
