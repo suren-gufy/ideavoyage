@@ -26,30 +26,28 @@ function Router() {
 }
 
 function App() {
-  // Custom sidebar width for analytics application
-  const style = {
-    "--sidebar-width": "20rem",       // 320px for better navigation
-    "--sidebar-width-icon": "4rem",   // default icon width
-  };
-
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <TooltipProvider>
-          <SidebarProvider style={style as React.CSSProperties}>
-            <div className="flex h-screen w-full">
-              <AppSidebar />
-              <div className="flex flex-col flex-1">
-                <header className="flex items-center justify-between p-4 border-b border-border">
-                  <SidebarTrigger data-testid="button-sidebar-toggle" />
-                  <ThemeToggle />
-                </header>
-                <main className="flex-1 overflow-auto">
-                  <Router />
-                </main>
+          <div className="min-h-screen bg-background">
+            <header className="flex items-center justify-between p-4 border-b border-border">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
+                  <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </div>
+                <div>
+                  <h1 className="text-lg font-semibold">Idea Validator</h1>
+                </div>
               </div>
-            </div>
-          </SidebarProvider>
+              <ThemeToggle />
+            </header>
+            <main className="container mx-auto">
+              <Router />
+            </main>
+          </div>
           <Toaster />
         </TooltipProvider>
       </ThemeProvider>
