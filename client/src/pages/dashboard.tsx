@@ -165,169 +165,217 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* How it works */}
-      <div className="max-w-4xl mx-auto space-y-8">
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl font-semibold">How it works</h2>
-          <p className="text-muted-foreground">Get validated insights in three simple steps</p>
-        </div>
+      {/* How it works - VIBRANT REDESIGN */}
+      <div className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-[hsl(var(--neon-green))/5] via-background to-[hsl(var(--hot-pink))/5]">
+        <div className="max-w-6xl mx-auto space-y-16">
+          <div className="text-center space-y-6">
+            <h2 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-foreground via-primary to-[hsl(var(--hot-pink))] bg-clip-text text-transparent">
+              How it works
+            </h2>
+            <p className="text-xl text-muted-foreground">Get validated insights in three simple steps</p>
+          </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="text-center space-y-4">
-            <div className="mx-auto w-12 h-12 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-bold text-lg">
-              1
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+            <div className="text-center space-y-6 group">
+              <div className="mx-auto w-20 h-20 bg-gradient-to-br from-primary to-[hsl(var(--neon-green))] text-white rounded-2xl flex items-center justify-center font-bold text-2xl shadow-2xl group-hover:scale-110 transition-transform duration-300">
+                1
+              </div>
+              <div className="space-y-3">
+                <h3 className="text-xl font-bold">💡 Enter your idea</h3>
+                <p className="text-muted-foreground">
+                  Describe your startup concept in 1-3 sentences
+                </p>
+              </div>
             </div>
-            <h3 className="font-medium">Enter your idea</h3>
-            <p className="text-sm text-muted-foreground">
-              Describe your startup concept in 1-3 sentences
-            </p>
-          </div>
-          
-          <div className="text-center space-y-4">
-            <div className="mx-auto w-12 h-12 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-bold text-lg">
-              2
+            
+            <div className="text-center space-y-6 group">
+              <div className="mx-auto w-20 h-20 bg-gradient-to-br from-[hsl(var(--hot-pink))] to-[hsl(var(--bright-orange))] text-white rounded-2xl flex items-center justify-center font-bold text-2xl shadow-2xl group-hover:scale-110 transition-transform duration-300">
+                2
+              </div>
+              <div className="space-y-3">
+                <h3 className="text-xl font-bold">🤖 We mine Reddit + reviews + trends</h3>
+                <p className="text-muted-foreground">
+                  AI analyzes thousands of real user discussions and market signals
+                </p>
+              </div>
             </div>
-            <h3 className="font-medium">We mine Reddit + reviews + trends</h3>
-            <p className="text-sm text-muted-foreground">
-              AI analyzes thousands of real user discussions and market signals
-            </p>
-          </div>
-          
-          <div className="text-center space-y-4">
-            <div className="mx-auto w-12 h-12 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-bold text-lg">
-              3
+            
+            <div className="text-center space-y-6 group">
+              <div className="mx-auto w-20 h-20 bg-gradient-to-br from-[hsl(var(--neon-green))] to-primary text-white rounded-2xl flex items-center justify-center font-bold text-2xl shadow-2xl group-hover:scale-110 transition-transform duration-300">
+                3
+              </div>
+              <div className="space-y-3">
+                <h3 className="text-xl font-bold">📊 You get a free report</h3>
+                <p className="text-muted-foreground">
+                  Upgrade for exact volumes, CPC, CAC/LTV simulator, 24-mo trends, full sources
+                </p>
+              </div>
             </div>
-            <h3 className="font-medium">You get a free report</h3>
-            <p className="text-sm text-muted-foreground">
-              Upgrade for exact volumes, CPC, CAC/LTV simulator, 24-mo trends, full sources
-            </p>
           </div>
         </div>
       </div>
 
-      {/* Free vs Paid comparison */}
-      <div className="max-w-4xl mx-auto space-y-8">
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl font-semibold">Free vs Paid</h2>
-          <p className="text-muted-foreground">Make the value gap obvious</p>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Free column */}
-          <div className="border rounded-lg p-6 space-y-4">
-            <div className="text-center space-y-2">
-              <h3 className="text-xl font-semibold">Free</h3>
-              <p className="text-2xl font-bold">$0</p>
-            </div>
-            <ul className="space-y-3 text-sm">
-              <li className="flex items-start gap-2">
-                <svg className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                2–3 full pain clusters (with 2 linked quotes)
-              </li>
-              <li className="flex items-start gap-2">
-                <svg className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                Trend sparkline (bands, no exact numbers)
-              </li>
-              <li className="flex items-start gap-2">
-                <svg className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                1 competitor row (features summary)
-              </li>
-              <li className="flex items-start gap-2">
-                <svg className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                Personas light + roadmap headings
-              </li>
-            </ul>
+      {/* Free vs Paid comparison - VIBRANT REDESIGN */}
+      <div className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-background via-[hsl(var(--bright-orange))/5] to-background">
+        <div className="max-w-5xl mx-auto space-y-12">
+          <div className="text-center space-y-6">
+            <h2 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-foreground via-[hsl(var(--hot-pink))] to-[hsl(var(--bright-orange))] bg-clip-text text-transparent">
+              Free vs Paid
+            </h2>
+            <p className="text-xl text-muted-foreground">Make the value gap obvious</p>
           </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Free column - VIBRANT */}
+            <div className="relative bg-card border-2 border-muted-foreground/20 rounded-2xl p-8 space-y-6 hover:shadow-2xl transition-all duration-300">
+              <div className="text-center space-y-4">
+                <h3 className="text-2xl font-bold text-muted-foreground">Free</h3>
+                <p className="text-4xl font-bold">$0</p>
+              </div>
+              <ul className="space-y-4 text-base">
+                <li className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-gradient-to-br from-[hsl(var(--neon-green))] to-[hsl(var(--neon-green))/70] rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  2–3 full pain clusters (with 2 linked quotes)
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-gradient-to-br from-[hsl(var(--neon-green))] to-[hsl(var(--neon-green))/70] rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  Trend sparkline (bands, no exact numbers)
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-gradient-to-br from-[hsl(var(--neon-green))] to-[hsl(var(--neon-green))/70] rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  1 competitor row (features summary)
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-gradient-to-br from-[hsl(var(--neon-green))] to-[hsl(var(--neon-green))/70] rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  Personas light + roadmap headings
+                </li>
+              </ul>
+            </div>
 
-          {/* Paid column */}
-          <div className="border-2 border-primary rounded-lg p-6 space-y-4 relative">
-            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-              <span className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-medium">
-                Most Popular
-              </span>
+            {/* Paid column - VIBRANT PREMIUM */}
+            <div className="relative bg-gradient-to-br from-card to-primary/5 border-4 border-primary rounded-2xl p-8 space-y-6 shadow-2xl hover:shadow-[0_0_50px_rgba(59,130,246,0.3)] transition-all duration-300 transform hover:scale-105">
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                <div className="bg-gradient-to-r from-[hsl(var(--hot-pink))] to-[hsl(var(--bright-orange))] text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg animate-pulse">
+                  ⭐ Most Popular
+                </div>
+              </div>
+              <div className="text-center space-y-4">
+                <h3 className="text-2xl font-bold bg-gradient-to-r from-primary to-[hsl(var(--neon-green))] bg-clip-text text-transparent">Paid</h3>
+                <p className="text-5xl font-bold bg-gradient-to-r from-[hsl(var(--hot-pink))] to-[hsl(var(--bright-orange))] bg-clip-text text-transparent">$39</p>
+              </div>
+              <ul className="space-y-4 text-base">
+                <li className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-gradient-to-br from-[hsl(var(--hot-pink))] to-[hsl(var(--bright-orange))] rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <span className="font-medium">Exact search volumes, CPC, difficulty + 24-mo trend</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-gradient-to-br from-[hsl(var(--hot-pink))] to-[hsl(var(--bright-orange))] rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <span className="font-medium">CAC/LTV simulator + payback estimate</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-gradient-to-br from-[hsl(var(--hot-pink))] to-[hsl(var(--bright-orange))] rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <span className="font-medium">Full competitor matrix (pricing, sentiment, differentiators)</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-gradient-to-br from-[hsl(var(--hot-pink))] to-[hsl(var(--bright-orange))] rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <span className="font-medium">90-day GTM plan + risks & kill-criteria</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-gradient-to-br from-[hsl(var(--hot-pink))] to-[hsl(var(--bright-orange))] rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <span className="font-medium">All sources & exports</span>
+                </li>
+              </ul>
             </div>
-            <div className="text-center space-y-2">
-              <h3 className="text-xl font-semibold">Paid</h3>
-              <p className="text-2xl font-bold">$39</p>
-            </div>
-            <ul className="space-y-3 text-sm">
-              <li className="flex items-start gap-2">
-                <svg className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                Exact search volumes, CPC, difficulty + 24-mo trend
-              </li>
-              <li className="flex items-start gap-2">
-                <svg className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                CAC/LTV simulator + payback estimate
-              </li>
-              <li className="flex items-start gap-2">
-                <svg className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                Full competitor matrix (pricing, sentiment, differentiators)
-              </li>
-              <li className="flex items-start gap-2">
-                <svg className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                90-day GTM plan + risks & kill-criteria
-              </li>
-              <li className="flex items-start gap-2">
-                <svg className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                All sources & exports
-              </li>
-            </ul>
           </div>
         </div>
       </div>
 
-      {/* FAQ Section */}
-      <div className="max-w-3xl mx-auto space-y-8">
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl font-semibold">Frequently Asked Questions</h2>
-          <p className="text-muted-foreground">Everything you need to know</p>
-        </div>
-        
-        <div className="space-y-6">
-          <div className="space-y-3">
-            <h3 className="font-medium">Why not show all numbers for free?</h3>
-            <p className="text-sm text-muted-foreground">
-              We keep costly data pulls for paid; free still shows real quotes & trend signals.
-            </p>
+      {/* FAQ Section - VIBRANT REDESIGN */}
+      <div className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-[hsl(var(--hot-pink))/5] via-background to-[hsl(var(--neon-green))/5]">
+        <div className="max-w-4xl mx-auto space-y-12">
+          <div className="text-center space-y-6">
+            <h2 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-foreground via-[hsl(var(--neon-green))] to-[hsl(var(--hot-pink))] bg-clip-text text-transparent">
+              Frequently Asked Questions
+            </h2>
+            <p className="text-xl text-muted-foreground">Everything you need to know</p>
           </div>
           
-          <div className="space-y-3">
-            <h3 className="font-medium">What sources?</h3>
-            <p className="text-sm text-muted-foreground">
-              Reddit + public reviews + Trends; links included.
-            </p>
-          </div>
-          
-          <div className="space-y-3">
-            <h3 className="font-medium">Is my idea private?</h3>
-            <p className="text-sm text-muted-foreground">
-              We don't share your prompt; excerpts are public-source quotes only.
-            </p>
-          </div>
-          
-          <div className="space-y-3">
-            <h3 className="font-medium">Refunds?</h3>
-            <p className="text-sm text-muted-foreground">
-              If the paid report lacks enough data to decide, we'll make it right.
-            </p>
+          <div className="space-y-6">
+            <div className="bg-card border-2 border-primary/20 rounded-xl p-6 space-y-4 hover:border-primary/50 hover:shadow-xl transition-all duration-300">
+              <h3 className="text-lg font-bold flex items-center gap-3">
+                <span className="w-8 h-8 bg-gradient-to-br from-primary to-[hsl(var(--neon-green))] rounded-full flex items-center justify-center text-white font-bold text-sm">?</span>
+                Why not show all numbers for free?
+              </h3>
+              <p className="text-muted-foreground pl-11">
+                We keep costly data pulls for paid; free still shows real quotes & trend signals.
+              </p>
+            </div>
+            
+            <div className="bg-card border-2 border-[hsl(var(--hot-pink))/20] rounded-xl p-6 space-y-4 hover:border-[hsl(var(--hot-pink))]/50 hover:shadow-xl transition-all duration-300">
+              <h3 className="text-lg font-bold flex items-center gap-3">
+                <span className="w-8 h-8 bg-gradient-to-br from-[hsl(var(--hot-pink))] to-[hsl(var(--bright-orange))] rounded-full flex items-center justify-center text-white font-bold text-sm">📊</span>
+                What sources?
+              </h3>
+              <p className="text-muted-foreground pl-11">
+                Reddit + public reviews + Trends; links included.
+              </p>
+            </div>
+            
+            <div className="bg-card border-2 border-[hsl(var(--neon-green))]/20 rounded-xl p-6 space-y-4 hover:border-[hsl(var(--neon-green))]/50 hover:shadow-xl transition-all duration-300">
+              <h3 className="text-lg font-bold flex items-center gap-3">
+                <span className="w-8 h-8 bg-gradient-to-br from-[hsl(var(--neon-green))] to-primary rounded-full flex items-center justify-center text-white font-bold text-sm">🔒</span>
+                Is my idea private?
+              </h3>
+              <p className="text-muted-foreground pl-11">
+                We don't share your prompt; excerpts are public-source quotes only.
+              </p>
+            </div>
+            
+            <div className="bg-card border-2 border-[hsl(var(--bright-orange))]/20 rounded-xl p-6 space-y-4 hover:border-[hsl(var(--bright-orange))]/50 hover:shadow-xl transition-all duration-300">
+              <h3 className="text-lg font-bold flex items-center gap-3">
+                <span className="w-8 h-8 bg-gradient-to-br from-[hsl(var(--bright-orange))] to-[hsl(var(--hot-pink))] rounded-full flex items-center justify-center text-white font-bold text-sm">💰</span>
+                Refunds?
+              </h3>
+              <p className="text-muted-foreground pl-11">
+                If the paid report lacks enough data to decide, we'll make it right.
+              </p>
+            </div>
           </div>
         </div>
       </div>
