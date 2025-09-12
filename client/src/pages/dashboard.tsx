@@ -34,21 +34,6 @@ export default function Dashboard() {
             </p>
           </div>
           
-          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-            <button 
-              className="bg-primary text-primary-foreground hover:bg-primary/90 px-10 py-4 rounded-xl font-bold text-xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-200 w-full sm:w-auto"
-              data-testid="cta-primary"
-            >
-              🚀 Generate my free report
-            </button>
-            <button 
-              className="border-2 border-primary/50 hover:border-primary text-primary hover:bg-primary/5 px-10 py-4 rounded-xl font-semibold text-xl backdrop-blur-sm w-full sm:w-auto"
-              data-testid="cta-secondary"
-            >
-              👀 See a sample report
-            </button>
-          </div>
-          
           <div className="flex flex-wrap justify-center items-center gap-4 text-sm text-muted-foreground">
             <span className="flex items-center gap-2">
               ✅ Uses public data
