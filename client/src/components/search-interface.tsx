@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Lightbulb, Sparkles, Target, Building2, ChevronDown, ChevronUp } from "lucide-react"
+import { Lightbulb, Sparkles, Target, Building2, ChevronDown, ChevronUp, BarChart3 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -24,7 +24,7 @@ export function SearchInterface({ onAnalysisComplete }: SearchInterfaceProps) {
   const [country, setCountry] = useState("global")
   const [platform, setPlatform] = useState<"web-app" | "mobile-app" | "both">("web-app")
   const [fundingMethod, setFundingMethod] = useState<"self-funded" | "bootstrapping" | "raising-capital">("self-funded")
-  const [timeRange, setTimeRange] = useState<"week" | "month" | "quarter" | "year">("month")
+  const [timeRange, setTimeRange] = useState<"week" | "month" | "quarter" | "year">("year")
   const [email, setEmail] = useState("")
   const [goal, setGoal] = useState("")
   const [role, setRole] = useState("")
@@ -200,7 +200,7 @@ export function SearchInterface({ onAnalysisComplete }: SearchInterfaceProps) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 {/* Platform */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Platform</label>
@@ -216,37 +216,16 @@ export function SearchInterface({ onAnalysisComplete }: SearchInterfaceProps) {
                   </Select>
                 </div>
 
-                {/* Funding Method */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Funding stage</label>
-                  <Select value={fundingMethod} onValueChange={(value: "self-funded" | "bootstrapping" | "raising-capital") => setFundingMethod(value)}>
-                    <SelectTrigger data-testid="select-funding">
-                      <SelectValue placeholder="Select funding stage" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="self-funded">Self-funded</SelectItem>
-                      <SelectItem value="bootstrapping">Pre-seed</SelectItem>
-                      <SelectItem value="raising-capital">Seed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Time Range */}
+              <div className="grid grid-cols-1 gap-4">
+                {/* Time Range - Fixed to 12 months for optimal insights */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Analysis time range</label>
-                  <Select value={timeRange} onValueChange={(value: "week" | "month" | "quarter" | "year") => setTimeRange(value)}>
-                    <SelectTrigger data-testid="select-timerange">
-                      <SelectValue placeholder="Select time range" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="week">Past week</SelectItem>
-                      <SelectItem value="month">Past month</SelectItem>
-                      <SelectItem value="quarter">Past quarter</SelectItem>
-                      <SelectItem value="year">Past year</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="px-3 py-2 bg-muted/50 border border-border rounded-md text-sm text-muted-foreground flex items-center gap-2" data-testid="text-time-range">
+                    <BarChart3 className="h-4 w-4" />
+                    Past 12 months (optimal for trend analysis)
+                  </div>
                 </div>
 
                 {/* Main Goal */}
