@@ -129,7 +129,7 @@ export function SearchInterface({ onAnalysisComplete }: SearchInterfaceProps) {
                     Improve accuracy (optional)
                   </span>
                   <Badge variant="secondary" className="bg-[hsl(var(--neon-green))] text-white text-xs">
-                    +15% accuracy
+                    +43.25% accuracy
                   </Badge>
                 </div>
                 {showOptionalFields ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
