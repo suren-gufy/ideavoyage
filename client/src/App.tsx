@@ -44,7 +44,7 @@ function App() {
               </div>
               <ThemeToggle />
             </header>
-            <main className="container mx-auto">
+            <main className="flex-1 p-6 max-w-6xl mx-auto w-full">
               <Router />
             </main>
           </div>
