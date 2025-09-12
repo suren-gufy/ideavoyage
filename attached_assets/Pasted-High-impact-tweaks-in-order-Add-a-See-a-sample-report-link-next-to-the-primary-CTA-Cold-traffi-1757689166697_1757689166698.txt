@@ -1,0 +1,47 @@
+High-impact tweaks (in order)
+
+Add a “See a sample report” link next to the primary CTA.
+Cold traffic converts better when they can preview the deliverable without leaving the page (modal or new tab). Also helps ad–page message match. 
+CXL
++1
+
+Make the CTA visually dominant and unique.
+Use one primary color for the main action and avoid competing styles; minimize secondary links near it. Focus on one most-wanted action. 
+CXL
+
+Keep the advanced fields collapsed by default; show a tiny “+X% accuracy” hint.
+This preserves the short-form feel while nudging motivated users to add context—classic progressive disclosure. Use a single-column form layout for speed. 
+The Interaction Design Foundation
+
+Capture email during generation (in a progress panel), not before the first click.
+Two-step forms and staged capture typically lift completion because the “start” feels easy, then you ask for email when motivation is high. Add a small progress bar. 
+Venture Harbour
+
+Place social proof directly under the hero cards.
+If you have logos, use them; otherwise add 2–3 photo-backed testimonials. Credibility/social proof on landing pages materially improves conversion. 
+CXL
++1
+
+Tighten the “Improve accuracy” fields.
+
+Keep: Audience (chips), Industry, Geo, Platform.
+
+Move to later (or hide initially): Funding stage.
+
+Consider defaulting Analysis time range to “Past 12 months” (stronger signal for trends) and let power users change it.
+
+Keep Main goal radio—it helps personalize copy later, but make it last.
+This reduces perceived complexity (field count is more damaging than step count). 
+Baymard Institute
+
+Instrument message match from ads.
+Spin lightweight headline variants that mirror each ad group’s promise/keywords (e.g., “AI meal-planning idea? Validate it with real user evidence.”). Ad–page scent improves conversion and Quality Score. 
+WordStream
++1
+
+Add a “methodology” micro-modal and keep the hero concise.
+Avoid wall-of-text above the fold; link “How it works” to a short modal. Users scan quickly; keep bullets scannable. 
+CXL
+
+Trust signals near checkout (later).
+When you add the paid step, include familiar payment logos and a small note on secure checkout; trust seals can lift perceived security.

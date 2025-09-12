@@ -258,7 +258,7 @@ export function SearchInterface({ onAnalysisComplete }: SearchInterfaceProps) {
           </div>
 
           {!showEmailCapture && !analyzeIdeaMutation.isPending && (
-            <div className="flex items-center justify-center pt-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
               <Button 
                 onClick={() => {
                   if (!idea.trim()) {
@@ -279,6 +279,19 @@ export function SearchInterface({ onAnalysisComplete }: SearchInterfaceProps) {
                 <Sparkles className="h-5 w-5 mr-2" />
                 Generate my free report
               </Button>
+              <button
+                onClick={() => {
+                  // TODO: Open sample report modal/new tab
+                  toast({
+                    title: "Sample Report",
+                    description: "Opening sample report preview...",
+                  })
+                }}
+                data-testid="link-sample-report"
+                className="text-primary hover:text-primary/80 underline underline-offset-4 font-medium text-base transition-colors duration-200"
+              >
+                👀 See a sample report
+              </button>
             </div>
           )}
         </CardContent>
