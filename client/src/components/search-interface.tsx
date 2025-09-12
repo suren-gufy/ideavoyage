@@ -98,150 +98,189 @@ export function SearchInterface({ onAnalysisComplete }: SearchInterfaceProps) {
   }
 
   return (
-    <div className="w-full max-w-6xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
-      {/* Form Header */}
-      <div className="text-center space-y-6 mb-12">
-        <div className="inline-flex items-center gap-3 bg-gradient-to-r from-primary/10 to-[hsl(var(--neon-green))/10] px-6 py-3 rounded-full border border-primary/20">
-          <Sparkles className="h-6 w-6 text-primary animate-pulse" />
-          <span className="text-lg font-semibold bg-gradient-to-r from-primary to-[hsl(var(--neon-green))] bg-clip-text text-transparent">
-            Get Your Free Validation Report
-          </span>
-        </div>
-        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          Start with just your idea. Add details below to get more precise insights.
-        </p>
-      </div>
-
-      <Card className="border-2 border-primary/20 shadow-2xl bg-gradient-to-br from-card to-primary/5">
-        <CardContent className="p-6 sm:p-8 space-y-8">
-          {/* Main idea input - Always visible */}
-          <div className="space-y-4">
-            <div className="space-y-3">
-              <label className="text-xl font-bold flex items-center gap-2">
-                💡 Describe your idea (1–3 sentences) 
-                <span className="text-primary">*</span>
-              </label>
-              <Textarea
-                placeholder="AI meal-planning coach that builds weekly menus from pantry photos."
-                value={idea}
-                onChange={(e) => setIdea(e.target.value)}
-                data-testid="input-startup-idea"
-                className="min-h-[120px] text-lg border-2 border-primary/30 focus:border-primary shadow-lg resize-none"
-              />
-            </div>
-
-            {/* Make optional fields more prominent - show by default */}
-            <div className="mt-8">
-              <div className="bg-gradient-to-r from-[hsl(var(--neon-green))/10] to-[hsl(var(--hot-pink))/10] rounded-xl p-6 border-2 border-[hsl(var(--neon-green))/20]">
-                <Collapsible open={showOptionalFields} onOpenChange={setShowOptionalFields}>
-                  <CollapsibleTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="lg" 
-                      className="w-full justify-between p-4 h-auto text-lg font-semibold border-2 border-[hsl(var(--neon-green))] bg-[hsl(var(--neon-green))/5] hover:bg-[hsl(var(--neon-green))/10]"
-                      data-testid="toggle-optional-fields"
-                    >
-                      <span className="flex items-center gap-3">
-                        🎯 Improve accuracy (recommended)
-                        <Badge variant="secondary" className="bg-[hsl(var(--neon-green))] text-white">
-                          Better results
-                        </Badge>
-                      </span>
-                      {showOptionalFields ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-                    </Button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="space-y-6 mt-6">
-                    {/* Target Audience */}
-                    <div className="space-y-3">
-                      <label className="text-lg font-semibold">🎯 Target audience</label>
-                      <div className="flex gap-3 flex-wrap">
-                        {["Gen-Z freelancers", "New parents", "SMBs", "College students", "Remote workers"].map((audience) => (
-                          <Button
-                            key={audience}
-                            variant={targetAudience === audience ? "default" : "outline"}
-                            size="lg"
-                            onClick={() => setTargetAudience(targetAudience === audience ? "" : audience)}
-                            data-testid={`chip-audience-${audience.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
-                            className="border-2"
-                          >
-                            {audience}
-                          </Button>
-                        ))}
-                      </div>
-                      <Input
-                        placeholder="Or describe your own target audience..."
-                        value={targetAudience.includes("Gen-Z") || targetAudience.includes("New parents") || targetAudience.includes("SMBs") || targetAudience.includes("College") || targetAudience.includes("Remote") ? "" : targetAudience}
-                        onChange={(e) => setTargetAudience(e.target.value)}
-                        data-testid="input-custom-audience"
-                        className="text-lg border-2 border-muted-foreground/20 focus:border-primary"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* Industry */}
-                      <div className="space-y-3">
-                        <label className="text-lg font-semibold">🏢 Industry</label>
-                        <Select value={industry} onValueChange={setIndustry}>
-                          <SelectTrigger data-testid="select-industry" className="h-12 text-lg border-2">
-                            <SelectValue placeholder="Select your industry" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {industries.map((ind) => (
-                              <SelectItem key={ind} value={ind}>
-                                {ind}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      {/* Geography */}
-                      <div className="space-y-3">
-                        <label className="text-lg font-semibold">🌍 Target geography</label>
-                        <Select value={country} onValueChange={setCountry}>
-                          <SelectTrigger data-testid="select-country" className="h-12 text-lg border-2">
-                            <SelectValue placeholder="Select target country" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {countries.map((country) => (
-                              <SelectItem key={country} value={country.toLowerCase().replace(/ /g, '-')}>
-                                {country}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              </div>
-            </div>
-
-            {!showEmailCapture && !analyzeIdeaMutation.isPending && (
-              <div className="flex items-center justify-center">
-                <Button 
-                  onClick={() => {
-                    if (!idea.trim()) {
-                      toast({
-                        title: "Missing Information",
-                        description: "Please describe your startup idea first.",
-                        variant: "destructive",
-                      })
-                      return
-                    }
-                    setShowEmailCapture(true)
-                  }}
-                  disabled={!idea.trim()}
-                  data-testid="button-analyze"
-                  size="lg"
-                  className="px-12 py-6 text-xl font-bold bg-gradient-to-r from-primary to-[hsl(var(--neon-green))] hover:from-primary/90 hover:to-[hsl(var(--neon-green))/90] shadow-2xl transform hover:scale-105 transition-all duration-200"
-                >
-                  <Sparkles className="h-6 w-6 mr-3" />
-                  🚀 Generate my free report
-                </Button>
-              </div>
-            )}
+    <div className="max-w-4xl mx-auto py-8 px-4">
+      <Card className="border-2 border-primary/20 shadow-xl bg-gradient-to-br from-card to-primary/5">
+        <CardContent className="p-6 space-y-6">
+          {/* Main idea input - Always visible above the fold */}
+          <div className="space-y-3">
+            <label className="text-lg font-medium">
+              Describe your idea (1–3 sentences)
+            </label>
+            <Textarea
+              placeholder="AI meal-planning coach that builds weekly menus from pantry photos."
+              value={idea}
+              onChange={(e) => setIdea(e.target.value)}
+              data-testid="input-startup-idea"
+              className="min-h-[120px] text-base border-2 border-primary/30 focus:border-primary"
+            />
           </div>
+
+          {/* Improve accuracy section - Always visible by default */}
+          <div className="bg-gradient-to-r from-[hsl(var(--neon-green))/10] to-[hsl(var(--hot-pink))/10] rounded-lg p-4 border border-[hsl(var(--neon-green))/20]">
+            <div className="flex items-center gap-2 mb-4">
+              <Target className="h-4 w-4 text-[hsl(var(--neon-green))]" />
+              <span className="text-sm font-semibold text-[hsl(var(--neon-green))]">
+                Improve accuracy (optional)
+              </span>
+              <Badge variant="secondary" className="bg-[hsl(var(--neon-green))] text-white text-xs">
+                Better results
+              </Badge>
+            </div>
+
+            <div className="space-y-4">
+              {/* Target Audience - Free text with suggestions */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Target audience</label>
+                <Input
+                  placeholder="e.g., Busy parents with young children"
+                  value={targetAudience}
+                  onChange={(e) => setTargetAudience(e.target.value)}
+                  data-testid="input-custom-audience"
+                  className="text-sm"
+                />
+                <div className="flex gap-2 flex-wrap">
+                  {["Gen-Z freelancers", "New parents", "SMBs", "College students", "Remote workers"].map((suggestion) => (
+                    <Button
+                      key={suggestion}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setTargetAudience(suggestion)}
+                      className="text-xs"
+                    >
+                      {suggestion}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Industry */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Industry</label>
+                  <Select value={industry} onValueChange={setIndustry}>
+                    <SelectTrigger data-testid="select-industry">
+                      <SelectValue placeholder="Select your industry" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {industries.map((ind) => (
+                        <SelectItem key={ind} value={ind}>
+                          {ind}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Geography */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Target geography</label>
+                  <Select value={country} onValueChange={setCountry}>
+                    <SelectTrigger data-testid="select-country">
+                      <SelectValue placeholder="Select target country" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {countries.map((country) => (
+                        <SelectItem key={country} value={country.toLowerCase().replace(/ /g, '-')}>
+                          {country}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Platform */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Platform</label>
+                  <Select value={platform} onValueChange={(value: "web-app" | "mobile-app" | "both") => setPlatform(value)}>
+                    <SelectTrigger data-testid="select-platform">
+                      <SelectValue placeholder="Select platform" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="web-app">Web App</SelectItem>
+                      <SelectItem value="mobile-app">Mobile App</SelectItem>
+                      <SelectItem value="both">Both</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Funding Method */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Funding stage</label>
+                  <Select value={fundingMethod} onValueChange={(value: "self-funded" | "bootstrapping" | "raising-capital") => setFundingMethod(value)}>
+                    <SelectTrigger data-testid="select-funding">
+                      <SelectValue placeholder="Select funding stage" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="self-funded">Self-funded</SelectItem>
+                      <SelectItem value="bootstrapping">Pre-seed</SelectItem>
+                      <SelectItem value="raising-capital">Seed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Time Range */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Analysis time range</label>
+                  <Select value={timeRange} onValueChange={(value: "week" | "month" | "quarter" | "year") => setTimeRange(value)}>
+                    <SelectTrigger data-testid="select-timerange">
+                      <SelectValue placeholder="Select time range" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="week">Past week</SelectItem>
+                      <SelectItem value="month">Past month</SelectItem>
+                      <SelectItem value="quarter">Past quarter</SelectItem>
+                      <SelectItem value="year">Past year</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Main Goal */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Main goal</label>
+                  <Select value={goal} onValueChange={setGoal}>
+                    <SelectTrigger data-testid="select-goal">
+                      <SelectValue placeholder="Select main goal" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="validate-demand">Validate demand</SelectItem>
+                      <SelectItem value="find-competitors">Find competitors</SelectItem>
+                      <SelectItem value="understand-pain-points">Understand pain points</SelectItem>
+                      <SelectItem value="identify-features">Identify key features</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {!showEmailCapture && !analyzeIdeaMutation.isPending && (
+            <div className="flex items-center justify-center pt-4">
+              <Button 
+                onClick={() => {
+                  if (!idea.trim()) {
+                    toast({
+                      title: "Missing Information",
+                      description: "Please describe your startup idea first.",
+                      variant: "destructive",
+                    })
+                    return
+                  }
+                  setShowEmailCapture(true)
+                }}
+                disabled={!idea.trim()}
+                data-testid="button-analyze"
+                size="lg"
+                className="px-8 py-3 text-lg font-semibold bg-gradient-to-r from-primary to-[hsl(var(--neon-green))] hover:from-primary/90 hover:to-[hsl(var(--neon-green))/90] shadow-xl"
+              >
+                <Sparkles className="h-5 w-5 mr-2" />
+                Generate my free report
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
