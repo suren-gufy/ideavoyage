@@ -29,25 +29,6 @@ export default function Dashboard() {
               </span>{" "}
               with real user evidence.
             </h1>
-            <p className="text-xl sm:text-2xl text-muted-foreground leading-relaxed max-w-4xl mx-auto">
-              AI mines Reddit + public reviews and search trends to surface real pains, demand signals, competitors, and a go-to-market plan.{" "}
-              <strong className="text-[hsl(var(--neon-green))]">Generate a FREE report</strong> now; upgrade for the full numbers & playbook.
-            </p>
-          </div>
-          
-          <div className="flex flex-wrap justify-center items-center gap-4 text-sm text-muted-foreground">
-            <span className="flex items-center gap-2">
-              ✅ Uses public data
-            </span>
-            <span className="flex items-center gap-2">
-              🔗 Links to sources
-            </span>
-            <span className="flex items-center gap-2">
-              🏆 Built on Lean/YC principles
-            </span>
-            <span className="flex items-center gap-2">
-              🚫 No spam
-            </span>
           </div>
         </div>
       </div>
