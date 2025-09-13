@@ -381,7 +381,7 @@ export default function Dashboard() {
       </div>
       
       {analysisResults && (
-        <>
+        <div data-testid="analysis-results" className="space-y-8 py-8">
           <div className="space-y-6">
             <h2 className="text-xl font-medium">Startup Idea Scores</h2>
             <ScoringCards 
@@ -409,7 +409,7 @@ export default function Dashboard() {
             <h2 className="text-xl font-medium">Generated App Ideas</h2>
             <AppIdeasGenerator appIdeas={analysisResults.app_ideas} />
           </div>
-        </>
+        </div>
       )}
 
       {!analysisResults && (

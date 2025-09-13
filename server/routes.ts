@@ -64,8 +64,7 @@ Make sure all subreddit names are real, active Reddit communities.`;
             content: keywordPrompt
           }
         ],
-        max_tokens: 500,
-        temperature: 0.3,
+        max_completion_tokens: 500,
         response_format: { type: "json_object" },
       });
 
@@ -254,8 +253,7 @@ ${hasRealData ? 'Base your analysis on the REAL Reddit data provided above.' : '
             content: analysisPrompt
           }
         ],
-        max_tokens: 2000,
-        temperature: 0.7,
+        max_completion_tokens: 2000,
         response_format: { type: "json_object" },
       });
 
