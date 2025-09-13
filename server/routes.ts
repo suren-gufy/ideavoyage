@@ -51,8 +51,9 @@ Generate 5 highly relevant keywords that users would use when discussing this pr
 Generate 5 subreddit names (without r/ prefix) where this startup idea would be discussed.
 Make sure all subreddit names are real, active Reddit communities.`;
 
+      // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
       const keywordCompletion = await openai.chat.completions.create({
-        model: "gpt-4",
+        model: "gpt-5",
         messages: [
           {
             role: "system",
@@ -65,6 +66,7 @@ Make sure all subreddit names are real, active Reddit communities.`;
         ],
         max_tokens: 500,
         temperature: 0.3,
+        response_format: { type: "json_object" },
       });
 
       const keywordResponse = JSON.parse(keywordCompletion.choices[0].message.content || '{"keywords": [], "subreddits": []}');
@@ -239,8 +241,9 @@ GENERATE MARKET INSIGHTS:
 
 ${hasRealData ? 'Base your analysis on the REAL Reddit data provided above.' : 'Make sure all data is relevant to the specific startup idea and target communities.'}`;
 
+      // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
       const completion = await openai.chat.completions.create({
-        model: "gpt-4",
+        model: "gpt-5",
         messages: [
           {
             role: "system",
@@ -253,6 +256,7 @@ ${hasRealData ? 'Base your analysis on the REAL Reddit data provided above.' : '
         ],
         max_tokens: 2000,
         temperature: 0.7,
+        response_format: { type: "json_object" },
       });
 
       const rawContent = completion.choices[0].message.content || "{}";
