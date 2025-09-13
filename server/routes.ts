@@ -9,11 +9,22 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const reddit = new Snoowrap({
-  userAgent: process.env.REDDIT_USER_AGENT || 'StartupValidator:v1.0',
-  clientId: process.env.REDDIT_CLIENT_ID,
-  clientSecret: process.env.REDDIT_CLIENT_SECRET
-});
+// Initialize Reddit client only if credentials are available
+let reddit: Snoowrap | null = null;
+try {
+  if (process.env.REDDIT_CLIENT_ID && process.env.REDDIT_CLIENT_SECRET) {
+    reddit = new Snoowrap({
+      userAgent: process.env.REDDIT_USER_AGENT || 'StartupValidator:v1.0',
+      clientId: process.env.REDDIT_CLIENT_ID,
+      clientSecret: process.env.REDDIT_CLIENT_SECRET
+    });
+    console.log("Reddit API initialized successfully");
+  } else {
+    console.warn("Reddit credentials not found - Reddit scraping will be disabled");
+  }
+} catch (error) {
+  console.warn("Failed to initialize Reddit API:", error);
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Startup Idea Analysis Route
@@ -63,97 +74,127 @@ Make sure all subreddit names are real, active Reddit communities.`;
       console.log("Generated keywords:", keywords);
       console.log("Target subreddits:", subreddits);
 
-      // Step 2: Scrape real Reddit data
+      // Step 2: Scrape real Reddit data (if Reddit API is available)
       const allPosts: any[] = [];
       const searchQueries = keywords.slice(0, 3); // Use top 3 keywords
       const targetSubreddits = subreddits.slice(0, 3); // Use top 3 subreddits
 
-      for (const subreddit of targetSubreddits) {
-        try {
-          console.log(`Scraping r/${subreddit}...`);
-          
-          // Search recent posts in this subreddit
-          const posts = await reddit.getSubreddit(subreddit).getNew({ limit: 20 });
-          
-          for (const post of posts) {
-            // Check if post is relevant to our keywords
-            const title = post.title.toLowerCase();
-            const selftext = (post.selftext || '').toLowerCase();
-            const isRelevant = searchQueries.some((keyword: string) => 
-              title.includes(keyword.toLowerCase()) || selftext.includes(keyword.toLowerCase())
-            );
+      if (reddit) {
+        for (const subreddit of targetSubreddits) {
+          try {
+            console.log(`Scraping r/${subreddit}...`);
             
-            if (isRelevant) {
-              // Get top comments for additional insights
-              const comments = await post.comments.fetchAll({ limit: 5 });
+            // Search recent posts in this subreddit
+            const posts = await reddit.getSubreddit(subreddit).getNew({ limit: 20 });
+            
+            for (const post of posts) {
+              // Check if post is relevant to our keywords
+              const title = post.title.toLowerCase();
+              const selftext = (post.selftext || '').toLowerCase();
+              const isRelevant = searchQueries.some((keyword: string) => 
+                title.includes(keyword.toLowerCase()) || selftext.includes(keyword.toLowerCase())
+              );
+              
+              if (isRelevant) {
+                // Get top comments for additional insights
+                const comments = await post.comments.fetchAll({ limit: 5 });
+                
+                allPosts.push({
+                  title: post.title,
+                  content: post.selftext || '',
+                  score: post.score,
+                  subreddit: subreddit,
+                  comments: comments.slice(0, 5).map((comment: any) => ({
+                    body: comment.body || '',
+                    score: comment.score || 0
+                  }))
+                });
+              }
+            }
+          } catch (error) {
+            console.warn(`Failed to scrape r/${subreddit}:`, error);
+          }
+        }
+
+        // Also search across Reddit for our top keywords
+        for (const keyword of searchQueries.slice(0, 2)) {
+          try {
+            console.log(`Searching Reddit for "${keyword}"...`);
+            const searchResults = await reddit.search({
+              query: keyword,
+              sort: 'relevance',
+              time: 'month',
+              limit: 10
+            });
+
+            for (const post of searchResults) {
+              const comments = await post.comments.fetchAll({ limit: 3 });
               
               allPosts.push({
                 title: post.title,
                 content: post.selftext || '',
                 score: post.score,
-                subreddit: subreddit,
-                comments: comments.slice(0, 5).map((comment: any) => ({
+                subreddit: post.subreddit.display_name,
+                comments: comments.slice(0, 3).map((comment: any) => ({
                   body: comment.body || '',
                   score: comment.score || 0
                 }))
               });
             }
+          } catch (error) {
+            console.warn(`Failed to search for "${keyword}":`, error);
           }
-        } catch (error) {
-          console.warn(`Failed to scrape r/${subreddit}:`, error);
         }
+
+        console.log(`Collected ${allPosts.length} relevant posts from Reddit`);
+      } else {
+        console.log("Reddit API not available - skipping data scraping, will use AI-generated insights");
       }
 
-      // Also search across Reddit for our top keywords
-      for (const keyword of searchQueries.slice(0, 2)) {
-        try {
-          console.log(`Searching Reddit for "${keyword}"...`);
-          const searchResults = await reddit.search({
-            query: keyword,
-            sort: 'relevance',
-            time: 'month',
-            limit: 10
-          });
-
-          for (const post of searchResults) {
-            const comments = await post.comments.fetchAll({ limit: 3 });
-            
-            allPosts.push({
-              title: post.title,
-              content: post.selftext || '',
-              score: post.score,
-              subreddit: post.subreddit.display_name,
-              comments: comments.slice(0, 3).map((comment: any) => ({
-                body: comment.body || '',
-                score: comment.score || 0
-              }))
-            });
-          }
-        } catch (error) {
-          console.warn(`Failed to search for "${keyword}":`, error);
-        }
-      }
-
-      console.log(`Collected ${allPosts.length} relevant posts from Reddit`);
-
-      // Step 3: Analyze the real Reddit data with AI
-      const analysisPrompt = `Analyze this real Reddit data for market research insights:
-
-Startup Idea: "${validatedData.idea}"
-
-Real Reddit Posts and Comments:
-${allPosts.slice(0, 15).map((post, i) => `
-Post ${i + 1} (r/${post.subreddit}, Score: ${post.score}):
-Title: ${post.title}
+      // Step 3: Create analysis prompt based on available data
+      const hasRealData = allPosts.length > 0;
+      let dataSection = "";
+      
+      if (hasRealData) {
+        // Include real Reddit data in the analysis
+        const topPosts = allPosts.slice(0, 10); // Limit to top 10 posts to stay within token budget
+        dataSection = `
+REAL REDDIT DATA ANALYSIS:
+${topPosts.map((post, i) => `
+Post ${i + 1} from r/${post.subreddit} (Score: ${post.score}):
+Title: ${post.title.slice(0, 150)}
 Content: ${post.content.slice(0, 300)}
-Comments: ${post.comments.map((c: any) => c.body.slice(0, 100)).join(' | ')}
+Top Comments: ${post.comments.slice(0, 2).map((c: any) => c.body.slice(0, 200)).join(' | ')}
 `).join('\n')}
 
-Keywords used: ${keywords.join(', ')}
-Subreddits analyzed: ${subreddits.join(', ')}
-Total posts collected: ${allPosts.length}
+Total Posts Analyzed: ${allPosts.length}
+Keywords Found: ${keywords.join(', ')}
+Subreddits: ${subreddits.join(', ')}
 
-Based on this REAL Reddit data, please provide a JSON response with:
+Based on this REAL Reddit data, analyze the market sentiment, extract actual pain points from user comments, and identify genuine market opportunities.`;
+      } else {
+        dataSection = `
+MARKET RESEARCH MODE (Reddit data unavailable):
+Using AI market knowledge to analyze the startup idea based on generated keywords and target communities.
+Keywords: ${keywords.join(', ')}
+Target Subreddits: ${subreddits.join(', ')}
+Posts Analyzed: 0 (fallback to AI insights)
+
+Generate realistic market insights based on typical discussions in these communities about this type of product.`;
+      }
+
+      const analysisPrompt = `Analyze this startup idea for market research insights:
+
+Startup Idea: "${validatedData.idea}"
+Industry: ${validatedData.industry || "Not specified"}
+Target Audience: ${validatedData.targetAudience || "Not specified"}
+Country: ${validatedData.country || "global"}
+Platform: ${validatedData.platform || "web-app"}
+Funding Method: ${validatedData.fundingMethod || "self-funded"}
+
+${dataSection}
+
+Please provide a JSON response with the following structure:
 {
   "keywords": ${JSON.stringify(keywords)},
   "subreddits": ${JSON.stringify(subreddits)},
@@ -177,22 +218,33 @@ Based on this REAL Reddit data, please provide a JSON response with:
 }
 
 Instructions:
-1. Analyze the sentiment of the real Reddit comments and posts to create accurate sentiment_data percentages that add up to 100%
-2. Extract real pain points mentioned in the posts/comments with actual quotes as examples
-3. Generate realistic app ideas based on the problems discussed in the real data
-4. Base market_interest_level on the actual engagement (scores, comment counts) from Reddit
-5. Set total_posts_analyzed to the actual number: ${allPosts.length}
-6. Generate overall_score (1-10) based on real market demand evidence from Reddit
-7. Generate viability_score (1-10) considering technical complexity and market barriers mentioned in posts
+${hasRealData ? `
+ANALYZE THE REAL REDDIT DATA:
+1. Extract sentiment from actual user comments and posts to create accurate sentiment_data percentages
+2. Identify real pain points mentioned in the posts/comments - use actual quotes as examples
+3. Generate app ideas based on problems and solutions discussed in the real Reddit data
+4. Base market_interest_level on actual engagement (scores, comment counts) from Reddit
+5. Extract real user language and concerns from the post titles and comments
+6. Set total_posts_analyzed to: ${allPosts.length}
+` : `
+GENERATE MARKET INSIGHTS:
+1. Create realistic sentiment analysis based on typical market discussions
+2. Identify common pain points for this type of product with realistic examples
+3. Generate relevant app ideas based on market knowledge
+4. Assess market interest based on the generated keywords and target communities
+5. Set total_posts_analyzed to: 0
+`}
+7. Generate overall_score (1-10): Rate how good/bad the startup idea is overall based on ${hasRealData ? 'real market evidence' : 'market potential'}
+8. Generate viability_score (1-10): Rate how easy/difficult it would be to bring this idea to life
 
-Make your analysis based on the REAL Reddit data provided, not generic assumptions.`;
+${hasRealData ? 'Base your analysis on the REAL Reddit data provided above.' : 'Make sure all data is relevant to the specific startup idea and target communities.'}`;
 
       const completion = await openai.chat.completions.create({
         model: "gpt-4",
         messages: [
           {
             role: "system",
-            content: "You are an expert market researcher analyzing real Reddit data. Always respond with valid JSON in the exact format requested. Base your analysis on the actual Reddit posts and comments provided."
+            content: "You are an expert market researcher specializing in startup validation. Always respond with valid JSON in the exact format requested. Do not include any text outside the JSON structure."
           },
           {
             role: "user",
