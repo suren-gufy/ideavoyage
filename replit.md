@@ -32,13 +32,19 @@ Preferred communication style: Simple, everyday language.
 - **Development**: Hot module replacement with Vite integration
 
 ### Data Processing
-- **AI Integration**: OpenAI API for analyzing startup ideas and generating insights
+- **Real Reddit Integration**: Snoowrap library for authentic Reddit API data scraping with graceful fallback
+- **AI Analysis**: OpenAI GPT-4 for processing both real Reddit data and generating market insights
+- **Data Sources**: 
+  - Live Reddit posts and comments from relevant subreddits
+  - Intelligent keyword-based filtering and relevance scoring
+  - Real user sentiment extraction from actual discussions
 - **Analysis Features**: 
-  - Keyword extraction for Reddit searches
-  - Subreddit recommendations
-  - Sentiment analysis with percentage breakdowns
-  - Pain point identification with frequency scoring
-  - App idea generation with difficulty assessment
+  - Smart keyword and subreddit generation using AI
+  - Real-time Reddit data collection with rate limiting
+  - Authentic sentiment analysis from actual user comments
+  - Pain point identification with real user quotes as examples
+  - Market validation based on genuine community engagement
+  - Graceful fallback to AI-generated insights when Reddit unavailable
 
 ### Database Architecture
 - **ORM**: Drizzle ORM with PostgreSQL dialect
@@ -66,8 +72,9 @@ Preferred communication style: Simple, everyday language.
 
 ## External Dependencies
 
-### AI & Analytics
-- **OpenAI API**: GPT-based analysis for startup idea validation, sentiment analysis, and app idea generation
+### AI & Reddit Integration
+- **OpenAI API**: GPT-4 analysis for processing real Reddit data and generating market insights
+- **Snoowrap**: Official Reddit API wrapper for authentic data collection
 - **Recharts**: Data visualization library for sentiment charts and analytics displays
 
 ### Database & ORM
