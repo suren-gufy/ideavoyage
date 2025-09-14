@@ -64,7 +64,7 @@ Make sure all subreddit names are real, active Reddit communities.`;
             content: keywordPrompt
           }
         ],
-        max_completion_tokens: 500,
+        max_completion_tokens: 1000,
         response_format: { type: "json_object" },
       });
 
@@ -98,7 +98,7 @@ Make sure all subreddit names are real, active Reddit communities.`;
               
               if (isRelevant) {
                 // Get top comments for additional insights
-                const comments = await post.comments.fetchAll({ limit: 5 });
+                const comments = await post.comments.fetchAll();
                 
                 allPosts.push({
                   title: post.title,
@@ -129,7 +129,7 @@ Make sure all subreddit names are real, active Reddit communities.`;
             });
 
             for (const post of searchResults) {
-              const comments = await post.comments.fetchAll({ limit: 3 });
+              const comments = await post.comments.fetchAll();
               
               allPosts.push({
                 title: post.title,
@@ -253,7 +253,7 @@ ${hasRealData ? 'Base your analysis on the REAL Reddit data provided above.' : '
             content: analysisPrompt
           }
         ],
-        max_completion_tokens: 2000,
+        max_completion_tokens: 4000,
         response_format: { type: "json_object" },
       });
 
