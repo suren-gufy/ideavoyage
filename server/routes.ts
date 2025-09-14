@@ -64,7 +64,7 @@ Make sure all subreddit names are real, active Reddit communities.`;
             content: keywordPrompt
           }
         ],
-        max_completion_tokens: 1000,
+        max_completion_tokens: 2000,
         response_format: { type: "json_object" },
       });
 
