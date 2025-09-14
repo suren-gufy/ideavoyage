@@ -3,11 +3,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { HelpCircle } from "lucide-react"
 
 interface ScoringCardsProps {
-  overallScore: number
-  viabilityScore: number
+  overallScore?: number
+  viabilityScore?: number
 }
 
-export function ScoringCards({ overallScore, viabilityScore }: ScoringCardsProps) {
+export function ScoringCards({ overallScore = 0, viabilityScore = 0 }: ScoringCardsProps) {
   const getScoreColor = (score: number) => {
     if (score >= 8) return "text-green-600 dark:text-green-400"
     if (score >= 6) return "text-yellow-600 dark:text-yellow-400" 
@@ -42,7 +42,7 @@ export function ScoringCards({ overallScore, viabilityScore }: ScoringCardsProps
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold" data-testid="text-overall-score">
-            <span className={getScoreColor(overallScore)}>{overallScore.toFixed(1)}</span>
+            <span className={getScoreColor(overallScore)}>{(overallScore || 0).toFixed(1)}</span>
             <span className="text-muted-foreground text-base font-normal ml-1">/10</span>
           </div>
         </CardContent>
@@ -66,7 +66,7 @@ export function ScoringCards({ overallScore, viabilityScore }: ScoringCardsProps
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold" data-testid="text-viability-score">
-            <span className={getScoreColor(viabilityScore)}>{viabilityScore.toFixed(1)}</span>
+            <span className={getScoreColor(viabilityScore)}>{(viabilityScore || 0).toFixed(1)}</span>
             <span className="text-muted-foreground text-base font-normal ml-1">/10</span>
           </div>
         </CardContent>

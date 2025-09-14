@@ -120,7 +120,10 @@ export default function Results() {
           {/* Scoring Cards */}
           <div className="space-y-6">
             <h2 className="text-2xl font-bold">Market Validation Scores</h2>
-            <ScoringCards scores={analysisResults} />
+            <ScoringCards 
+              overallScore={analysisResults.overall_score || 0} 
+              viabilityScore={analysisResults.viability_score || 0} 
+            />
           </div>
 
           {/* Metrics Overview */}
@@ -132,7 +135,7 @@ export default function Results() {
           {/* Sentiment Analysis */}
           <div className="space-y-6">
             <h2 className="text-2xl font-bold">Market Sentiment Analysis</h2>
-            <SentimentChart sentimentData={analysisResults.sentiment_analysis} />
+            <SentimentChart sentimentData={analysisResults.sentiment_data} />
           </div>
 
           {/* Pain Points */}

@@ -3,27 +3,17 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { analyzeIdeaSchema, analysisResponseSchema, type AnalysisResponse } from "../shared/schema";
 import OpenAI from 'openai';
-import Snoowrap from 'snoowrap';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Initialize Reddit client only if credentials are available
-let reddit: Snoowrap | null = null;
-try {
-  if (process.env.REDDIT_CLIENT_ID && process.env.REDDIT_CLIENT_SECRET) {
-    reddit = new Snoowrap({
-      userAgent: process.env.REDDIT_USER_AGENT || 'StartupValidator:v1.0',
-      clientId: process.env.REDDIT_CLIENT_ID,
-      clientSecret: process.env.REDDIT_CLIENT_SECRET
-    });
-    console.log("Reddit API initialized successfully");
-  } else {
-    console.warn("Reddit credentials not found - Reddit scraping will be disabled");
-  }
-} catch (error) {
-  console.warn("Failed to initialize Reddit API:", error);
+// Initialize Perplexity API
+const perplexityApiKey = process.env.PERPLEXITY_API_KEY;
+if (!perplexityApiKey) {
+  console.warn("PERPLEXITY_API_KEY not found - research will be limited");
+} else {
+  console.log("Perplexity API initialized successfully");
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -34,8 +24,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log("Analyzing startup idea:", validatedData);
       
-      // Step 1: Generate relevant keywords and subreddits using AI
-      const keywordPrompt = `Analyze this startup idea and generate the best search terms and communities for market research:
+      // Step 1: Generate relevant keywords for comprehensive research
+      const keywordPrompt = `Analyze this startup idea and generate the best search terms for comprehensive market research:
 
 Startup Idea: "${validatedData.idea}"
 Industry: ${validatedData.industry || "Not specified"}
@@ -47,9 +37,8 @@ Please provide a JSON response with:
   "subreddits": ["subreddit1", "subreddit2", "subreddit3", "subreddit4", "subreddit5"]
 }
 
-Generate 5 highly relevant keywords that users would use when discussing this problem/solution.
-Generate 5 subreddit names (without r/ prefix) where this startup idea would be discussed.
-Make sure all subreddit names are real, active Reddit communities.`;
+Generate 5 highly relevant keywords that capture different aspects of this business idea.
+Generate 5 community names that would be relevant for this startup area.`;
 
       // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
       const keywordCompletion = await openai.chat.completions.create({
@@ -75,113 +64,99 @@ Make sure all subreddit names are real, active Reddit communities.`;
       console.log("Generated keywords:", keywords);
       console.log("Target subreddits:", subreddits);
 
-      // Step 2: Scrape real Reddit data (if Reddit API is available)
-      const allPosts: any[] = [];
-      const searchQueries = keywords.slice(0, 3); // Use top 3 keywords
-      const targetSubreddits = subreddits.slice(0, 3); // Use top 3 subreddits
-
-      if (reddit) {
-        for (const subreddit of targetSubreddits) {
+      // Step 2: Use Perplexity for comprehensive internet research
+      let researchData = "";
+      let totalSearches = 0;
+      
+      if (perplexityApiKey) {
+        console.log("Starting comprehensive market research with Perplexity...");
+        
+        const searchQueries = [
+          `${validatedData.idea} market research pain points user feedback`,
+          `startup ideas similar to "${validatedData.idea}" competition analysis`,
+          `problems with ${keywords.slice(0, 2).join(' ')} current solutions`,
+          `user complaints about ${validatedData.industry || keywords[0]} industry`,
+          `${validatedData.targetAudience || 'users'} feedback on ${keywords[0]} solutions`
+        ];
+        
+        for (const query of searchQueries) {
           try {
-            console.log(`Scraping r/${subreddit}...`);
+            console.log(`Researching: "${query}"`);
             
-            // Search recent posts in this subreddit
-            const posts = await reddit.getSubreddit(subreddit).getNew({ limit: 20 });
-            
-            for (const post of posts) {
-              // Check if post is relevant to our keywords
-              const title = post.title.toLowerCase();
-              const selftext = (post.selftext || '').toLowerCase();
-              const isRelevant = searchQueries.some((keyword: string) => 
-                title.includes(keyword.toLowerCase()) || selftext.includes(keyword.toLowerCase())
-              );
-              
-              if (isRelevant) {
-                // Get top comments for additional insights
-                const comments = await post.comments.fetchAll();
-                
-                allPosts.push({
-                  title: post.title,
-                  content: post.selftext || '',
-                  score: post.score,
-                  subreddit: subreddit,
-                  comments: comments.slice(0, 5).map((comment: any) => ({
-                    body: comment.body || '',
-                    score: comment.score || 0
-                  }))
-                });
-              }
-            }
-          } catch (error) {
-            console.warn(`Failed to scrape r/${subreddit}:`, error);
-          }
-        }
-
-        // Also search across Reddit for our top keywords
-        for (const keyword of searchQueries.slice(0, 2)) {
-          try {
-            console.log(`Searching Reddit for "${keyword}"...`);
-            const searchResults = await reddit.search({
-              query: keyword,
-              sort: 'relevance',
-              time: 'month',
-              limit: 10
+            const response = await fetch('https://api.perplexity.ai/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${perplexityApiKey}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                model: 'llama-3.1-sonar-small-128k-online',
+                messages: [
+                  {
+                    role: 'system',
+                    content: 'Provide comprehensive market research insights with specific examples, user quotes, and pain points. Focus on real user feedback and market validation data.'
+                  },
+                  {
+                    role: 'user',
+                    content: query
+                  }
+                ],
+                max_tokens: 1000,
+                temperature: 0.2,
+                search_recency_filter: 'month',
+                return_citations: true
+              })
             });
-
-            for (const post of searchResults) {
-              const comments = await post.comments.fetchAll();
+            
+            if (response.ok) {
+              const data = await response.json();
+              const content = data.choices[0]?.message?.content || '';
+              const citations = data.citations || [];
               
-              allPosts.push({
-                title: post.title,
-                content: post.selftext || '',
-                score: post.score,
-                subreddit: post.subreddit.display_name,
-                comments: comments.slice(0, 3).map((comment: any) => ({
-                  body: comment.body || '',
-                  score: comment.score || 0
-                }))
-              });
+              researchData += `\n\nRESEARCH QUERY: ${query}\n`;
+              researchData += `FINDINGS: ${content}\n`;
+              if (citations.length > 0) {
+                researchData += `SOURCES: ${citations.slice(0, 3).join(', ')}\n`;
+              }
+              totalSearches++;
             }
+            
+            // Small delay to respect rate limits
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
           } catch (error) {
-            console.warn(`Failed to search for "${keyword}":`, error);
+            console.warn(`Failed to research "${query}":`, error);
           }
         }
-
-        console.log(`Collected ${allPosts.length} relevant posts from Reddit`);
+        
+        console.log(`Completed ${totalSearches} research queries with Perplexity`);
       } else {
-        console.log("Reddit API not available - skipping data scraping, will use AI-generated insights");
+        console.log("Perplexity API not available - using AI-generated insights");
       }
 
-      // Step 3: Create analysis prompt based on available data
-      const hasRealData = allPosts.length > 0;
+      // Step 3: Create analysis prompt based on research data
+      const hasResearchData = researchData.length > 0;
       let dataSection = "";
       
-      if (hasRealData) {
-        // Include real Reddit data in the analysis
-        const topPosts = allPosts.slice(0, 10); // Limit to top 10 posts to stay within token budget
+      if (hasResearchData) {
         dataSection = `
-REAL REDDIT DATA ANALYSIS:
-${topPosts.map((post, i) => `
-Post ${i + 1} from r/${post.subreddit} (Score: ${post.score}):
-Title: ${post.title.slice(0, 150)}
-Content: ${post.content.slice(0, 300)}
-Top Comments: ${post.comments.slice(0, 2).map((c: any) => c.body.slice(0, 200)).join(' | ')}
-`).join('\n')}
+COMPREHENSIVE INTERNET RESEARCH DATA:
+${researchData}
 
-Total Posts Analyzed: ${allPosts.length}
-Keywords Found: ${keywords.join(', ')}
-Subreddits: ${subreddits.join(', ')}
+Total Research Queries: ${totalSearches}
+Keywords: ${keywords.join(', ')}
+Target Communities: ${subreddits.join(', ')}
 
-Based on this REAL Reddit data, analyze the market sentiment, extract actual pain points from user comments, and identify genuine market opportunities.`;
+Based on this comprehensive internet research from multiple sources, analyze the market sentiment, extract actual pain points, identify real competition, and provide genuine market validation insights.`;
       } else {
         dataSection = `
-MARKET RESEARCH MODE (Reddit data unavailable):
+MARKET RESEARCH MODE (Limited data available):
 Using AI market knowledge to analyze the startup idea based on generated keywords and target communities.
 Keywords: ${keywords.join(', ')}
-Target Subreddits: ${subreddits.join(', ')}
-Posts Analyzed: 0 (fallback to AI insights)
+Target Communities: ${subreddits.join(', ')}
+Research Queries: 0 (fallback to AI insights)
 
-Generate realistic market insights based on typical discussions in these communities about this type of product.`;
+Generate realistic market insights based on typical market patterns for this type of product.`;
       }
 
       const analysisPrompt = `Analyze this startup idea for market research insights:
@@ -213,20 +188,20 @@ Please provide a JSON response with the following structure:
     {"title": "App idea 2", "description": "Description of the app", "market_validation": "medium", "difficulty": "easy"}
   ],
   "market_interest_level": "high",
-  "total_posts_analyzed": ${allPosts.length},
+  "total_posts_analyzed": ${totalSearches},
   "overall_score": 7.5,
   "viability_score": 6.8
 }
 
 Instructions:
-${hasRealData ? `
-ANALYZE THE REAL REDDIT DATA:
-1. Extract sentiment from actual user comments and posts to create accurate sentiment_data percentages
-2. Identify real pain points mentioned in the posts/comments - use actual quotes as examples
-3. Generate app ideas based on problems and solutions discussed in the real Reddit data
-4. Base market_interest_level on actual engagement (scores, comment counts) from Reddit
-5. Extract real user language and concerns from the post titles and comments
-6. Set total_posts_analyzed to: ${allPosts.length}
+${hasResearchData ? `
+ANALYZE THE COMPREHENSIVE RESEARCH DATA:
+1. Extract sentiment from the internet research findings to create accurate sentiment_data percentages
+2. Identify real pain points mentioned in the research - use actual insights and quotes as examples
+3. Generate app ideas based on problems and solutions discovered in the research
+4. Base market_interest_level on actual market evidence found in the research
+5. Extract real user language and concerns from the research findings
+6. Set total_posts_analyzed to: ${totalSearches}
 ` : `
 GENERATE MARKET INSIGHTS:
 1. Create realistic sentiment analysis based on typical market discussions
@@ -235,10 +210,10 @@ GENERATE MARKET INSIGHTS:
 4. Assess market interest based on the generated keywords and target communities
 5. Set total_posts_analyzed to: 0
 `}
-7. Generate overall_score (1-10): Rate how good/bad the startup idea is overall based on ${hasRealData ? 'real market evidence' : 'market potential'}
+7. Generate overall_score (1-10): Rate how good/bad the startup idea is overall based on ${hasResearchData ? 'comprehensive research evidence' : 'market potential'}
 8. Generate viability_score (1-10): Rate how easy/difficult it would be to bring this idea to life
 
-${hasRealData ? 'Base your analysis on the REAL Reddit data provided above.' : 'Make sure all data is relevant to the specific startup idea and target communities.'}`;
+${hasResearchData ? 'Base your analysis on the comprehensive internet research data provided above.' : 'Make sure all data is relevant to the specific startup idea and target communities.'}`;
 
       // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
       const completion = await openai.chat.completions.create({
@@ -288,7 +263,7 @@ ${hasRealData ? 'Base your analysis on the REAL Reddit data provided above.' : '
               {"title": "Market Research Tool", "description": "A tool to validate startup ideas", "market_validation": "medium", "difficulty": "medium"}
             ],
             market_interest_level: parsedContent.market_interest_level || "medium",
-            total_posts_analyzed: allPosts.length,
+            total_posts_analyzed: totalSearches || 0,
             // Critical: Ensure scores are always valid numbers to prevent UI crashes
             overall_score: typeof parsedContent.overall_score === 'number' && parsedContent.overall_score >= 1 && parsedContent.overall_score <= 10 
               ? parsedContent.overall_score 
