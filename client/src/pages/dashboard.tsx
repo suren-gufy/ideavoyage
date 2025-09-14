@@ -146,7 +146,6 @@ export default function Dashboard() {
             </h2>
             <div className="space-y-3">
               <p className="text-xl text-muted-foreground">Get validated insights in three simple steps</p>
-              <MethodologyModal />
             </div>
           </div>
         
