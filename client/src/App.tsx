@@ -8,6 +8,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import Dashboard from "@/pages/dashboard";
+import Results from "@/pages/results";
 import Analytics from "@/pages/analytics";
 import NotFound from "@/pages/not-found";
 
@@ -15,6 +16,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Dashboard} />
+      <Route path="/results" component={Results} />
       <Route path="/analytics" component={Analytics} />
       <Route path="/trends" component={Dashboard} />
       <Route path="/pain-points" component={Dashboard} />

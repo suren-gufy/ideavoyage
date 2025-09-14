@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useLocation } from "wouter"
 import { Lightbulb, Sparkles, Target, Building2, ChevronDown, ChevronUp, BarChart3 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,10 +15,10 @@ import { useToast } from "@/hooks/use-toast"
 import type { AnalyzeIdeaRequest, AnalysisResponse } from "@shared/schema"
 
 interface SearchInterfaceProps {
-  onAnalysisComplete?: (results: AnalysisResponse) => void;
+  // No props needed anymore - navigation handles the flow
 }
 
-export function SearchInterface({ onAnalysisComplete }: SearchInterfaceProps) {
+export function SearchInterface({}: SearchInterfaceProps) {
   const [idea, setIdea] = useState("")
   const [industry, setIndustry] = useState("")
   const [targetAudience, setTargetAudience] = useState("")
@@ -32,6 +33,7 @@ export function SearchInterface({ onAnalysisComplete }: SearchInterfaceProps) {
   const [showOptionalFields, setShowOptionalFields] = useState(false)
   const [showEmailCapture, setShowEmailCapture] = useState(false)
   const { toast } = useToast()
+  const [location, setLocation] = useLocation()
 
   // Industry options
   const industries = [
@@ -58,7 +60,9 @@ export function SearchInterface({ onAnalysisComplete }: SearchInterfaceProps) {
     },
     onSuccess: (results) => {
       console.log('Analysis completed successfully:', results)
-      onAnalysisComplete?.(results)
+      // Save results to sessionStorage and navigate to results page
+      sessionStorage.setItem('analysis-results', JSON.stringify(results))
+      setLocation('/results')
       toast({
         title: "Analysis Complete!",
         description: `Found ${results.subreddits.length} relevant subreddits and ${results.pain_points.length} key pain points.`,
