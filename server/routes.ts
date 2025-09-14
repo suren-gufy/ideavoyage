@@ -24,45 +24,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log("Analyzing startup idea:", validatedData);
       
-      // Step 1: Generate relevant keywords for comprehensive research
-      const keywordPrompt = `Analyze this startup idea and generate the best search terms for comprehensive market research:
+      // Step 1: Use sophisticated web research analyst to create research plan
+      const researchAnalystPrompt = `ROLE: You are a web research analyst. Work step-by-step:
 
-Startup Idea: "${validatedData.idea}"
-Industry: ${validatedData.industry || "Not specified"}
-Target Audience: ${validatedData.targetAudience || "Not specified"}
+1. UNDERSTAND — Problem framing
+- Startup idea: ${validatedData.idea}
+- Audience: ${validatedData.targetAudience || "General users"}
+- Industry: ${validatedData.industry || "Technology"}
+- Geography: Global
+- Platform: Web/Mobile
+- Time window to prioritize: Last 12 months
+- Goal: Comprehensive market validation
 
-Please provide a JSON response with:
+2. ANALYSE — Scope the evidence we need
+- Real user pains & solution requests (esp. Reddit discussions).
+- Product review verbatims (G2, Amazon, Trustpilot, etc.).
+- Competitor list and differentiators (pricing, positioning).
+- Search demand signals (keywords, intent, trends).
+- Buyer personas (jobs-to-be-done, triggers, obstacles).
+
+3. REASON — Search plan & queries
+Run diverse queries; prefer recent content. Use variations with and without quotes.
+- Reddit pain discovery:
+  site:reddit.com "{core problem keywords}"  |  site:reddit.com "anyone else" {keywords}
+  site:reddit.com/r/* "{product type}" alternatives  |  site:reddit.com "{use case}" "frustrating"
+- Reviews & social proof:
+  "site:g2.com OR site:trustpilot.com OR site:amazon.com" "{product/competitor}"
+- Competitors:
+  "{product type} alternatives"  |  "best {product type} tools"  |  "vs" comparisons
+- Demand:
+  "{use case} how to"  |  "{problem} app"  |  "{category} software"  |  long-tail variants
+Adjust keywords to the user's audience/geo/platform.
+
+4. SYNTHESIS — Return a single JSON object (no Markdown) with these top-level keys:
 {
-  "keywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"],
-  "subreddits": ["subreddit1", "subreddit2", "subreddit3", "subreddit4", "subreddit5"]
+  "meta": {
+    "idea": "...",
+    "industry": "...",
+    "geo": "...",
+    "platform": "...",
+    "time_range": "..."
+  },
+  "research_queries": [
+    "specific search query 1",
+    "specific search query 2",
+    "specific search query 3",
+    "specific search query 4",
+    "specific search query 5"
+  ],
+  "expected_data": {
+    "pains": "User pain points and frustrations",
+    "competitors": "Existing solutions and alternatives",
+    "demand_signals": "Search trends and user interest",
+    "personas": "Target user archetypes"
+  }
 }
 
-Generate 5 highly relevant keywords that capture different aspects of this business idea.
-Generate 5 community names that would be relevant for this startup area.`;
+REQUIREMENTS
+- Generate 5 specific, targeted search queries for Perplexity
+- Focus on Reddit, G2, Amazon reviews, Trustpilot, Product Hunt, Hacker News
+- Prefer public sources with rich user discourse
+- De-duplicate aggressively
 
+5. CONCLUDE — Before returning, validate:
+- Every query targets specific pain points or market insights
+- Queries cover different aspects: problems, competitors, demand, reviews`;
+
+      console.log("Generating sophisticated research plan...");
+      
       // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
-      const keywordCompletion = await openai.chat.completions.create({
+      const researchPlanCompletion = await openai.chat.completions.create({
         model: "gpt-5",
         messages: [
           {
             role: "system",
-            content: "You are an expert at finding relevant keywords and communities for market research. Always respond with valid JSON in the exact format requested."
+            content: "You are a web research analyst expert at creating comprehensive market research plans. Always respond with valid JSON in the exact format requested."
           },
           {
             role: "user",
-            content: keywordPrompt
+            content: researchAnalystPrompt
           }
         ],
-        max_completion_tokens: 2000,
+        max_completion_tokens: 3000,
         response_format: { type: "json_object" },
       });
 
-      const keywordResponse = JSON.parse(keywordCompletion.choices[0].message.content || '{"keywords": [], "subreddits": []}');
-      const keywords = keywordResponse.keywords || ["startup", "business", "product"];
-      const subreddits = keywordResponse.subreddits || ["startups", "entrepreneur", "business"];
+      const researchPlan = JSON.parse(researchPlanCompletion.choices[0].message.content || '{"research_queries": []}');
+      const searchQueries = researchPlan.research_queries || [
+        `${validatedData.idea} market research pain points user feedback`,
+        `startup ideas similar to "${validatedData.idea}" competition analysis`,
+        `problems with current solutions user complaints`,
+        `user feedback reviews ${validatedData.industry} industry`,
+        `${validatedData.targetAudience} needs ${validatedData.idea}`
+      ];
 
-      console.log("Generated keywords:", keywords);
-      console.log("Target subreddits:", subreddits);
+      console.log("Generated research plan:", researchPlan.meta);
+      console.log("Research queries:", searchQueries);
+      
+      // Extract keywords for fallback use
+      const keywords = researchPlan.meta?.keywords || [validatedData.idea.split(' ')[0], "startup", "business"];
+      const subreddits = researchPlan.meta?.subreddits || ["startups", "entrepreneur", "business"];
 
       // Step 2: Use Perplexity for comprehensive internet research
       let researchData = "";
@@ -70,14 +131,6 @@ Generate 5 community names that would be relevant for this startup area.`;
       
       if (perplexityApiKey) {
         console.log("Starting comprehensive market research with Perplexity...");
-        
-        const searchQueries = [
-          `${validatedData.idea} market research pain points user feedback`,
-          `startup ideas similar to "${validatedData.idea}" competition analysis`,
-          `problems with ${keywords.slice(0, 2).join(' ')} current solutions`,
-          `user complaints about ${validatedData.industry || keywords[0]} industry`,
-          `${validatedData.targetAudience || 'users'} feedback on ${keywords[0]} solutions`
-        ];
         
         for (const query of searchQueries) {
           try {
