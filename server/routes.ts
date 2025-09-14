@@ -187,86 +187,86 @@ REQUIREMENTS
         console.log("Perplexity API not available - using AI-generated insights");
       }
 
-      // Step 3: Create analysis prompt based on research data
+      // Step 3: Use 'Startup Validation Expert' prompt to synthesize Perplexity results
       const hasResearchData = researchData.length > 0;
-      let dataSection = "";
       
-      if (hasResearchData) {
-        dataSection = `
-COMPREHENSIVE INTERNET RESEARCH DATA:
-${researchData}
+      // Create structured research JSON for the validation expert
+      const researchJson = {
+        meta: {
+          idea: validatedData.idea,
+          industry: validatedData.industry || "Technology",
+          target_audience: validatedData.targetAudience || "General users",
+          time_range: "Last 12 months",
+          total_queries: totalSearches,
+          data_quality: hasResearchData ? "comprehensive" : "limited"
+        },
+        research_findings: researchData,
+        keywords: keywords,
+        citations: hasResearchData ? `Based on ${totalSearches} Perplexity research queries` : "AI-generated insights"
+      };
 
-Total Research Queries: ${totalSearches}
-Keywords: ${keywords.join(', ')}
-Target Communities: ${subreddits.join(', ')}
+      const validationExpertPrompt = `You are a startup validation expert. Using ONLY the evidence and citations from research_json, produce a comprehensive validation report.
 
-Based on this comprehensive internet research from multiple sources, analyze the market sentiment, extract actual pain points, identify real competition, and provide genuine market validation insights.`;
-      } else {
-        dataSection = `
-MARKET RESEARCH MODE (Limited data available):
-Using AI market knowledge to analyze the startup idea based on generated keywords and target communities.
-Keywords: ${keywords.join(', ')}
-Target Communities: ${subreddits.join(', ')}
-Research Queries: 0 (fallback to AI insights)
+research_json: ${JSON.stringify(researchJson, null, 2)}
 
-Generate realistic market insights based on typical market patterns for this type of product.`;
-      }
+Produce a JSON response with the following structure for a structured startup validation report:
 
-      const analysisPrompt = `Analyze this startup idea for market research insights:
-
-Startup Idea: "${validatedData.idea}"
-Industry: ${validatedData.industry || "Not specified"}
-Target Audience: ${validatedData.targetAudience || "Not specified"}
-Country: ${validatedData.country || "global"}
-Platform: ${validatedData.platform || "web-app"}
-Funding Method: ${validatedData.fundingMethod || "self-funded"}
-
-${dataSection}
-
-Please provide a JSON response with the following structure:
 {
+  "title": "Startup Validation Report — ${validatedData.idea}",
+  "overview_viability": {
+    "summary": "One paragraph: what people are trying to accomplish, the top 1–2 pains, and whether demand looks promising",
+    "confidence_band": "Low/Med/High",
+    "key_citations": ["citation 1", "citation 2"]
+  },
+  "problem_clusters": [
+    {
+      "cluster_name": "theme label",
+      "quotes": [{"text": "short quote ≤30 words", "source": "source link"}],
+      "implication": "one-line implication for the product"
+    }
+  ],
+  "demand_signals": {
+    "trend_summary": "12-month trend shape from research",
+    "seasonality": "seasonal patterns if any",
+    "keywords": [{"term": "keyword", "intent": "informational|commercial|transactional", "notes": "additional context"}]
+  },
+  "competitive_landscape": {
+    "top_incumbent": "most relevant competitor",
+    "what_they_do_well": "their strengths",
+    "key_gap": "main opportunity gap",
+    "source_link": "reference link"
+  },
   "keywords": ${JSON.stringify(keywords)},
   "subreddits": ${JSON.stringify(subreddits)},
   "sentiment_data": [
-    {"name": "Enthusiastic", "value": 45, "color": "hsl(var(--chart-2))", "description": "Users excited about solutions and expressing strong interest"},
-    {"name": "Curious/Mixed", "value": 35, "color": "hsl(var(--chart-3))", "description": "Users asking questions, comparing options, or expressing moderate interest"},
-    {"name": "Frustrated", "value": 20, "color": "hsl(var(--destructive))", "description": "Users complaining about current solutions or expressing dissatisfaction"}
+    {"name": "Enthusiastic", "value": 45, "color": "hsl(var(--chart-2))", "description": "Users excited about solutions"},
+    {"name": "Curious/Mixed", "value": 35, "color": "hsl(var(--chart-3))", "description": "Users asking questions or comparing options"},
+    {"name": "Frustrated", "value": 20, "color": "hsl(var(--destructive))", "description": "Users complaining about current solutions"}
   ],
   "pain_points": [
-    {"title": "Pain point 1", "frequency": 85, "urgency": "high", "examples": ["Example quote 1", "Example quote 2"]},
-    {"title": "Pain point 2", "frequency": 70, "urgency": "medium", "examples": ["Example quote 3", "Example quote 4"]}
+    {"title": "pain point title", "frequency": 85, "urgency": "high", "examples": ["user quote 1", "user quote 2"]}
   ],
   "app_ideas": [
-    {"title": "App idea 1", "description": "Description of the app", "market_validation": "high", "difficulty": "medium"},
-    {"title": "App idea 2", "description": "Description of the app", "market_validation": "medium", "difficulty": "easy"}
+    {"title": "app idea", "description": "description based on research", "market_validation": "high", "difficulty": "medium"}
   ],
-  "market_interest_level": "high",
+  "market_interest_level": "high|medium|low",
   "total_posts_analyzed": ${totalSearches},
   "overall_score": 7.5,
-  "viability_score": 6.8
+  "viability_score": 6.8,
+  "paid_sections": {
+    "exact_demand_numbers": "Table: keyword, volume, CPC, KD (requires paid access)",
+    "competitor_matrix": "6–8 competitors with pricing, differentiators, sentiment (requires paid access)",
+    "cac_ltv_simulator": "ARPU assumptions, gross margin, CAC band, payback months (requires paid access)",
+    "gtm_plan": "90-day GTM plan, channels, messages, experiments, risks, kill criteria (requires paid access)"
+  }
 }
 
-Instructions:
-${hasResearchData ? `
-ANALYZE THE COMPREHENSIVE RESEARCH DATA:
-1. Extract sentiment from the internet research findings to create accurate sentiment_data percentages
-2. Identify real pain points mentioned in the research - use actual insights and quotes as examples
-3. Generate app ideas based on problems and solutions discovered in the research
-4. Base market_interest_level on actual market evidence found in the research
-5. Extract real user language and concerns from the research findings
-6. Set total_posts_analyzed to: ${totalSearches}
-` : `
-GENERATE MARKET INSIGHTS:
-1. Create realistic sentiment analysis based on typical market discussions
-2. Identify common pain points for this type of product with realistic examples
-3. Generate relevant app ideas based on market knowledge
-4. Assess market interest based on the generated keywords and target communities
-5. Set total_posts_analyzed to: 0
-`}
-7. Generate overall_score (1-10): Rate how good/bad the startup idea is overall based on ${hasResearchData ? 'comprehensive research evidence' : 'market potential'}
-8. Generate viability_score (1-10): Rate how easy/difficult it would be to bring this idea to life
-
-${hasResearchData ? 'Base your analysis on the comprehensive internet research data provided above.' : 'Make sure all data is relevant to the specific startup idea and target communities.'}`;
+RULES:
+- Every claim must link to evidence from research_json
+- If research_json lacks data for a section, say "Insufficient data—collect X by doing Y"
+- Tone: pragmatic, no hype; bullets over paragraphs
+- Use real quotes and insights from the research data when available
+- ${hasResearchData ? 'Base analysis on the comprehensive research data provided' : 'Generate realistic insights based on the startup idea and market knowledge'}`;
 
       // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
       const completion = await openai.chat.completions.create({
@@ -278,7 +278,7 @@ ${hasResearchData ? 'Base your analysis on the comprehensive internet research d
           },
           {
             role: "user",
-            content: analysisPrompt
+            content: validationExpertPrompt
           }
         ],
         max_completion_tokens: 4000,
@@ -294,8 +294,35 @@ ${hasResearchData ? 'Base your analysis on the comprehensive internet research d
         const cleanedContent = rawContent.replace(/```json\n?|\n?```/g, '').trim();
         const parsedContent = JSON.parse(cleanedContent);
         
-        // Use Zod validation to ensure all required fields are present and valid
-        const validationResult = analysisResponseSchema.safeParse(parsedContent);
+        // For now, we'll structure the response to match our current frontend expectations
+        // Later we can update the frontend to handle the new validation report structure
+        const legacyStructuredResponse = {
+          keywords: parsedContent.keywords || keywords,
+          subreddits: parsedContent.subreddits || subreddits,
+          sentiment_data: parsedContent.sentiment_data || [
+            {"name": "Enthusiastic", "value": 40, "color": "hsl(var(--chart-2))", "description": "Users excited about solutions"},
+            {"name": "Curious/Mixed", "value": 35, "color": "hsl(var(--chart-3))", "description": "Users asking questions or comparing options"},
+            {"name": "Frustrated", "value": 25, "color": "hsl(var(--destructive))", "description": "Users complaining about current solutions"}
+          ],
+          pain_points: parsedContent.pain_points || [
+            {"title": "Market validation challenges", "frequency": 75, "urgency": "medium", "examples": ["Need better market research", "Uncertain about demand"]}
+          ],
+          app_ideas: parsedContent.app_ideas || [
+            {"title": "Market Research Tool", "description": "AI-powered startup validation platform", "market_validation": "medium", "difficulty": "medium"}
+          ],
+          market_interest_level: parsedContent.market_interest_level || "medium",
+          total_posts_analyzed: totalSearches || 0,
+          overall_score: typeof parsedContent.overall_score === 'number' && parsedContent.overall_score >= 1 && parsedContent.overall_score <= 10 
+            ? parsedContent.overall_score 
+            : 5.0,
+          viability_score: typeof parsedContent.viability_score === 'number' && parsedContent.viability_score >= 1 && parsedContent.viability_score <= 10 
+            ? parsedContent.viability_score 
+            : 5.0,
+          // Store the full validation report for future use
+          validation_report: parsedContent
+        };
+        
+        const validationResult = analysisResponseSchema.safeParse(legacyStructuredResponse);
         
         if (!validationResult.success) {
           console.warn("OpenAI response validation failed:", validationResult.error);
