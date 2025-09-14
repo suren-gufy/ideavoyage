@@ -191,7 +191,7 @@ Focus on Reddit discussions, G2 reviews, Amazon reviews, Trustpilot, Product Hun
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              model: 'llama-3.1-sonar-small-128k-online',
+              model: 'sonar',
               messages: [
                 {
                   role: 'system',
@@ -202,7 +202,7 @@ Focus on Reddit discussions, G2 reviews, Amazon reviews, Trustpilot, Product Hun
                   content: comprehensiveQuery
                 }
               ],
-              max_completion_tokens: 3000,
+              max_tokens: 3000,
               temperature: 0.2,
               search_recency_filter: 'year',
               return_citations: true
@@ -227,7 +227,8 @@ Focus on Reddit discussions, G2 reviews, Amazon reviews, Trustpilot, Product Hun
             
             console.log(`[${requestId}] Comprehensive Perplexity research completed`);
           } else {
-            console.warn(`[${requestId}] Perplexity API request failed:`, response.status);
+            const errorText = await response.text();
+            console.warn(`[${requestId}] Perplexity API request failed:`, response.status, errorText);
           }
           
         } catch (error) {
