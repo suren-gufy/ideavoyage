@@ -19,10 +19,13 @@ if (!perplexityApiKey) {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Startup Idea Analysis Route
   app.post("/api/analyze", async (req, res) => {
+    const requestId = Date.now();
+    console.log(`[${requestId}] Starting analysis request`);
+    
     try {
       const validatedData = analyzeIdeaSchema.parse(req.body);
       
-      console.log("Analyzing startup idea:", validatedData);
+      console.log(`[${requestId}] Analyzing startup idea:`, validatedData);
       
       // Step 1: Use sophisticated web research analyst to create research plan
       const researchAnalystPrompt = `ROLE: You are a web research analyst. Work step-by-step:
@@ -63,7 +66,9 @@ Adjust keywords to the user's audience/geo/platform.
     "industry": "...",
     "geo": "...",
     "platform": "...",
-    "time_range": "..."
+    "time_range": "...",
+    "keywords": ["keyword1", "keyword2", "keyword3"],
+    "subreddits": ["subreddit1", "subreddit2", "subreddit3"]
   },
   "research_queries": [
     "specific search query 1",
@@ -90,11 +95,11 @@ REQUIREMENTS
 - Every query targets specific pain points or market insights
 - Queries cover different aspects: problems, competitors, demand, reviews`;
 
-      console.log("Generating sophisticated research plan...");
+      console.log(`[${requestId}] Generating sophisticated research plan...`);
       
-      // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
+      // Using gpt-4o-mini for reliable API compatibility
       const researchPlanCompletion = await openai.chat.completions.create({
-        model: "gpt-5",
+        model: "gpt-4o-mini",
         messages: [
           {
             role: "system",
@@ -109,7 +114,17 @@ REQUIREMENTS
         response_format: { type: "json_object" },
       });
 
-      const researchPlan = JSON.parse(researchPlanCompletion.choices[0].message.content || '{"research_queries": []}');
+      // Robust JSON parsing with fallbacks
+      let researchPlan;
+      try {
+        const rawContent = researchPlanCompletion.choices[0].message.content || '{"research_queries": []}';
+        console.log("Raw research plan response:", rawContent.substring(0, 200) + "...");
+        researchPlan = JSON.parse(rawContent);
+      } catch (parseError) {
+        console.warn("Failed to parse research plan JSON:", parseError);
+        researchPlan = { research_queries: [] };
+      }
+      
       const searchQueries = researchPlan.research_queries || [
         `${validatedData.idea} market research pain points user feedback`,
         `startup ideas similar to "${validatedData.idea}" competition analysis`,
@@ -118,8 +133,8 @@ REQUIREMENTS
         `${validatedData.targetAudience} needs ${validatedData.idea}`
       ];
 
-      console.log("Generated research plan:", researchPlan.meta);
-      console.log("Research queries:", searchQueries);
+      console.log(`[${requestId}] Generated research plan:`, researchPlan.meta);
+      console.log(`[${requestId}] Research queries:`, searchQueries);
       
       // Extract keywords for fallback use
       const keywords = researchPlan.meta?.keywords || [validatedData.idea.split(' ')[0], "startup", "business"];
@@ -130,61 +145,96 @@ REQUIREMENTS
       let totalSearches = 0;
       
       if (perplexityApiKey) {
-        console.log("Starting comprehensive market research with Perplexity...");
+        console.log(`[${requestId}] Starting comprehensive market research with Perplexity...`);
         
-        for (const query of searchQueries) {
-          try {
-            console.log(`Researching: "${query}"`);
+        try {
+          const comprehensiveQuery = `Research the startup idea "${validatedData.idea}" in the ${validatedData.industry || "Technology"} industry for ${validatedData.targetAudience || "General users"}. 
+
+Provide a comprehensive JSON research report with the following structure:
+{
+  "pain_points": [
+    {
+      "title": "pain point title",
+      "frequency": "how often mentioned",
+      "user_quotes": [{"text": "exact user quote", "source": "URL"}],
+      "urgency": "high/medium/low"
+    }
+  ],
+  "competitors": [
+    {
+      "name": "competitor name",
+      "what_they_do": "description",
+      "pricing": "pricing info",
+      "user_sentiment": "positive/negative/mixed",
+      "source_url": "URL"
+    }
+  ],
+  "demand_signals": {
+    "search_trends": "trend analysis",
+    "reddit_discussions": [{"title": "discussion title", "url": "URL", "sentiment": "positive/negative/neutral"}],
+    "social_proof": ["evidence of demand"]
+  },
+  "market_validation": {
+    "opportunity_size": "assessment",
+    "competition_level": "high/medium/low",
+    "user_willingness_to_pay": "assessment",
+    "implementation_difficulty": "easy/medium/hard"
+  }
+}
+
+Focus on Reddit discussions, G2 reviews, Amazon reviews, Trustpilot, Product Hunt, and Hacker News. Prioritize recent content from the last 12 months. Include specific user quotes with source URLs whenever possible.`;
+
+          const response = await fetch('https://api.perplexity.ai/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${perplexityApiKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              model: 'llama-3.1-sonar-small-128k-online',
+              messages: [
+                {
+                  role: 'system',
+                  content: 'You are a market research expert. Provide comprehensive research in valid JSON format. Always include specific user quotes with source URLs when available. Focus on real user feedback and market validation data from Reddit, G2, Amazon, Trustpilot, Product Hunt, and similar platforms.'
+                },
+                {
+                  role: 'user',
+                  content: comprehensiveQuery
+                }
+              ],
+              max_completion_tokens: 3000,
+              temperature: 0.2,
+              search_recency_filter: 'year',
+              return_citations: true
+            })
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            const content = data.choices[0]?.message?.content || '';
+            const citations = data.citations || [];
             
-            const response = await fetch('https://api.perplexity.ai/chat/completions', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${perplexityApiKey}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                model: 'llama-3.1-sonar-small-128k-online',
-                messages: [
-                  {
-                    role: 'system',
-                    content: 'Provide comprehensive market research insights with specific examples, user quotes, and pain points. Focus on real user feedback and market validation data.'
-                  },
-                  {
-                    role: 'user',
-                    content: query
-                  }
-                ],
-                max_tokens: 1000,
-                temperature: 0.2,
-                search_recency_filter: 'month',
-                return_citations: true
-              })
-            });
+            researchData = content;
+            totalSearches = 1;
             
-            if (response.ok) {
-              const data = await response.json();
-              const content = data.choices[0]?.message?.content || '';
-              const citations = data.citations || [];
-              
-              researchData += `\n\nRESEARCH QUERY: ${query}\n`;
-              researchData += `FINDINGS: ${content}\n`;
-              if (citations.length > 0) {
-                researchData += `SOURCES: ${citations.slice(0, 3).join(', ')}\n`;
-              }
-              totalSearches++;
+            // Safely handle citations array
+            if (Array.isArray(citations) && citations.length > 0) {
+              const citationUrls = citations.slice(0, 5).map(citation => 
+                typeof citation === 'string' ? citation : citation?.url || 'Unknown source'
+              );
+              researchData += `\n\nSOURCES: ${citationUrls.join(', ')}\n`;
             }
             
-            // Small delay to respect rate limits
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-          } catch (error) {
-            console.warn(`Failed to research "${query}":`, error);
+            console.log(`[${requestId}] Comprehensive Perplexity research completed`);
+          } else {
+            console.warn(`[${requestId}] Perplexity API request failed:`, response.status);
           }
+          
+        } catch (error) {
+          console.warn(`[${requestId}] Failed to complete Perplexity research:`, error);
         }
-        
-        console.log(`Completed ${totalSearches} research queries with Perplexity`);
       } else {
-        console.log("Perplexity API not available - using AI-generated insights");
+        console.log(`[${requestId}] Perplexity API not available - using AI-generated insights`);
       }
 
       // Step 3: Use 'Startup Validation Expert' prompt to synthesize Perplexity results
@@ -268,9 +318,9 @@ RULES:
 - Use real quotes and insights from the research data when available
 - ${hasResearchData ? 'Base analysis on the comprehensive research data provided' : 'Generate realistic insights based on the startup idea and market knowledge'}`;
 
-      // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
+      // Using gpt-4o-mini for reliable API compatibility
       const completion = await openai.chat.completions.create({
-        model: "gpt-5",
+        model: "gpt-4o-mini",
         messages: [
           {
             role: "system",
@@ -352,24 +402,31 @@ RULES:
               ? parsedContent.viability_score 
               : 5.0,
           };
+          // Store the full validation report for future use
+          (analysisResult as any).validation_report = parsedContent;
           console.log("Using fallback values for invalid AI response");
         } else {
+          // Success path: preserve the full validation report alongside validated data
           analysisResult = validationResult.data;
+          // Store the full validation report for future use
+          (analysisResult as any).validation_report = parsedContent;
         }
       } catch (parseError) {
         console.error("Failed to parse OpenAI response:", parseError);
         throw new Error("Invalid JSON response format from AI service");
       }
       
-      console.log("Analysis completed:", analysisResult);
+      console.log(`[${requestId}] Analysis completed successfully`);
+      console.log(`[${requestId}] Overall score: ${analysisResult.overall_score}, Viability score: ${analysisResult.viability_score}`);
       
       res.json(analysisResult);
       
     } catch (error) {
-      console.error("Analysis error:", error);
+      console.error(`[${requestId}] Analysis error:`, error);
       res.status(500).json({ 
         error: "Failed to analyze startup idea",
-        details: error instanceof Error ? error.message : "Unknown error"
+        details: error instanceof Error ? error.message : "Unknown error",
+        requestId
       });
     }
   });
