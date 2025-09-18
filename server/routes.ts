@@ -61,25 +61,222 @@ async function fetchRedditData(subreddit: string, limit: number = 25) {
     await new Promise(resolve => setTimeout(resolve, 1000));
   }
   
-  console.warn(`All Reddit access methods failed for r/${subreddit}`);
+  console.warn(`JSON API methods failed for r/${subreddit}, trying HTML fallback...`);
+  
+  // Fallback: Use Jina.ai reader proxy to get Reddit HTML content
+  try {
+    const jinaUrl = `https://r.jina.ai/https://www.reddit.com/r/${subreddit}/top/?t=month`;
+    const jinaHeaders = {
+      'User-Agent': 'Mozilla/5.0 (compatible; StartupValidator/1.0)'
+    };
+    
+    const response = await fetch(jinaUrl, { headers: jinaHeaders });
+    if (response.ok) {
+      const htmlContent = await response.text();
+      return parseRedditHTML(htmlContent, subreddit);
+    }
+  } catch (error) {
+    console.warn(`Jina.ai fallback also failed for r/${subreddit}:`, (error as Error).message);
+  }
+  
   return null;
 }
 
+// Parse Reddit HTML content from Jina.ai reader proxy
+function parseRedditHTML(htmlContent: string, subreddit: string) {
+  try {
+    const posts: any[] = [];
+    
+    // Extract Reddit post URLs/permalinks from the HTML
+    const postUrlMatches = htmlContent.match(/\/r\/\w+\/comments\/[a-z0-9]+\/[^\s"'\/]*/g) || [];
+    const uniquePermalinks = Array.from(new Set(postUrlMatches));
+    
+    // Parse basic post info from listing page
+    const lines = htmlContent.split('\n');
+    let postIndex = 0;
+    
+    for (let i = 0; i < lines.length && postIndex < uniquePermalinks.length && postIndex < 10; i++) {
+      const line = lines[i].trim();
+      
+      // Look for post title patterns
+      if (line.length > 15 && line.length < 200 && line.match(/[A-Za-z]/) && 
+          !line.includes('ago') && !line.includes('comment') && !line.includes('http')) {
+        
+        let score = 0;
+        let comments = 0;
+        let createdTime = Date.now() / 1000; // Current timestamp as fallback
+        
+        // Look ahead for score and comment info
+        for (let j = i - 3; j <= i + 3 && j < lines.length; j++) {
+          if (j >= 0) {
+            const contextLine = lines[j];
+            const scoreMatch = contextLine.match(/(\d+)\s+(points?|point)/);
+            if (scoreMatch) score = parseInt(scoreMatch[1]);
+            
+            const commentMatch = contextLine.match(/(\d+)\s+comments?/);
+            if (commentMatch) comments = parseInt(commentMatch[1]);
+            
+            const timeMatch = contextLine.match(/(\d+)\s+(hours?|days?|months?)\s+ago/);
+            if (timeMatch) {
+              const timeValue = parseInt(timeMatch[1]);
+              const timeUnit = timeMatch[2];
+              const hoursAgo = timeUnit.includes('hour') ? timeValue : 
+                              timeUnit.includes('day') ? timeValue * 24 :
+                              timeUnit.includes('month') ? timeValue * 24 * 30 : 1;
+              createdTime = Date.now() / 1000 - (hoursAgo * 3600);
+            }
+          }
+        }
+        
+        if (postIndex < uniquePermalinks.length) {
+          const permalink = uniquePermalinks[postIndex];
+          posts.push({
+            title: line,
+            selftext: '', // Will be filled by fetchRedditThread if available
+            score: score,
+            num_comments: comments,
+            created_utc: createdTime,
+            permalink: permalink,
+            url: `https://reddit.com${permalink}`,
+            subreddit: subreddit
+          });
+          postIndex++;
+        }
+      }
+    }
+    
+    if (posts.length > 0) {
+      console.log(`Successfully parsed ${posts.length} posts from r/${subreddit} via HTML fallback`);
+      return {
+        data: {
+          children: posts.map(post => ({ data: post }))
+        }
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.warn(`Error parsing HTML for r/${subreddit}:`, (error as Error).message);
+    return null;
+  }
+}
+
 async function fetchRedditComments(permalink: string, limit: number = 10) {
+  // Try JSON API first
   const url = `https://reddit.com${permalink}.json?limit=${limit}`;
   const headers = {
-    'User-Agent': 'web:startup-validator:1.0.0 (educational research)',
+    'User-Agent': 'Mozilla/5.0 (compatible; StartupValidator/1.0)',
     'Accept': 'application/json'
   };
   
   try {
     const response = await fetch(url, { headers });
-    if (!response.ok) return null;
-    
-    const data = await response.json();
-    return data;
+    if (response.ok) {
+      const data = await response.json();
+      return data;
+    }
   } catch (error) {
-    console.warn(`Failed to fetch comments for ${permalink}:`, (error as Error).message);
+    // Fall through to HTML fallback
+  }
+  
+  // Fallback: Use Jina.ai to get thread HTML and parse comments
+  try {
+    const jinaUrl = `https://r.jina.ai/https://reddit.com${permalink}`;
+    const jinaHeaders = {
+      'User-Agent': 'Mozilla/5.0 (compatible; StartupValidator/1.0)'
+    };
+    
+    const response = await fetch(jinaUrl, { headers: jinaHeaders });
+    if (response.ok) {
+      const htmlContent = await response.text();
+      return parseRedditThreadHTML(htmlContent, permalink);
+    }
+  } catch (error) {
+    console.warn(`Failed to fetch comments for ${permalink} via HTML:`, (error as Error).message);
+  }
+  
+  return null;
+}
+
+// Parse Reddit thread HTML to extract post content and comments
+function parseRedditThreadHTML(htmlContent: string, permalink: string) {
+  try {
+    const lines = htmlContent.split('\n');
+    const comments: any[] = [];
+    let postText = '';
+    
+    let inCommentSection = false;
+    let currentComment = '';
+    let commentScore = 0;
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      
+      // Extract post content (selftext)
+      if (!postText && line.length > 50 && line.length < 1000 && 
+          !line.includes('comment') && !line.includes('ago') && 
+          !line.includes('reddit') && line.match(/[.!?]$/)) {
+        postText = line;
+      }
+      
+      // Look for comment patterns
+      if (line.includes('points') || line.includes('point')) {
+        const scoreMatch = line.match(/(\d+)\s+(points?|point)/);
+        if (scoreMatch) {
+          commentScore = parseInt(scoreMatch[1]);
+          inCommentSection = true;
+        }
+      }
+      
+      // Extract comment text
+      if (inCommentSection && line.length > 20 && line.length < 500 && 
+          !line.includes('reply') && !line.includes('permalink') && 
+          !line.includes('ago') && line.match(/[.!?]$/)) {
+        
+        if (currentComment && comments.length < 5) {
+          comments.push({
+            data: {
+              body: currentComment,
+              score: commentScore,
+              created_utc: Date.now() / 1000
+            }
+          });
+        }
+        
+        currentComment = line;
+        commentScore = 0;
+        inCommentSection = false;
+      }
+    }
+    
+    // Add the last comment
+    if (currentComment && comments.length < 5) {
+      comments.push({
+        data: {
+          body: currentComment,
+          score: commentScore,
+          created_utc: Date.now() / 1000
+        }
+      });
+    }
+    
+    return [{
+      data: {
+        children: [{
+          data: {
+            selftext: postText,
+            permalink: permalink
+          }
+        }]
+      }
+    }, {
+      data: {
+        children: comments
+      }
+    }];
+    
+  } catch (error) {
+    console.warn(`Error parsing thread HTML for ${permalink}:`, (error as Error).message);
     return null;
   }
 }
@@ -349,7 +546,15 @@ Focus on Reddit discussions, G2 reviews, Amazon reviews, Trustpilot, Product Hun
                     const commentsData = await fetchRedditComments(postData.permalink, 10);
                     
                     let comments: any[] = [];
+                    let threadSelftext = '';
+                    
                     if (commentsData && Array.isArray(commentsData) && commentsData.length > 1) {
+                      // Extract thread selftext from HTML fallback data
+                      if (commentsData[0] && commentsData[0].data && commentsData[0].data.children && 
+                          commentsData[0].data.children[0] && commentsData[0].data.children[0].data) {
+                        threadSelftext = commentsData[0].data.children[0].data.selftext || '';
+                      }
+                      
                       const commentsSection = commentsData[1];
                       if (commentsSection.data && commentsSection.data.children) {
                         comments = commentsSection.data.children
@@ -370,7 +575,7 @@ Focus on Reddit discussions, G2 reviews, Amazon reviews, Trustpilot, Product Hun
                     
                     const processedPost = {
                       title: postData.title || '',
-                      text: postData.selftext || '',
+                      text: threadSelftext || postData.selftext || '',
                       score: postData.score || 0,
                       num_comments: postData.num_comments || 0,
                       created: new Date((postData.created_utc || 0) * 1000).toISOString(),
