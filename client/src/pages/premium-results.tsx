@@ -1821,7 +1821,7 @@ function MarketSizingSection({ analysisId, industry }: { analysisId: string, ind
 export default function PremiumResults() {
   const [location, setLocation] = useLocation()
   const [analysisResults, setAnalysisResults] = useState<AnalysisResponse | null>(null)
-  const [analysisId] = useState(() => `analysis_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`)
+  const [analysisId, setAnalysisId] = useState<string | null>(null)
   const { isPremium, setShowUpgradeModal } = usePremium()
 
   useEffect(() => {
@@ -1834,9 +1834,21 @@ export default function PremiumResults() {
       try {
         const parsedResults = JSON.parse(savedResults)
         setAnalysisResults(parsedResults)
+        // Extract the analysisId from the stored results
+        if (parsedResults.analysisId) {
+          setAnalysisId(parsedResults.analysisId)
+        } else {
+          // Fallback: generate an ID if not present
+          setAnalysisId(`analysis_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`)
+        }
       } catch (error) {
         console.error('Failed to parse analysis results:', error)
+        // Fallback ID in case of error
+        setAnalysisId(`analysis_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`)
       }
+    } else {
+      // No saved results, generate a fallback ID
+      setAnalysisId(`analysis_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`)
     }
 
     // Cleanup title on unmount
@@ -1852,7 +1864,7 @@ export default function PremiumResults() {
     }
   }, [isPremium, setShowUpgradeModal])
 
-  if (!analysisResults) {
+  if (!analysisResults || !analysisId) {
     return (
       <div className="min-h-screen bg-background">
         <div className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
