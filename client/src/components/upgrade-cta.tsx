@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Crown, Sparkles, ArrowRight } from "lucide-react";
 import { usePremium } from "@/contexts/premium-context";
+import { useLocation } from "wouter";
 
 interface UpgradeCTAProps {
   variant?: "button" | "card" | "inline";
@@ -16,14 +17,15 @@ export function UpgradeCTA({
   size = "md",
   feature 
 }: UpgradeCTAProps) {
-  const { isPremium, isDevelopment, setShowUpgradeModal } = usePremium();
+  const { isPremium, isDevelopment } = usePremium();
+  const [, setLocation] = useLocation();
 
   // In development, show CTA even for premium users (for testing)
   // In production, only show for non-premium users
   if (isPremium && !isDevelopment) return null;
 
   const handleUpgrade = () => {
-    setShowUpgradeModal(true);
+    setLocation('/premium-results');
   };
 
   if (variant === "card") {
@@ -45,7 +47,7 @@ export function UpgradeCTA({
         </div>
         <Button 
           size="sm" 
-          className="w-full bg-gradient-to-r from-[hsl(var(--hot-pink))] to-[hsl(var(--bright-orange))] hover:from-[hsl(var(--hot-pink))]/90 hover:to-[hsl(var(--bright-orange))]/90 text-white"
+          className="w-full bg-gradient-to-r from-[hsl(var(--hot-pink))] to-[hsl(var(--bright-orange))] text-white"
           onClick={handleUpgrade}
           data-testid="button-upgrade-card"
         >
@@ -81,7 +83,7 @@ export function UpgradeCTA({
   return (
     <Button 
       size={buttonSizes[size]}
-      className="bg-gradient-to-r from-[hsl(var(--hot-pink))] to-[hsl(var(--bright-orange))] hover:from-[hsl(var(--hot-pink))]/90 hover:to-[hsl(var(--bright-orange))]/90 text-white font-medium"
+      className="bg-gradient-to-r from-[hsl(var(--hot-pink))] to-[hsl(var(--bright-orange))] text-white font-medium"
       onClick={handleUpgrade}
       data-testid="button-upgrade-primary"
     >

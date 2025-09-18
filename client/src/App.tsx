@@ -11,6 +11,7 @@ import { PremiumProvider } from "@/contexts/premium-context";
 import { UpgradeModal } from "@/components/upgrade-modal";
 import Dashboard from "@/pages/dashboard";
 import Results from "@/pages/results";
+import PremiumResults from "@/pages/premium-results";
 import Analytics from "@/pages/analytics";
 import NotFound from "@/pages/not-found";
 
@@ -19,6 +20,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Dashboard} />
       <Route path="/results" component={Results} />
+      <Route path="/premium-results" component={PremiumResults} />
       <Route path="/analytics" component={Analytics} />
       <Route path="/trends" component={Dashboard} />
       <Route path="/pain-points" component={Dashboard} />
