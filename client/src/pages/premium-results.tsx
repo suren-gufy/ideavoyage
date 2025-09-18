@@ -12,39 +12,39 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { usePremium } from "@/contexts/premium-context"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { apiRequest } from "@/lib/queryClient"
-import type { AnalysisResponse, KeywordIntelligence, FinancialModel, CompetitorMatrix, GtmPlan, MarketSizing } from "@shared/schema"
+import type { AnalysisResponse, KeywordIntelligence, FinancialModel, CompetitorMatrix, GtmPlan, MarketSizing, KeywordGenerationInput, FinancialModelInput, CompetitorAnalysisInput, GtmPlanInput, MarketSizingInput } from "@shared/schema"
 
 // Premium analytics data fetching
 const usePremiumKeywords = (analysisId: string, enabled: boolean) => {
-  return useQuery({
+  return useQuery<KeywordIntelligence>({
     queryKey: ['/api/premium/keywords', analysisId],
     enabled: enabled && !!analysisId,
   })
 }
 
 const usePremiumFinancial = (analysisId: string, enabled: boolean) => {
-  return useQuery({
+  return useQuery<FinancialModel>({
     queryKey: ['/api/premium/financial-model', analysisId], 
     enabled: enabled && !!analysisId,
   })
 }
 
 const usePremiumCompetitors = (analysisId: string, enabled: boolean) => {
-  return useQuery({
+  return useQuery<CompetitorMatrix>({
     queryKey: ['/api/premium/competitors', analysisId],
     enabled: enabled && !!analysisId,
   })
 }
 
 const usePremiumGtm = (analysisId: string, enabled: boolean) => {
-  return useQuery({
+  return useQuery<GtmPlan>({
     queryKey: ['/api/premium/gtm-plan', analysisId],
     enabled: enabled && !!analysisId,
   })
 }
 
 const usePremiumMarket = (analysisId: string, enabled: boolean) => {
-  return useQuery({
+  return useQuery<MarketSizing>({
     queryKey: ['/api/premium/market-sizing', analysisId],
     enabled: enabled && !!analysisId,
   })
@@ -53,8 +53,8 @@ const usePremiumMarket = (analysisId: string, enabled: boolean) => {
 // Generate premium data mutations
 const useGenerateKeywords = () => {
   const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (data: any) => apiRequest('/api/premium/keywords', 'POST', data),
+  return useMutation<KeywordIntelligence, Error, KeywordGenerationInput>({
+    mutationFn: (data: KeywordGenerationInput) => apiRequest('/api/premium/keywords', 'POST', data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/premium/keywords', variables.analysisId] })
     }
@@ -63,8 +63,8 @@ const useGenerateKeywords = () => {
 
 const useGenerateFinancial = () => {
   const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (data: any) => apiRequest('/api/premium/financial-model', 'POST', data),
+  return useMutation<FinancialModel, Error, FinancialModelInput>({
+    mutationFn: (data: FinancialModelInput) => apiRequest('/api/premium/financial-model', 'POST', data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/premium/financial-model', variables.analysisId] })
     }
@@ -73,8 +73,8 @@ const useGenerateFinancial = () => {
 
 const useGenerateCompetitors = () => {
   const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (data: any) => apiRequest('/api/premium/competitors', 'POST', data),
+  return useMutation<CompetitorMatrix, Error, CompetitorAnalysisInput>({
+    mutationFn: (data: CompetitorAnalysisInput) => apiRequest('/api/premium/competitors', 'POST', data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/premium/competitors', variables.analysisId] })
     }
@@ -83,8 +83,8 @@ const useGenerateCompetitors = () => {
 
 const useGenerateGtm = () => {
   const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (data: any) => apiRequest('/api/premium/gtm-plan', 'POST', data),
+  return useMutation<GtmPlan, Error, GtmPlanInput>({
+    mutationFn: (data: GtmPlanInput) => apiRequest('/api/premium/gtm-plan', 'POST', data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/premium/gtm-plan', variables.analysisId] })
     }
@@ -93,8 +93,8 @@ const useGenerateGtm = () => {
 
 const useGenerateMarket = () => {
   const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (data: any) => apiRequest('/api/premium/market-sizing', 'POST', data),
+  return useMutation<MarketSizing, Error, MarketSizingInput>({
+    mutationFn: (data: MarketSizingInput) => apiRequest('/api/premium/market-sizing', 'POST', data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/premium/market-sizing', variables.analysisId] })
     }
@@ -142,7 +142,35 @@ function KeywordIntelligenceSection({ analysisId, industry, primaryKeyword }: { 
     )
   }
 
-  const keywordData: KeywordIntelligence | undefined = keywordsQuery.data as KeywordIntelligence | undefined
+  if (keywordsQuery.isError) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5" />
+            Keyword Intelligence
+            <Badge variant="secondary">Premium</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center text-muted-foreground py-8">
+            <p>Failed to load keyword data. Please try again.</p>
+            <Button 
+              onClick={() => keywordsQuery.refetch()} 
+              variant="outline" 
+              size="sm" 
+              className="mt-4"
+              data-testid="button-retry-keywords"
+            >
+              Retry
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  const keywordData = keywordsQuery.data
 
   return (
     <Card>
@@ -159,19 +187,19 @@ function KeywordIntelligenceSection({ analysisId, industry, primaryKeyword }: { 
             {/* Overview Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="text-center">
-                <div className="text-2xl font-bold text-primary">{keywordData.totalSearchVolume?.toLocaleString() || 'N/A'}</div>
+                <div className="text-2xl font-bold text-primary" data-testid="text-total-search-volume">{keywordData.totalSearchVolume?.toLocaleString() || 'N/A'}</div>
                 <div className="text-sm text-muted-foreground">Total Search Volume</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">${keywordData.avgCpc?.toFixed(2) || '0.00'}</div>
+                <div className="text-2xl font-bold text-green-600 dark:text-green-400" data-testid="text-avg-cpc">${keywordData.avgCpc?.toFixed(2) || '0.00'}</div>
                 <div className="text-sm text-muted-foreground">Avg CPC</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-orange-600">{Math.round(keywordData.avgDifficulty || 0)}/100</div>
+                <div className="text-2xl font-bold text-orange-600 dark:text-orange-400" data-testid="text-avg-difficulty">{Math.round(keywordData.avgDifficulty || 0)}/100</div>
                 <div className="text-sm text-muted-foreground">Avg Difficulty</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">{keywordData.locale || 'US'}</div>
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400" data-testid="text-locale">{keywordData.locale || 'US'}</div>
                 <div className="text-sm text-muted-foreground">Market</div>
               </div>
             </div>
@@ -180,10 +208,10 @@ function KeywordIntelligenceSection({ analysisId, industry, primaryKeyword }: { 
 
             {/* Keyword Tables */}
             <Tabs defaultValue="primary" className="w-full">
-              <TabsList>
-                <TabsTrigger value="primary">Primary Keywords</TabsTrigger>
-                <TabsTrigger value="longtail">Long-tail Keywords</TabsTrigger>
-                <TabsTrigger value="competitor">Competitor Keywords</TabsTrigger>
+              <TabsList data-testid="tabs-keyword-types">
+                <TabsTrigger value="primary" data-testid="tab-primary-keywords">Primary Keywords</TabsTrigger>
+                <TabsTrigger value="longtail" data-testid="tab-longtail-keywords">Long-tail Keywords</TabsTrigger>
+                <TabsTrigger value="competitor" data-testid="tab-competitor-keywords">Competitor Keywords</TabsTrigger>
               </TabsList>
               
               <TabsContent value="primary">
@@ -980,6 +1008,9 @@ export default function PremiumResults() {
   const { isPremium, setShowUpgradeModal } = usePremium()
 
   useEffect(() => {
+    // Set document title for SEO
+    document.title = "Premium Business Intelligence Report - Reddit Idea Validator"
+    
     // Get results from sessionStorage (set by dashboard after analysis)
     const savedResults = sessionStorage.getItem('analysis-results')
     if (savedResults) {
@@ -989,6 +1020,11 @@ export default function PremiumResults() {
       } catch (error) {
         console.error('Failed to parse analysis results:', error)
       }
+    }
+
+    // Cleanup title on unmount
+    return () => {
+      document.title = "Reddit Idea Validator - Discover Market Opportunities"
     }
   }, [])
 

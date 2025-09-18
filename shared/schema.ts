@@ -400,7 +400,45 @@ export const premiumAnalysisSchema = z.object({
   expiresAt: z.string(),
 });
 
+// Premium API Input Schemas
+export const keywordGenerationInputSchema = z.object({
+  analysisId: z.string(),
+  primaryKeyword: z.string(),
+  industry: z.string(),
+  targetAudience: z.string(),
+  locale: z.string().default("US"),
+});
+
+export const financialModelInputSchema = z.object({
+  analysisId: z.string(),
+}).merge(financialInputsSchema);
+
+export const competitorAnalysisInputSchema = z.object({
+  analysisId: z.string(),
+  industry: z.string(),
+  targetKeyword: z.string(),
+});
+
+export const gtmPlanInputSchema = z.object({
+  analysisId: z.string(),
+  productDescription: z.string(),
+  targetAudience: z.string(),
+  budget: z.number(),
+});
+
+export const marketSizingInputSchema = z.object({
+  analysisId: z.string(),
+  industry: z.string(),
+  productCategory: z.string(),
+  geography: z.string(),
+});
+
 // Type exports for all premium schemas
+export type KeywordGenerationInput = z.infer<typeof keywordGenerationInputSchema>;
+export type FinancialModelInput = z.infer<typeof financialModelInputSchema>;
+export type CompetitorAnalysisInput = z.infer<typeof competitorAnalysisInputSchema>;
+export type GtmPlanInput = z.infer<typeof gtmPlanInputSchema>;
+export type MarketSizingInput = z.infer<typeof marketSizingInputSchema>;
 export type SourceRef = z.infer<typeof sourceRefSchema>;
 export type KeywordTrendPoint = z.infer<typeof keywordTrendPointSchema>;
 export type KeywordIntelligenceItem = z.infer<typeof keywordIntelligenceItemSchema>;
