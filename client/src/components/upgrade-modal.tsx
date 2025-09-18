@@ -102,7 +102,7 @@ export function UpgradeModal() {
               className="flex-1 bg-gradient-to-r from-[hsl(var(--hot-pink))] to-[hsl(var(--bright-orange))] hover:from-[hsl(var(--hot-pink))]/90 hover:to-[hsl(var(--bright-orange))]/90 text-white font-medium" 
               onClick={handleUpgrade}
               data-testid="button-upgrade-premium"
-              disabled={!isDevelopment}
+              disabled={false}
             >
               <Sparkles className="h-4 w-4 mr-2" />
               {isDevelopment ? 'Upgrade to Premium' : 'Proceed to Payment'}

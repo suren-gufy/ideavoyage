@@ -17,12 +17,14 @@ import { MethodologyModal } from "@/components/methodology-modal"
 import { PremiumBadge } from "@/components/premium-badge"
 import { UpgradeCTA } from "@/components/upgrade-cta"
 import { Card, CardHeader, CardContent } from "@/components/ui/card"
-import { Crown, Sparkles, TrendingUp } from "lucide-react"
+import { Crown, Sparkles, TrendingUp, Lock } from "lucide-react"
+import { usePremium } from "@/contexts/premium-context"
 import type { AnalysisResponse } from "@shared/schema"
 
 export default function Results() {
   const [location, setLocation] = useLocation()
   const [analysisResults, setAnalysisResults] = useState<AnalysisResponse | null>(null)
+  const { isPremium } = usePremium()
 
   useEffect(() => {
     // Get results from sessionStorage (set by dashboard after analysis)
@@ -167,7 +169,22 @@ export default function Results() {
               <h2 className="text-2xl font-bold">Market Sentiment Analysis</h2>
               <PremiumBadge />
             </div>
-            <SentimentChart sentimentData={analysisResults.sentiment_data} />
+            {isPremium ? (
+              <SentimentChart sentimentData={analysisResults.sentiment_data} />
+            ) : (
+              <Card className="relative">
+                <CardContent className="p-8 text-center space-y-4">
+                  <div className="mx-auto w-12 h-12 bg-gradient-to-r from-[hsl(var(--hot-pink))]/10 to-[hsl(var(--bright-orange))]/10 rounded-full flex items-center justify-center">
+                    <Lock className="h-6 w-6 text-[hsl(var(--hot-pink))]" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-lg">Detailed Sentiment Analysis</h3>
+                    <p className="text-muted-foreground">Unlock comprehensive sentiment breakdown, emotional triggers, and user satisfaction metrics</p>
+                  </div>
+                  <UpgradeCTA text="Unlock for $39" size="sm" />
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Pain Points */}
@@ -210,7 +227,22 @@ export default function Results() {
               <h2 className="text-2xl font-bold">Google Trends Analysis</h2>
               <PremiumBadge />
             </div>
-            <GoogleTrends trends={analysisResults.google_trends} />
+            {isPremium ? (
+              <GoogleTrends trends={analysisResults.google_trends} />
+            ) : (
+              <Card className="relative">
+                <CardContent className="p-8 text-center space-y-4">
+                  <div className="mx-auto w-12 h-12 bg-gradient-to-r from-[hsl(var(--hot-pink))]/10 to-[hsl(var(--bright-orange))]/10 rounded-full flex items-center justify-center">
+                    <Lock className="h-6 w-6 text-[hsl(var(--hot-pink))]" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-lg">Google Trends & Search Volume</h3>
+                    <p className="text-muted-foreground">Access real search volumes, trend data, and seasonal patterns for your market</p>
+                  </div>
+                  <UpgradeCTA text="Unlock for $39" size="sm" />
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Ideal Customer Profile */}
@@ -231,7 +263,22 @@ export default function Results() {
               <h2 className="text-2xl font-bold">Financial Risk Assessment</h2>
               <PremiumBadge />
             </div>
-            <FinancialRisks risks={analysisResults.financial_risks} />
+            {isPremium ? (
+              <FinancialRisks risks={analysisResults.financial_risks} />
+            ) : (
+              <Card className="relative">
+                <CardContent className="p-8 text-center space-y-4">
+                  <div className="mx-auto w-12 h-12 bg-gradient-to-r from-[hsl(var(--hot-pink))]/10 to-[hsl(var(--bright-orange))]/10 rounded-full flex items-center justify-center">
+                    <Lock className="h-6 w-6 text-[hsl(var(--hot-pink))]" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-lg">Financial Risk Analysis</h3>
+                    <p className="text-muted-foreground">Get detailed financial projections, ROI calculations, and risk mitigation strategies</p>
+                  </div>
+                  <UpgradeCTA text="Unlock for $39" size="sm" />
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Competitors Analysis */}
@@ -240,7 +287,22 @@ export default function Results() {
               <h2 className="text-2xl font-bold">Competitive Landscape</h2>
               <PremiumBadge />
             </div>
-            <CompetitorsAnalysis competitors={analysisResults.competitors} />
+            {isPremium ? (
+              <CompetitorsAnalysis competitors={analysisResults.competitors} />
+            ) : (
+              <Card className="relative">
+                <CardContent className="p-8 text-center space-y-4">
+                  <div className="mx-auto w-12 h-12 bg-gradient-to-r from-[hsl(var(--hot-pink))]/10 to-[hsl(var(--bright-orange))]/10 rounded-full flex items-center justify-center">
+                    <Lock className="h-6 w-6 text-[hsl(var(--hot-pink))]" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-lg">Complete Competitor Analysis</h3>
+                    <p className="text-muted-foreground">Full competitive matrix, pricing analysis, and market positioning insights</p>
+                  </div>
+                  <UpgradeCTA text="Unlock for $39" size="sm" />
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Revenue Models */}
@@ -249,7 +311,22 @@ export default function Results() {
               <h2 className="text-2xl font-bold">Revenue Strategy & Models</h2>
               <PremiumBadge />
             </div>
-            <RevenueModels revenueModels={analysisResults.revenue_models} />
+            {isPremium ? (
+              <RevenueModels revenueModels={analysisResults.revenue_models} />
+            ) : (
+              <Card className="relative">
+                <CardContent className="p-8 text-center space-y-4">
+                  <div className="mx-auto w-12 h-12 bg-gradient-to-r from-[hsl(var(--hot-pink))]/10 to-[hsl(var(--bright-orange))]/10 rounded-full flex items-center justify-center">
+                    <Lock className="h-6 w-6 text-[hsl(var(--hot-pink))]" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-lg">Revenue Models & Monetization</h3>
+                    <p className="text-muted-foreground">Comprehensive revenue strategies, pricing models, and monetization frameworks</p>
+                  </div>
+                  <UpgradeCTA text="Unlock for $39" size="sm" />
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Final Premium CTA */}

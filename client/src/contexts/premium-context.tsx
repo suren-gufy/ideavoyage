@@ -61,14 +61,16 @@ export function PremiumProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (isDevelopment) {
-      // In development, use localStorage with dev override
+      // In development, start with free experience unless user has upgraded
       const premiumAccess = localStorage.getItem('premium_access');
       const forceNonPremium = localStorage.getItem('force_non_premium') === 'true';
       
       if (forceNonPremium) {
         setIsPremium(false);
+      } else if (premiumAccess === 'true') {
+        setIsPremium(true); // User has manually upgraded
       } else {
-        setIsPremium(true); // Auto-premium in development
+        setIsPremium(false); // Start with free experience
       }
     } else {
       // In production, trust server response only
