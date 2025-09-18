@@ -300,24 +300,83 @@ Produce a JSON response with the following structure for a structured startup va
   "app_ideas": [
     {"title": "app idea", "description": "description based on research", "market_validation": "high", "difficulty": "medium"}
   ],
+  "google_trends": [
+    {"keyword": "relevant keyword", "trend_direction": "rising|stable|declining", "interest_level": 75, "related_queries": ["related query 1", "related query 2"]}
+  ],
+  "icp": {
+    "demographics": {
+      "age_range": "25-45",
+      "gender": "Mixed/Male/Female", 
+      "income_level": "Middle to High income",
+      "education": "College Graduate"
+    },
+    "psychographics": {
+      "interests": ["interest 1", "interest 2", "interest 3"],
+      "values": ["value 1", "value 2"],
+      "lifestyle": "lifestyle description"
+    },
+    "behavioral": {
+      "pain_points": ["behavioral pain 1", "behavioral pain 2"],
+      "preferred_channels": ["channel 1", "channel 2"],
+      "buying_behavior": "buying behavior description"
+    }
+  },
+  "problem_statements": [
+    {
+      "problem": "Clear problem statement based on research",
+      "impact": "Impact description with business implications",
+      "evidence": ["evidence 1 from research", "evidence 2 from research"],
+      "market_size": "Market size assessment"
+    }
+  ],
+  "financial_risks": [
+    {
+      "risk_type": "Risk category (e.g., Market Risk, Operational Risk)",
+      "severity": "high|medium|low",
+      "description": "Detailed risk description",
+      "mitigation_strategy": "Strategy to mitigate this risk"
+    }
+  ],
+  "competitors": [
+    {
+      "name": "Competitor name",
+      "description": "What they do and their positioning",
+      "strengths": ["strength 1", "strength 2"],
+      "weaknesses": ["weakness 1", "weakness 2"],
+      "market_share": "Market share assessment",
+      "pricing_model": "Their pricing approach"
+    }
+  ],
+  "revenue_models": [
+    {
+      "model_type": "Revenue model name (e.g., SaaS, Freemium, Marketplace)",
+      "description": "How this model works for this business",
+      "pros": ["advantage 1", "advantage 2"],
+      "cons": ["disadvantage 1", "disadvantage 2"],
+      "implementation_difficulty": "easy|medium|hard",
+      "potential_revenue": "Revenue potential assessment"
+    }
+  ],
   "market_interest_level": "high|medium|low",
   "total_posts_analyzed": ${totalSearches},
   "overall_score": 7.5,
-  "viability_score": 6.8,
-  "paid_sections": {
-    "exact_demand_numbers": "Table: keyword, volume, CPC, KD (requires paid access)",
-    "competitor_matrix": "6–8 competitors with pricing, differentiators, sentiment (requires paid access)",
-    "cac_ltv_simulator": "ARPU assumptions, gross margin, CAC band, payback months (requires paid access)",
-    "gtm_plan": "90-day GTM plan, channels, messages, experiments, risks, kill criteria (requires paid access)"
-  }
+  "viability_score": 6.8
 }
 
 RULES:
 - Every claim must link to evidence from research_json
-- If research_json lacks data for a section, say "Insufficient data—collect X by doing Y"
+- Generate REAL analysis for ALL sections including google_trends, icp, problem_statements, financial_risks, competitors, and revenue_models
+- For google_trends: analyze actual search patterns and trending keywords related to the startup idea
+- For icp: create detailed customer profiles based on the target market research
+- For problem_statements: extract real problems from user feedback and research data
+- For financial_risks: identify genuine business and financial risks for this specific startup
+- For competitors: analyze real competitors found in research or similar market players
+- For revenue_models: suggest appropriate revenue models for this specific business type
+- If research_json lacks data for a section, generate realistic insights based on the startup idea and industry knowledge
 - Tone: pragmatic, no hype; bullets over paragraphs
 - Use real quotes and insights from the research data when available
-- ${hasResearchData ? 'Base analysis on the comprehensive research data provided' : 'Generate realistic insights based on the startup idea and market knowledge'}`;
+- ${hasResearchData ? 'Base analysis on the comprehensive research data provided' : 'Generate realistic insights based on the startup idea and market knowledge'}
+- DO NOT use placeholder or demo data - generate authentic analysis for each section`;
 
       // Using gpt-4o-mini for reliable API compatibility
       const completion = await openai.chat.completions.create({
