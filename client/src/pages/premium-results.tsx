@@ -1297,20 +1297,6 @@ function LaunchRoadmapSection({ analysisId, industry }: { analysisId: string, in
     </Card>
   )
 }
-                <div key={index} className="p-4 border rounded-lg hover-elevate">
-                  <h5 className="font-medium mb-2">{milestone.phase}</h5>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-muted-foreground">
-                    {milestone.items.map((item, itemIndex) => (
-                      <div key={itemIndex}>• {item}</div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
   )
 }
 
