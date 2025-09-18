@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useToast } from '@/hooks/use-toast';
 
 interface PremiumContextType {
   isPremium: boolean;
@@ -17,8 +18,11 @@ export function PremiumProvider({ children }: { children: React.ReactNode }) {
   const isDevelopment = import.meta.env.MODE === 'development';
   const [isPremium, setIsPremium] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const { toast } = useToast();
 
   const upgradeToPremium = () => {
+    console.log('📦 upgradeToPremium called!', { isDevelopment, currentIsPremium: isPremium });
+    
     // Only allow upgrade in development mode
     if (!isDevelopment) {
       console.warn('Premium upgrade blocked in production - requires payment flow');
@@ -26,10 +30,19 @@ export function PremiumProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     
+    console.log('💾 Setting premium access...');
     // For development - instant premium access without payment
     setIsPremium(true);
     setShowUpgradeModal(false);
     localStorage.setItem('premium_access', 'true');
+    console.log('✅ Premium access granted!', { newPremiumStatus: true });
+    
+    // Show success notification
+    toast({
+      title: '🚀 Premium Activated!',
+      description: 'You now have access to all premium features. Scroll down to see your unlocked content.',
+      duration: 5000
+    });
   };
 
   const setDevPremiumOverride = (forceNonPremium: boolean) => {

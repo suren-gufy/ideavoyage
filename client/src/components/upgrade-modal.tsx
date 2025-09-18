@@ -8,6 +8,8 @@ export function UpgradeModal() {
   const { showUpgradeModal, setShowUpgradeModal, upgradeToPremium, isDevelopment } = usePremium();
 
   const handleUpgrade = () => {
+    console.log('🔥 Upgrade button clicked!', { isDevelopment });
+    
     if (!isDevelopment) {
       // In production, would redirect to payment processor
       alert('This would redirect to payment processor in production');
@@ -15,8 +17,10 @@ export function UpgradeModal() {
       return;
     }
     
+    console.log('🚀 Calling upgradeToPremium...');
     // For development - bypass payment
     upgradeToPremium();
+    console.log('✅ upgradeToPremium called');
   };
 
   return (
