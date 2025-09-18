@@ -3,7 +3,6 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { analyzeIdeaSchema, analysisResponseSchema, type AnalysisResponse } from "../shared/schema";
 import OpenAI from 'openai';
-import snoowrap from 'snoowrap';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -17,22 +16,72 @@ if (!perplexityApiKey) {
   console.log("Perplexity API initialized successfully");
 }
 
-// Initialize Reddit API
-let reddit: snoowrap | null = null;
-try {
-  if (process.env.REDDIT_CLIENT_ID && process.env.REDDIT_CLIENT_SECRET && process.env.REDDIT_REFRESH_TOKEN) {
-    reddit = new snoowrap({
-      userAgent: process.env.REDDIT_USER_AGENT || 'startup-validator:v1.0.0 (by /u/startup-validator)',
-      clientId: process.env.REDDIT_CLIENT_ID,
-      clientSecret: process.env.REDDIT_CLIENT_SECRET,
-      refreshToken: process.env.REDDIT_REFRESH_TOKEN
-    });
-    console.log("Reddit API initialized successfully");
-  } else {
-    console.warn("Reddit API credentials not found - will use research APIs only");
+// Reddit public JSON API - with multiple fallback strategies
+async function fetchRedditData(subreddit: string, limit: number = 25) {
+  const userAgents = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15',
+    'web:startup-validator:1.0.0 (educational research)'
+  ];
+  
+  const urls = [
+    `https://www.reddit.com/r/${subreddit}/hot.json?limit=${limit}`,
+    `https://old.reddit.com/r/${subreddit}/hot.json?limit=${limit}`,
+    `https://reddit.com/r/${subreddit}.json?limit=${limit}`
+  ];
+  
+  for (const userAgent of userAgents) {
+    for (const url of urls) {
+      try {
+        const headers = {
+          'User-Agent': userAgent,
+          'Accept': 'application/json',
+          'Accept-Language': 'en-US,en;q=0.9',
+          'Cache-Control': 'no-cache'
+        };
+        
+        const response = await fetch(url, { headers });
+        if (response.ok) {
+          const data = await response.json();
+          return data;
+        }
+        
+        if (response.status === 429) {
+          console.log(`Rate limited on r/${subreddit}, waiting...`);
+          await new Promise(resolve => setTimeout(resolve, 3000));
+          continue;
+        }
+        
+      } catch (error) {
+        continue; // Try next combination
+      }
+    }
+    
+    // Wait between user agent attempts
+    await new Promise(resolve => setTimeout(resolve, 1000));
   }
-} catch (error) {
-  console.warn("Failed to initialize Reddit API:", error);
+  
+  console.warn(`All Reddit access methods failed for r/${subreddit}`);
+  return null;
+}
+
+async function fetchRedditComments(permalink: string, limit: number = 10) {
+  const url = `https://reddit.com${permalink}.json?limit=${limit}`;
+  const headers = {
+    'User-Agent': 'web:startup-validator:1.0.0 (educational research)',
+    'Accept': 'application/json'
+  };
+  
+  try {
+    const response = await fetch(url, { headers });
+    if (!response.ok) return null;
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.warn(`Failed to fetch comments for ${permalink}:`, (error as Error).message);
+    return null;
+  }
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -262,66 +311,93 @@ Focus on Reddit discussions, G2 reviews, Amazon reviews, Trustpilot, Product Hun
       let redditPosts: any[] = [];
       let totalRedditPosts = 0;
       
-      if (reddit && subreddits.length > 0) {
+      if (subreddits.length > 0) {
         console.log(`[${requestId}] Starting Reddit scraping from subreddits:`, subreddits);
         
         try {
-          // Search each subreddit for relevant posts
+          // Search each subreddit for relevant posts using public JSON API
           for (const subredditName of subreddits.slice(0, 3)) { // Limit to 3 subreddits to avoid rate limits
             const cleanSubreddit = subredditName.replace('r/', '');
             try {
               console.log(`[${requestId}] Scraping r/${cleanSubreddit}...`);
               
-              // Search for posts related to the startup idea keywords
-              const searchTerms = keywords.slice(0, 2).join(' '); // Use top 2 keywords
+              // Get hot posts from the subreddit
+              const subredditData = await fetchRedditData(cleanSubreddit, 25);
               
-              const posts = await reddit.getSubreddit(cleanSubreddit)
-                .search({
-                  query: searchTerms,
-                  time: 'year',
-                  sort: 'relevance'
-                });
-              
-              // Get first 10 posts to avoid rate limits
-              const limitedPosts = posts.slice(0, 10);
-              
-              for (let i = 0; i < limitedPosts.length && totalRedditPosts < 15; i++) {
-                const post = limitedPosts[i];
-                try {
-                  // Get post details and comments
-                  const fullPost = await reddit.getSubmission(post.id);
-                  await fullPost.expandReplies({limit: 5, depth: 1}); // Get top 5 comments
+              if (subredditData && subredditData.data && subredditData.data.children) {
+                const posts = subredditData.data.children;
+                
+                // Filter posts that are relevant to our keywords
+                const relevantPosts = posts.filter((post: any) => {
+                  const postData = post.data;
+                  const title = (postData.title || '').toLowerCase();
+                  const text = (postData.selftext || '').toLowerCase();
+                  const combinedText = title + ' ' + text;
                   
-                  const postData = {
-                    title: fullPost.title,
-                    text: fullPost.selftext || '',
-                    score: fullPost.score,
-                    num_comments: fullPost.num_comments,
-                    created: new Date(fullPost.created_utc * 1000).toISOString(),
-                    url: `https://reddit.com${fullPost.permalink}`,
-                    subreddit: cleanSubreddit,
-                    comments: fullPost.comments.slice(0, 5).map((comment: any) => ({
-                      text: comment.body,
-                      score: comment.score,
-                      created: new Date(comment.created_utc * 1000).toISOString()
-                    })).filter((comment: any) => comment.text && comment.text !== '[deleted]' && comment.text !== '[removed]')
-                  };
+                  // Check if post contains any of our keywords
+                  return keywords.some((keyword: string) => 
+                    combinedText.includes(keyword.toLowerCase())
+                  );
+                }).slice(0, 10); // Limit to 10 relevant posts per subreddit
+                
+                for (const post of relevantPosts) {
+                  if (totalRedditPosts >= 15) break;
                   
-                  redditPosts.push(postData);
-                  totalRedditPosts++;
-                  
-                } catch (postError) {
-                  console.warn(`[${requestId}] Error processing post ${post.id}:`, postError);
+                  const postData = post.data;
+                  try {
+                    // Get post comments using public JSON API
+                    const commentsData = await fetchRedditComments(postData.permalink, 10);
+                    
+                    let comments: any[] = [];
+                    if (commentsData && Array.isArray(commentsData) && commentsData.length > 1) {
+                      const commentsSection = commentsData[1];
+                      if (commentsSection.data && commentsSection.data.children) {
+                        comments = commentsSection.data.children
+                          .slice(0, 5) // Top 5 comments
+                          .map((comment: any) => ({
+                            text: comment.data.body || '',
+                            score: comment.data.score || 0,
+                            created: new Date((comment.data.created_utc || 0) * 1000).toISOString()
+                          }))
+                          .filter((comment: any) => 
+                            comment.text && 
+                            comment.text !== '[deleted]' && 
+                            comment.text !== '[removed]' &&
+                            comment.text.trim().length > 0
+                          );
+                      }
+                    }
+                    
+                    const processedPost = {
+                      title: postData.title || '',
+                      text: postData.selftext || '',
+                      score: postData.score || 0,
+                      num_comments: postData.num_comments || 0,
+                      created: new Date((postData.created_utc || 0) * 1000).toISOString(),
+                      url: `https://reddit.com${postData.permalink}`,
+                      subreddit: cleanSubreddit,
+                      comments: comments
+                    };
+                    
+                    redditPosts.push(processedPost);
+                    totalRedditPosts++;
+                    
+                    // Rate limiting between posts
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                  } catch (postError) {
+                    console.warn(`[${requestId}] Error processing post:`, (postError as Error).message);
+                  }
                 }
               }
               
               if (totalRedditPosts >= 15) break;
               
               // Rate limiting - wait between subreddit requests
-              await new Promise(resolve => setTimeout(resolve, 1000));
+              await new Promise(resolve => setTimeout(resolve, 1500));
               
             } catch (subredditError) {
-              console.warn(`[${requestId}] Error scraping r/${cleanSubreddit}:`, subredditError);
+              console.warn(`[${requestId}] Error scraping r/${cleanSubreddit}:`, (subredditError as Error).message);
             }
           }
           
@@ -344,15 +420,10 @@ ${post.comments.map((comment: any) => `- ${comment.text.substring(0, 150)}${comm
           }
           
         } catch (error) {
-          console.warn(`[${requestId}] Reddit scraping failed:`, error);
+          console.warn(`[${requestId}] Reddit scraping failed:`, (error as Error).message);
         }
       } else {
-        console.log(`[${requestId}] Reddit API not available or no subreddits - skipping Reddit scraping`);
-      }
-      
-      // If Reddit scraping failed but we still have subreddits, log this
-      if (reddit && subreddits.length > 0 && redditPosts.length === 0) {
-        console.log(`[${requestId}] Reddit scraping failed but continuing with other research data`);
+        console.log(`[${requestId}] No subreddits identified - skipping Reddit scraping`);
       }
 
       // Step 3: Use 'Startup Validation Expert' prompt to synthesize Perplexity + Reddit results
