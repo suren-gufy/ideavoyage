@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { analyzeIdeaSchema, analysisResponseSchema, type AnalysisResponse } from "../shared/schema";
 import OpenAI from 'openai';
+import snoowrap from 'snoowrap';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -14,6 +15,24 @@ if (!perplexityApiKey) {
   console.warn("PERPLEXITY_API_KEY not found - research will be limited");
 } else {
   console.log("Perplexity API initialized successfully");
+}
+
+// Initialize Reddit API
+let reddit: snoowrap | null = null;
+try {
+  if (process.env.REDDIT_CLIENT_ID && process.env.REDDIT_CLIENT_SECRET && process.env.REDDIT_REFRESH_TOKEN) {
+    reddit = new snoowrap({
+      userAgent: process.env.REDDIT_USER_AGENT || 'startup-validator:v1.0.0 (by /u/startup-validator)',
+      clientId: process.env.REDDIT_CLIENT_ID,
+      clientSecret: process.env.REDDIT_CLIENT_SECRET,
+      refreshToken: process.env.REDDIT_REFRESH_TOKEN
+    });
+    console.log("Reddit API initialized successfully");
+  } else {
+    console.warn("Reddit API credentials not found - will use research APIs only");
+  }
+} catch (error) {
+  console.warn("Failed to initialize Reddit API:", error);
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -238,8 +257,107 @@ Focus on Reddit discussions, G2 reviews, Amazon reviews, Trustpilot, Product Hun
         console.log(`[${requestId}] Perplexity API not available - using AI-generated insights`);
       }
 
-      // Step 3: Use 'Startup Validation Expert' prompt to synthesize Perplexity results
+      // Step 2.5: Scrape real Reddit data for authentic sentiment analysis
+      let redditData = "";
+      let redditPosts: any[] = [];
+      let totalRedditPosts = 0;
+      
+      if (reddit && subreddits.length > 0) {
+        console.log(`[${requestId}] Starting Reddit scraping from subreddits:`, subreddits);
+        
+        try {
+          // Search each subreddit for relevant posts
+          for (const subredditName of subreddits.slice(0, 3)) { // Limit to 3 subreddits to avoid rate limits
+            const cleanSubreddit = subredditName.replace('r/', '');
+            try {
+              console.log(`[${requestId}] Scraping r/${cleanSubreddit}...`);
+              
+              // Search for posts related to the startup idea keywords
+              const searchTerms = keywords.slice(0, 2).join(' '); // Use top 2 keywords
+              
+              const posts = await reddit.getSubreddit(cleanSubreddit)
+                .search({
+                  query: searchTerms,
+                  time: 'year',
+                  sort: 'relevance'
+                });
+              
+              // Get first 10 posts to avoid rate limits
+              const limitedPosts = posts.slice(0, 10);
+              
+              for (let i = 0; i < limitedPosts.length && totalRedditPosts < 15; i++) {
+                const post = limitedPosts[i];
+                try {
+                  // Get post details and comments
+                  const fullPost = await reddit.getSubmission(post.id);
+                  await fullPost.expandReplies({limit: 5, depth: 1}); // Get top 5 comments
+                  
+                  const postData = {
+                    title: fullPost.title,
+                    text: fullPost.selftext || '',
+                    score: fullPost.score,
+                    num_comments: fullPost.num_comments,
+                    created: new Date(fullPost.created_utc * 1000).toISOString(),
+                    url: `https://reddit.com${fullPost.permalink}`,
+                    subreddit: cleanSubreddit,
+                    comments: fullPost.comments.slice(0, 5).map((comment: any) => ({
+                      text: comment.body,
+                      score: comment.score,
+                      created: new Date(comment.created_utc * 1000).toISOString()
+                    })).filter((comment: any) => comment.text && comment.text !== '[deleted]' && comment.text !== '[removed]')
+                  };
+                  
+                  redditPosts.push(postData);
+                  totalRedditPosts++;
+                  
+                } catch (postError) {
+                  console.warn(`[${requestId}] Error processing post ${post.id}:`, postError);
+                }
+              }
+              
+              if (totalRedditPosts >= 15) break;
+              
+              // Rate limiting - wait between subreddit requests
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              
+            } catch (subredditError) {
+              console.warn(`[${requestId}] Error scraping r/${cleanSubreddit}:`, subredditError);
+            }
+          }
+          
+          if (redditPosts.length > 0) {
+            redditData = `REAL REDDIT SENTIMENT DATA (${redditPosts.length} posts analyzed):
+
+${redditPosts.map(post => `
+SUBREDDIT: r/${post.subreddit}
+TITLE: ${post.title}
+TEXT: ${post.text.substring(0, 300)}${post.text.length > 300 ? '...' : ''}
+SCORE: ${post.score} | COMMENTS: ${post.num_comments}
+URL: ${post.url}
+TOP COMMENTS:
+${post.comments.map((comment: any) => `- ${comment.text.substring(0, 150)}${comment.text.length > 150 ? '...' : ''} (Score: ${comment.score})`).join('\n')}
+`).join('\n---\n')}`;
+            
+            console.log(`[${requestId}] Reddit scraping completed: ${redditPosts.length} posts from ${subreddits.length} subreddits`);
+          } else {
+            console.log(`[${requestId}] No relevant Reddit posts found`);
+          }
+          
+        } catch (error) {
+          console.warn(`[${requestId}] Reddit scraping failed:`, error);
+        }
+      } else {
+        console.log(`[${requestId}] Reddit API not available or no subreddits - skipping Reddit scraping`);
+      }
+      
+      // If Reddit scraping failed but we still have subreddits, log this
+      if (reddit && subreddits.length > 0 && redditPosts.length === 0) {
+        console.log(`[${requestId}] Reddit scraping failed but continuing with other research data`);
+      }
+
+      // Step 3: Use 'Startup Validation Expert' prompt to synthesize Perplexity + Reddit results
       const hasResearchData = researchData.length > 0;
+      const hasRedditData = redditData.length > 0;
       
       // Create structured research JSON for the validation expert
       const researchJson = {
@@ -249,11 +367,15 @@ Focus on Reddit discussions, G2 reviews, Amazon reviews, Trustpilot, Product Hun
           target_audience: validatedData.targetAudience || "General users",
           time_range: "Last 12 months",
           total_queries: totalSearches,
-          data_quality: hasResearchData ? "comprehensive" : "limited"
+          reddit_posts_analyzed: totalRedditPosts,
+          data_quality: hasResearchData && hasRedditData ? "comprehensive" : hasResearchData || hasRedditData ? "partial" : "limited"
         },
         research_findings: researchData,
+        reddit_sentiment_data: redditData,
         keywords: keywords,
-        citations: hasResearchData ? `Based on ${totalSearches} Perplexity research queries` : "AI-generated insights"
+        citations: hasResearchData || hasRedditData ? 
+          `Based on ${totalSearches} research queries + ${totalRedditPosts} real Reddit posts` : 
+          "AI-generated insights"
       };
 
       const validationExpertPrompt = `You are a startup validation expert. Using ONLY the evidence and citations from research_json, produce a comprehensive validation report.
@@ -365,7 +487,9 @@ Produce a JSON response with the following structure for a structured startup va
 
 RULES:
 - Every claim must link to evidence from research_json
-- Generate REAL analysis for ALL sections including google_trends, icp, problem_statements, financial_risks, competitors, and revenue_models
+- Generate REAL analysis for ALL sections including sentiment_data, google_trends, icp, problem_statements, financial_risks, competitors, and revenue_models
+- For sentiment_data: ${hasRedditData ? `ANALYZE THE REAL REDDIT DATA in reddit_sentiment_data to calculate genuine sentiment percentages. Count the positive, negative, and neutral sentiments from the ${totalRedditPosts} actual Reddit posts and comments provided` : 'Generate realistic sentiment based on the research data'}
+- For pain_points: Extract real user quotes from the Reddit posts and comments in reddit_sentiment_data
 - For google_trends: analyze actual search patterns and trending keywords related to the startup idea
 - For icp: create detailed customer profiles based on the target market research
 - For problem_statements: extract real problems from user feedback and research data
@@ -375,8 +499,8 @@ RULES:
 - If research_json lacks data for a section, generate realistic insights based on the startup idea and industry knowledge
 - Tone: pragmatic, no hype; bullets over paragraphs
 - Use real quotes and insights from the research data when available
-- ${hasResearchData ? 'Base analysis on the comprehensive research data provided' : 'Generate realistic insights based on the startup idea and market knowledge'}
-- DO NOT use placeholder or demo data - generate authentic analysis for each section`;
+- ${hasResearchData || hasRedditData ? `Base analysis on the ${hasRedditData ? 'real Reddit data + ' : ''}comprehensive research data provided` : 'Generate realistic insights based on the startup idea and market knowledge'}
+- DO NOT use placeholder or demo data - generate authentic analysis for each section based on the real data provided`;
 
       // Using gpt-4o-mini for reliable API compatibility
       const completion = await openai.chat.completions.create({
