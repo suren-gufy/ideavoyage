@@ -1297,8 +1297,6 @@ function LaunchRoadmapSection({ analysisId, industry }: { analysisId: string, in
     </Card>
   )
 }
-  )
-}
 
 
 // Enhanced Competitor Matrix Component
