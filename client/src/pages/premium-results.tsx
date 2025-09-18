@@ -12,7 +12,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { usePremium } from "@/contexts/premium-context"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { apiRequest } from "@/lib/queryClient"
-import type { AnalysisResponse, KeywordIntelligence, FinancialModel, CompetitorMatrix, GtmPlan, MarketSizing, KeywordGenerationInput, FinancialModelInput, CompetitorAnalysisInput, GtmPlanInput, MarketSizingInput } from "@shared/schema"
+import type { AnalysisResponse, KeywordIntelligence, RedditAnalysis, CustomerIntelligence, FinancialProjections, TechnologyOperations, LegalRegulatory, LaunchRoadmap, CompetitorMatrix, GtmPlan, MarketSizing, KeywordGenerationInput, CompetitorAnalysisInput, GtmPlanInput, MarketSizingInput } from "@shared/schema"
 
 // Premium analytics data fetching
 const usePremiumKeywords = (analysisId: string, enabled: boolean) => {
@@ -22,12 +22,6 @@ const usePremiumKeywords = (analysisId: string, enabled: boolean) => {
   })
 }
 
-const usePremiumFinancial = (analysisId: string, enabled: boolean) => {
-  return useQuery<FinancialModel>({
-    queryKey: ['/api/premium/financial-model', analysisId], 
-    enabled: enabled && !!analysisId,
-  })
-}
 
 const usePremiumCompetitors = (analysisId: string, enabled: boolean) => {
   return useQuery<CompetitorMatrix>({
@@ -50,6 +44,49 @@ const usePremiumMarket = (analysisId: string, enabled: boolean) => {
   })
 }
 
+// New premium analytics queries
+const usePremiumReddit = (analysisId: string, enabled: boolean) => {
+  return useQuery<RedditAnalysis>({
+    queryKey: ['/api/premium/reddit-analysis', analysisId],
+    enabled: enabled && !!analysisId,
+  })
+}
+
+const usePremiumCustomer = (analysisId: string, enabled: boolean) => {
+  return useQuery<CustomerIntelligence>({
+    queryKey: ['/api/premium/customer-intelligence', analysisId],
+    enabled: enabled && !!analysisId,
+  })
+}
+
+const usePremiumFinancialProjections = (analysisId: string, enabled: boolean) => {
+  return useQuery<FinancialProjections>({
+    queryKey: ['/api/premium/financial-projections', analysisId],
+    enabled: enabled && !!analysisId,
+  })
+}
+
+const usePremiumTechnology = (analysisId: string, enabled: boolean) => {
+  return useQuery<TechnologyOperations>({
+    queryKey: ['/api/premium/technology-operations', analysisId],
+    enabled: enabled && !!analysisId,
+  })
+}
+
+const usePremiumLegal = (analysisId: string, enabled: boolean) => {
+  return useQuery<LegalRegulatory>({
+    queryKey: ['/api/premium/legal-regulatory', analysisId],
+    enabled: enabled && !!analysisId,
+  })
+}
+
+const usePremiumRoadmap = (analysisId: string, enabled: boolean) => {
+  return useQuery<LaunchRoadmap>({
+    queryKey: ['/api/premium/launch-roadmap', analysisId],
+    enabled: enabled && !!analysisId,
+  })
+}
+
 // Generate premium data mutations
 const useGenerateKeywords = () => {
   const queryClient = useQueryClient()
@@ -61,15 +98,6 @@ const useGenerateKeywords = () => {
   })
 }
 
-const useGenerateFinancial = () => {
-  const queryClient = useQueryClient()
-  return useMutation<FinancialModel, Error, FinancialModelInput>({
-    mutationFn: (data: FinancialModelInput) => apiRequest('/api/premium/financial-model', 'POST', data),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/premium/financial-model', variables.analysisId] })
-    }
-  })
-}
 
 const useGenerateCompetitors = () => {
   const queryClient = useQueryClient()
@@ -97,6 +125,67 @@ const useGenerateMarket = () => {
     mutationFn: (data: MarketSizingInput) => apiRequest('/api/premium/market-sizing', 'POST', data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/premium/market-sizing', variables.analysisId] })
+    }
+  })
+}
+
+// New premium section mutations
+const useGenerateReddit = () => {
+  const queryClient = useQueryClient()
+  return useMutation<RedditAnalysis, Error, { analysisId: string, subreddits: string[], keywords: string[], industry: string }>({
+    mutationFn: (data) => apiRequest('/api/premium/reddit-analysis', 'POST', data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/premium/reddit-analysis', variables.analysisId] })
+    }
+  })
+}
+
+const useGenerateCustomer = () => {
+  const queryClient = useQueryClient()
+  return useMutation<CustomerIntelligence, Error, { analysisId: string, industry: string, targetAudience?: string }>({
+    mutationFn: (data) => apiRequest('/api/premium/customer-intelligence', 'POST', data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/premium/customer-intelligence', variables.analysisId] })
+    }
+  })
+}
+
+const useGenerateFinancialProjections = () => {
+  const queryClient = useQueryClient()
+  return useMutation<FinancialProjections, Error, { analysisId: string, industry: string, revenueModel?: string }>({
+    mutationFn: (data) => apiRequest('/api/premium/financial-projections', 'POST', data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/premium/financial-projections', variables.analysisId] })
+    }
+  })
+}
+
+const useGenerateTechnology = () => {
+  const queryClient = useQueryClient()
+  return useMutation<TechnologyOperations, Error, { analysisId: string, productType?: string, scale?: string }>({
+    mutationFn: (data) => apiRequest('/api/premium/technology-operations', 'POST', data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/premium/technology-operations', variables.analysisId] })
+    }
+  })
+}
+
+const useGenerateLegal = () => {
+  const queryClient = useQueryClient()
+  return useMutation<LegalRegulatory, Error, { analysisId: string, businessType?: string, jurisdiction?: string }>({
+    mutationFn: (data) => apiRequest('/api/premium/legal-regulatory', 'POST', data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/premium/legal-regulatory', variables.analysisId] })
+    }
+  })
+}
+
+const useGenerateRoadmap = () => {
+  const queryClient = useQueryClient()
+  return useMutation<LaunchRoadmap, Error, { analysisId: string, industry: string, targetLaunchDate?: string }>({
+    mutationFn: (data) => apiRequest('/api/premium/launch-roadmap', 'POST', data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/premium/launch-roadmap', variables.analysisId] })
     }
   })
 }
@@ -338,140 +427,431 @@ function KeywordIntelligenceSection({ analysisId, industry, primaryKeyword }: { 
   )
 }
 
-// Financial Modeling Component
-function FinancialModelingSection({ analysisId }: { analysisId: string }) {
+// Reddit Analysis Component
+function RedditAnalysisSection({ analysisId, subreddits, keywords, industry }: { analysisId: string, subreddits: string[], keywords: string[], industry: string }) {
   const { isPremium } = usePremium()
-  const [inputs, setInputs] = useState({
-    arpu: 50,
-    grossMargin: 0.8,
-    monthlyChurn: 0.05,
-    cacChannels: [
-      { channel: "Google Ads", cac: 120, conversionRate: 0.02, monthlySpend: 5000 },
-      { channel: "Facebook Ads", cac: 80, conversionRate: 0.015, monthlySpend: 3000 },
-      { channel: "Content Marketing", cac: 40, conversionRate: 0.01, monthlySpend: 2000 }
-    ],
-    totalMonthlyBudget: 10000,
-    timeHorizonMonths: 24
-  })
+  const redditQuery = usePremiumReddit(analysisId, isPremium)
+  const generateReddit = useGenerateReddit()
 
-  const financialQuery = usePremiumFinancial(analysisId, isPremium)
-  const generateFinancial = useGenerateFinancial()
+  useEffect(() => {
+    if (isPremium && analysisId && subreddits?.length && keywords?.length && !redditQuery.data && !redditQuery.isLoading) {
+      generateReddit.mutate({
+        analysisId,
+        subreddits,
+        keywords,
+        industry
+      })
+    }
+  }, [isPremium, analysisId, subreddits, keywords, industry])
 
-  const handleGenerateModel = () => {
-    generateFinancial.mutate({
-      analysisId,
-      ...inputs
-    })
+  if (!isPremium || !subreddits || !keywords) return null
+
+  if (redditQuery.isLoading || generateReddit.isPending) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Globe className="h-5 w-5" />
+            Deep Reddit Analysis & Community Insights
+            <Badge variant="secondary">Premium</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="animate-pulse">
+              <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+              <div className="h-4 bg-muted rounded w-1/2"></div>
+            </div>
+            <div className="text-sm text-muted-foreground">Analyzing Reddit discussions and community sentiment...</div>
+          </div>
+        </CardContent>
+      </Card>
+    )
   }
 
-  if (!isPremium) return null
+  if (redditQuery.error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Globe className="h-5 w-5" />
+            Deep Reddit Analysis & Community Insights
+            <Badge variant="secondary">Premium</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-sm text-muted-foreground">Failed to load Reddit analysis</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
 
-  const financialData: FinancialModel | undefined = financialQuery.data as FinancialModel | undefined
+  const redditData = redditQuery.data
+  if (!redditData) return null
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Calculator className="h-5 w-5" />
-          CAC/LTV Financial Simulator & Payback Analysis
+          <Globe className="h-5 w-5" />
+          Deep Reddit Analysis & Community Insights
           <Badge variant="secondary">Premium</Badge>
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
-          {/* Input Controls */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border rounded-lg bg-muted/20">
-            <div>
-              <label className="text-sm font-medium">ARPU (Monthly)</label>
-              <input 
-                type="number" 
-                value={inputs.arpu} 
-                onChange={(e) => setInputs({...inputs, arpu: Number(e.target.value)})}
-                className="w-full p-2 border rounded mt-1"
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium">Gross Margin</label>
-              <input 
-                type="number" 
-                step="0.01"
-                max="1"
-                min="0"
-                value={inputs.grossMargin} 
-                onChange={(e) => setInputs({...inputs, grossMargin: Number(e.target.value)})}
-                className="w-full p-2 border rounded mt-1"
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium">Monthly Churn Rate</label>
-              <input 
-                type="number" 
-                step="0.01"
-                max="1"
-                min="0"
-                value={inputs.monthlyChurn} 
-                onChange={(e) => setInputs({...inputs, monthlyChurn: Number(e.target.value)})}
-                className="w-full p-2 border rounded mt-1"
-              />
+          {/* Subreddit Insights */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {redditData.subredditInsights?.slice(0, 3).map((subreddit, index) => (
+              <Card key={index} className="border-l-4 border-l-blue-500">
+                <CardContent className="p-4">
+                  <h4 className="font-semibold text-blue-600 dark:text-blue-400">r/{subreddit.name}</h4>
+                  <div className="space-y-2 mt-2">
+                    <div className="text-sm">
+                      <span className="font-medium">Members: </span>
+                      <span data-testid={`text-${subreddit.name}-members`}>{subreddit.members}</span>
+                    </div>
+                    <div className="text-sm">
+                      <span className="font-medium">Engagement: </span>
+                      <span className={`${subreddit.engagement === 'High' ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400'}`}>
+                        {subreddit.engagement}
+                      </span>
+                    </div>
+                    <div className="text-sm">
+                      <span className="font-medium">Relevance: </span>
+                      <span className="text-sm">{subreddit.relevanceScore}/10</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Trending Discussions */}
+          <div className="space-y-4">
+            <h4 className="font-semibold">High-Impact Discussions & Pain Points</h4>
+            <div className="space-y-4">
+              {redditData.topDiscussions?.slice(0, 3).map((discussion, index) => (
+                <div key={index} className="p-4 border rounded-lg hover-elevate">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-2 flex-1">
+                      <h5 className="font-medium">{discussion.title}</h5>
+                      <p className="text-sm text-muted-foreground">"{discussion.excerpt}"</p>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <span>↑ {discussion.upvotes} upvotes</span>
+                        <span>💬 {discussion.comments} comments</span>
+                        <span>📊 {discussion.sentiment} sentiment</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-          
-          <Button onClick={handleGenerateModel} disabled={generateFinancial.isPending} data-testid="button-generate-financial">
-            {generateFinancial.isPending ? "Calculating..." : "Generate Financial Model"}
-          </Button>
 
-          {financialData && (
-            <div className="space-y-6">
-              {/* Key Metrics */}
+          {/* Pain Points Analysis */}
+          {redditData.painPointsAnalysis && (
+            <div className="space-y-4">
+              <h4 className="font-semibold">Identified Pain Points from Real Users</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {redditData.painPointsAnalysis.slice(0, 4).map((painPoint, index) => (
+                  <div key={index} className="p-4 bg-muted rounded-lg">
+                    <h5 className="font-medium text-sm">{painPoint.category}</h5>
+                    <p className="text-sm text-muted-foreground mt-1">{painPoint.description}</p>
+                    <div className="text-xs text-muted-foreground mt-2">
+                      Mentioned {painPoint.frequency} times across discussions
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+// Customer Intelligence Section
+function CustomerIntelligenceSection({ analysisId, industry }: { analysisId: string, industry: string }) {
+  const { isPremium } = usePremium()
+  const customerQuery = usePremiumCustomer(analysisId, isPremium)
+  const generateCustomer = useGenerateCustomer()
+
+  useEffect(() => {
+    if (isPremium && analysisId && industry && !customerQuery.data && !customerQuery.isLoading) {
+      generateCustomer.mutate({
+        analysisId,
+        industry,
+        targetAudience: "General market"
+      })
+    }
+  }, [isPremium, analysisId, industry])
+
+  if (!isPremium) return null
+
+  if (customerQuery.isLoading || generateCustomer.isPending) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Customer Intelligence & Persona Analysis
+            <Badge variant="secondary">Premium</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="animate-pulse">
+              <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+              <div className="h-4 bg-muted rounded w-1/2"></div>
+            </div>
+            <div className="text-sm text-muted-foreground">Analyzing customer personas and behavior patterns...</div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (customerQuery.error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Customer Intelligence & Persona Analysis
+            <Badge variant="secondary">Premium</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-sm text-muted-foreground">Failed to load customer intelligence</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  const customerData = customerQuery.data
+  if (!customerData) return null
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Users className="h-5 w-5" />
+          Customer Intelligence & Persona Analysis
+          <Badge variant="secondary">Premium</Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-6">
+          {/* Customer Personas */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {customerData.personas?.slice(0, 2).map((persona, index) => (
+              <Card key={index} className={`border-l-4 ${index === 0 ? 'border-l-green-500' : 'border-l-blue-500'}`}>
+                <CardHeader>
+                  <h4 className={`font-semibold ${index === 0 ? 'text-green-600 dark:text-green-400' : 'text-blue-600 dark:text-blue-400'}`}>
+                    {persona.type}: {persona.title}
+                  </h4>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div><strong>Demographics:</strong> {persona.demographics}</div>
+                  <div><strong>Pain Points:</strong> {persona.painPoints?.join(', ')}</div>
+                  <div><strong>Goals:</strong> {persona.goals?.join(', ')}</div>
+                  <div><strong>Buying Triggers:</strong> {persona.buyingTriggers?.join(', ')}</div>
+                  <div><strong>Decision Timeline:</strong> {persona.decisionTimeline}</div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Behavioral Analysis */}
+          {customerData.behaviorAnalysis && (
+            <div className="space-y-4">
+              <h4 className="font-semibold">Customer Behavior Analysis</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="p-4 bg-muted rounded-lg">
+                  <h5 className="font-medium">Purchasing Patterns</h5>
+                  <p className="text-sm text-muted-foreground mt-2">{customerData.behaviorAnalysis.purchasingPatterns}</p>
+                </div>
+                <div className="p-4 bg-muted rounded-lg">
+                  <h5 className="font-medium">Communication Preferences</h5>
+                  <p className="text-sm text-muted-foreground mt-2">{customerData.behaviorAnalysis.communicationPreferences}</p>
+                </div>
+                <div className="p-4 bg-muted rounded-lg">
+                  <h5 className="font-medium">Decision Factors</h5>
+                  <p className="text-sm text-muted-foreground mt-2">{customerData.behaviorAnalysis.decisionFactors}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Market Segments */}
+          {customerData.marketSegments && (
+            <div className="space-y-4">
+              <h4 className="font-semibold">Market Segmentation</h4>
+              <div className="space-y-3">
+                {customerData.marketSegments.map((segment, index) => (
+                  <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <h5 className="font-medium">{segment.name}</h5>
+                      <p className="text-sm text-muted-foreground">{segment.description}</p>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold">{segment.marketShare}%</div>
+                      <div className="text-sm text-muted-foreground">Market Share</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+// Financial Projections Section (not simulator)
+function FinancialProjectionsSection({ analysisId, industry }: { analysisId: string, industry: string }) {
+  const { isPremium } = usePremium()
+  const projectionsQuery = usePremiumFinancialProjections(analysisId, isPremium)
+  const generateProjections = useGenerateFinancialProjections()
+
+  useEffect(() => {
+    if (isPremium && analysisId && industry && !projectionsQuery.data && !projectionsQuery.isLoading) {
+      generateProjections.mutate({
+        analysisId,
+        industry,
+        revenueModel: "subscription"
+      })
+    }
+  }, [isPremium, analysisId, industry])
+
+  if (!isPremium) return null
+
+  if (projectionsQuery.isLoading || generateProjections.isPending) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <DollarSign className="h-5 w-5" />
+            Financial Projections & Revenue Model
+            <Badge variant="secondary">Premium</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="animate-pulse">
+              <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+              <div className="h-4 bg-muted rounded w-1/2"></div>
+            </div>
+            <div className="text-sm text-muted-foreground">Generating financial projections and revenue models...</div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (projectionsQuery.error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <DollarSign className="h-5 w-5" />
+            Financial Projections & Revenue Model
+            <Badge variant="secondary">Premium</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-sm text-muted-foreground">Failed to load financial projections</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  const projectionsData = projectionsQuery.data
+  if (!projectionsData) return null
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <DollarSign className="h-5 w-5" />
+          Financial Projections & Revenue Model
+          <Badge variant="secondary">Premium</Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-6">
+          {/* Revenue Model Options */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {projectionsData.revenueModels?.[0]?.tiers?.map((tier, index) => (
+              <Card key={index} className={`border-l-4 ${index === 0 ? 'border-l-green-500' : index === 1 ? 'border-l-blue-500' : 'border-l-purple-500'}`}>
+                <CardContent className="p-4">
+                  <h5 className={`font-semibold ${index === 0 ? 'text-green-600 dark:text-green-400' : index === 1 ? 'text-blue-600 dark:text-blue-400' : 'text-purple-600 dark:text-purple-400'}`}>
+                    {tier.name}
+                  </h5>
+                  <div className="space-y-2 mt-2 text-sm">
+                    <div>${tier.price}/{tier.billingCycle}</div>
+                    <div>Target: {Math.round(tier.targetPercentage * 100)}% of users</div>
+                    <div className="space-y-1">
+                      {tier.features?.slice(0, 3).map((feature, fIndex) => (
+                        <div key={fIndex} className="text-xs">{feature}</div>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* 3-Year Financial Outlook */}
+          <div className="space-y-4">
+            <h4 className="font-semibold">3-Year Growth Projections</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {projectionsData.projections?.slice(0, 3).map((year, index) => (
+                <div key={index} className="p-4 border rounded-lg text-center hover-elevate">
+                  <h5 className="font-semibold mb-2">Year {year.year}</h5>
+                  <div className="space-y-1 text-sm">
+                    <div>Customers: {year.customers?.toLocaleString()}</div>
+                    <div>Revenue: ${year.revenue?.toLocaleString()}</div>
+                    {year.growthRate && <div>Growth: {year.growthRate}x</div>}
+                    {year.churnRate && <div>Churn: {Math.round(year.churnRate * 100)}%</div>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Unit Economics */}
+          {projectionsData.unitEconomics && (
+            <div className="space-y-4">
+              <h4 className="font-semibold">Unit Economics</h4>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">${Math.round(financialData.ltv)}</div>
-                  <div className="text-sm text-muted-foreground">Customer LTV</div>
+                <div className="p-4 bg-muted rounded-lg text-center">
+                  <h5 className="font-medium">CAC</h5>
+                  <p className="text-2xl font-bold">${projectionsData.unitEconomics.customerAcquisitionCost}</p>
                 </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-red-600">${Math.round(financialData.blendedCac)}</div>
-                  <div className="text-sm text-muted-foreground">Blended CAC</div>
+                <div className="p-4 bg-muted rounded-lg text-center">
+                  <h5 className="font-medium">LTV</h5>
+                  <p className="text-2xl font-bold">${projectionsData.unitEconomics.lifetimeValue?.toLocaleString()}</p>
                 </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">{financialData.paybackMonths?.toFixed(1)} mo</div>
-                  <div className="text-sm text-muted-foreground">Payback Period</div>
+                <div className="p-4 bg-muted rounded-lg text-center">
+                  <h5 className="font-medium">LTV:CAC</h5>
+                  <p className="text-2xl font-bold">{projectionsData.unitEconomics.ltvCacRatio}:1</p>
                 </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-purple-600">{financialData.breakEvenMonth ? `Month ${financialData.breakEvenMonth}` : 'N/A'}</div>
-                  <div className="text-sm text-muted-foreground">Break Even</div>
-                </div>
-              </div>
-
-              {/* Financial Projections Chart */}
-              <div className="space-y-4">
-                <h4 className="font-semibold">24-Month Financial Projections</h4>
-                <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={financialData.projections?.slice(0, 24)}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" />
-                      <YAxis />
-                      <Tooltip formatter={(value: number) => [`$${value.toLocaleString()}`, ""]} />
-                      <Area type="monotone" dataKey="mrr" stackId="1" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
-                      <Area type="monotone" dataKey="cumulativeCashflow" stackId="2" stroke="#82ca9d" fill="#82ca9d" fillOpacity={0.6} />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-
-              {/* ROMI Analysis */}
-              <div className="space-y-4">
-                <h4 className="font-semibold">Return on Marketing Investment (ROMI)</h4>
-                <div className="h-48">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={financialData.romiProjections?.slice(0, 12)}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" />
-                      <YAxis />
-                      <Tooltip formatter={(value: number) => [`${(value * 100).toFixed(1)}%`, "ROMI"]} />
-                      <Bar dataKey="romi" fill="#8884d8" />
-                    </BarChart>
-                  </ResponsiveContainer>
+                <div className="p-4 bg-muted rounded-lg text-center">
+                  <h5 className="font-medium">Payback</h5>
+                  <p className="text-2xl font-bold">{projectionsData.unitEconomics.paybackPeriod} mo</p>
                 </div>
               </div>
             </div>
@@ -481,6 +861,459 @@ function FinancialModelingSection({ analysisId }: { analysisId: string }) {
     </Card>
   )
 }
+
+// Technology & Operations Section
+function TechnologyOperationsSection({ analysisId, industry }: { analysisId: string, industry: string }) {
+  const { isPremium } = usePremium()
+  const technologyQuery = usePremiumTechnology(analysisId, isPremium)
+  const generateTechnology = useGenerateTechnology()
+
+  useEffect(() => {
+    if (isPremium && analysisId && industry && !technologyQuery.data && !technologyQuery.isLoading) {
+      generateTechnology.mutate({
+        analysisId,
+        productType: "web_application",
+        scale: "startup"
+      })
+    }
+  }, [isPremium, analysisId, industry])
+
+  if (!isPremium) return null
+
+  if (technologyQuery.isLoading || generateTechnology.isPending) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Settings className="h-5 w-5" />
+            Technology Stack & Operations Plan
+            <Badge variant="secondary">Premium</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="animate-pulse">
+              <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+              <div className="h-4 bg-muted rounded w-1/2"></div>
+            </div>
+            <div className="text-sm text-muted-foreground">Analyzing technology stack and operations requirements...</div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (technologyQuery.error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Settings className="h-5 w-5" />
+            Technology Stack & Operations Plan
+            <Badge variant="secondary">Premium</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-sm text-muted-foreground">Failed to load technology operations plan</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  const technologyData = technologyQuery.data
+  if (!technologyData) return null
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Settings className="h-5 w-5" />
+          Technology Stack & Operations Plan
+          <Badge variant="secondary">Premium</Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-6">
+          {/* Tech Stack Recommendations */}
+          <div className="space-y-4">
+            <h4 className="font-semibold">Recommended Technology Stack</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {technologyData.technologyStack?.mvp?.concat(technologyData.technologyStack?.production || []).slice(0, 4).map((tech, index) => (
+                <Card key={index} className="border-l-4 border-l-blue-500">
+                  <CardContent className="p-4">
+                    <h5 className="font-semibold text-blue-600 dark:text-blue-400">{tech.category}</h5>
+                    <div className="space-y-2 mt-2">
+                      <div className="text-sm font-medium">{tech.technology}</div>
+                      <div className="text-sm text-muted-foreground">{tech.reasoning}</div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span>Cost: {tech.cost}</span>
+                        <span>Learning: {tech.learningCurve}</span>
+                      </div>
+                      {tech.alternatives && (
+                        <div className="text-xs text-muted-foreground">
+                          Alternatives: {tech.alternatives.join(', ')}
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+
+          {/* Team Requirements */}
+          {technologyData.team && (
+            <div className="space-y-4">
+              <h4 className="font-semibold">Team & Resource Planning</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 border rounded-lg">
+                  <h5 className="font-medium mb-3">MVP Phase</h5>
+                  <div className="space-y-2 text-sm">
+                    <div>Developers: {technologyData.team.mvpPhase?.developers}</div>
+                    <div>Designer: {technologyData.team.mvpPhase?.designer}</div>
+                    <div>Duration: {technologyData.team.mvpPhase?.duration}</div>
+                    <div className="font-medium">Monthly Cost: ${technologyData.team.mvpPhase?.monthlyCost?.toLocaleString()}</div>
+                  </div>
+                </div>
+                <div className="p-4 border rounded-lg">
+                  <h5 className="font-medium mb-3">Growth Phase</h5>
+                  <div className="space-y-2 text-sm">
+                    <div>Developers: {technologyData.team.growthPhase?.developers}</div>
+                    <div>Designer: {technologyData.team.growthPhase?.designer}</div>
+                    <div>DevOps: {technologyData.team.growthPhase?.devops}</div>
+                    <div>Duration: {technologyData.team.growthPhase?.duration}</div>
+                    <div className="font-medium">Monthly Cost: ${technologyData.team.growthPhase?.monthlyCost?.toLocaleString()}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Infrastructure */}
+          {technologyData.infrastructure && (
+            <div className="space-y-4">
+              <h4 className="font-semibold">Infrastructure & Hosting</h4>
+              <div className="p-4 border rounded-lg">
+                <h5 className="font-medium mb-2">Hosting Costs (AWS/Vercel)</h5>
+                <div className="grid grid-cols-4 gap-4 text-sm">
+                  <div className="text-center">
+                    <div className="font-bold">${technologyData.infrastructure.hosting?.estimatedCosts?.month1}</div>
+                    <div className="text-muted-foreground">Month 1</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-bold">${technologyData.infrastructure.hosting?.estimatedCosts?.month6}</div>
+                    <div className="text-muted-foreground">Month 6</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-bold">${technologyData.infrastructure.hosting?.estimatedCosts?.month12}</div>
+                    <div className="text-muted-foreground">Month 12</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-bold">${technologyData.infrastructure.hosting?.estimatedCosts?.month24}</div>
+                    <div className="text-muted-foreground">Month 24</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+// Legal & Regulatory Section
+function LegalRegulatorySection({ analysisId, industry }: { analysisId: string, industry: string }) {
+  const { isPremium } = usePremium()
+  const legalQuery = usePremiumLegal(analysisId, isPremium)
+  const generateLegal = useGenerateLegal()
+
+  useEffect(() => {
+    if (isPremium && analysisId && industry && !legalQuery.data && !legalQuery.isLoading) {
+      generateLegal.mutate({
+        analysisId,
+        businessType: "technology",
+        jurisdiction: "Delaware"
+      })
+    }
+  }, [isPremium, analysisId, industry])
+
+  if (!isPremium) return null
+
+  if (legalQuery.isLoading || generateLegal.isPending) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Scale className="h-5 w-5" />
+            Legal & Regulatory Requirements
+            <Badge variant="secondary">Premium</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="animate-pulse">
+              <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+              <div className="h-4 bg-muted rounded w-1/2"></div>
+            </div>
+            <div className="text-sm text-muted-foreground">Analyzing legal requirements and regulatory compliance...</div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (legalQuery.error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Scale className="h-5 w-5" />
+            Legal & Regulatory Requirements
+            <Badge variant="secondary">Premium</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-sm text-muted-foreground">Failed to load legal regulatory analysis</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  const legalData = legalQuery.data
+  if (!legalData) return null
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Scale className="h-5 w-5" />
+          Legal & Regulatory Requirements
+          <Badge variant="secondary">Premium</Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-6">
+          {/* Business Structure */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="border-l-4 border-l-blue-500">
+              <CardContent className="p-4">
+                <h5 className="font-semibold text-blue-600 dark:text-blue-400">Business Structure</h5>
+                <div className="space-y-2 mt-2 text-sm">
+                  <div>Recommended: {legalData.businessStructure?.recommended}</div>
+                  <div>Alternatives: {legalData.businessStructure?.alternatives?.join(', ')}</div>
+                  <div>Filing Cost: ${legalData.businessStructure?.incorporationCosts?.filing}</div>
+                  <div>Timeline: {legalData.businessStructure?.timeline}</div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="border-l-4 border-l-green-500">
+              <CardContent className="p-4">
+                <h5 className="font-semibold text-green-600 dark:text-green-400">Intellectual Property</h5>
+                <div className="space-y-2 mt-2 text-sm">
+                  <div>Trademarks: ${legalData.intellectualProperty?.trademarks?.companyName?.cost}</div>
+                  <div>Copyrights: ${legalData.intellectualProperty?.copyrights?.softwareCode?.cost}</div>
+                  <div>Timeline: {legalData.intellectualProperty?.trademarks?.companyName?.timeline}</div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="border-l-4 border-l-purple-500">
+              <CardContent className="p-4">
+                <h5 className="font-semibold text-purple-600 dark:text-purple-400">Compliance</h5>
+                <div className="space-y-2 mt-2 text-sm">
+                  <div>Privacy Policy: Required</div>
+                  <div>Terms of Service: Required</div>
+                  <div>GDPR: {legalData.compliance?.dataPrivacy?.[0]?.penalties}</div>
+                  <div>Cost: $800-3500</div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Legal Timeline */}
+          {legalData.timeline && (
+            <div className="space-y-4">
+              <h4 className="font-semibold">Legal Implementation Timeline</h4>
+              <div className="space-y-3">
+                {legalData.timeline.map((phase, index) => (
+                  <div key={index} className="p-4 border rounded-lg">
+                    <h5 className="font-medium">{phase.phase}</h5>
+                    <p className="text-sm text-muted-foreground mt-1">{phase.tasks?.join(', ')}</p>
+                    <div className="flex justify-between text-sm mt-2">
+                      <span>Cost: ${phase.cost?.toLocaleString()}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+// 12-Month Launch Roadmap Section
+function LaunchRoadmapSection({ analysisId, industry }: { analysisId: string, industry: string }) {
+  const { isPremium } = usePremium()
+  const roadmapQuery = usePremiumRoadmap(analysisId, isPremium)
+  const generateRoadmap = useGenerateRoadmap()
+
+  useEffect(() => {
+    if (isPremium && analysisId && industry && !roadmapQuery.data && !roadmapQuery.isLoading) {
+      generateRoadmap.mutate({
+        analysisId,
+        industry,
+        targetLaunchDate: undefined
+      })
+    }
+  }, [isPremium, analysisId, industry])
+
+  if (!isPremium) return null
+
+  if (roadmapQuery.isLoading || generateRoadmap.isPending) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            12-Month Launch Roadmap
+            <Badge variant="secondary">Premium</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="animate-pulse">
+              <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+              <div className="h-4 bg-muted rounded w-1/2"></div>
+            </div>
+            <div className="text-sm text-muted-foreground">Generating comprehensive 12-month launch roadmap...</div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (roadmapQuery.error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            12-Month Launch Roadmap
+            <Badge variant="secondary">Premium</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-sm text-muted-foreground">Failed to load launch roadmap</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  const roadmapData = roadmapQuery.data
+  if (!roadmapData) return null
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Calendar className="h-5 w-5" />
+          12-Month Launch Roadmap
+          <Badge variant="secondary">Premium</Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-6">
+          {/* Quarterly Breakdown */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {roadmapData.quarters?.map((quarter, index) => (
+              <Card key={index} className={`border-l-4 ${index === 0 ? 'border-l-blue-500' : index === 1 ? 'border-l-green-500' : index === 2 ? 'border-l-purple-500' : 'border-l-orange-500'}`}>
+                <CardHeader className="pb-2">
+                  <h4 className={`font-semibold ${index === 0 ? 'text-blue-600 dark:text-blue-400' : index === 1 ? 'text-green-600 dark:text-green-400' : index === 2 ? 'text-purple-600 dark:text-purple-400' : 'text-orange-600 dark:text-orange-400'}`}>
+                    {quarter.quarter}: {quarter.title}
+                  </h4>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="space-y-2 text-sm">
+                    {quarter.objectives?.slice(0, 4).map((objective, objIndex) => (
+                      <div key={objIndex} className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 bg-primary rounded-full" />
+                        {objective}
+                      </div>
+                    ))}
+                    <div className="text-xs text-muted-foreground mt-2">
+                      Budget: ${quarter.budget?.toLocaleString()}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Key Metrics Timeline */}
+          {roadmapData.metricTargets && (
+            <div className="space-y-4">
+              <h4 className="font-semibold">Growth Metrics Timeline</h4>
+              <div className="overflow-x-auto">
+                <table className="w-full border rounded-lg">
+                  <thead>
+                    <tr className="bg-muted">
+                      <th className="text-left p-3 font-medium">Metric</th>
+                      <th className="text-center p-3 font-medium">Month 3</th>
+                      <th className="text-center p-3 font-medium">Month 6</th>
+                      <th className="text-center p-3 font-medium">Month 9</th>
+                      <th className="text-center p-3 font-medium">Month 12</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {roadmapData.metricTargets.map((target, index) => (
+                      <tr key={index} className="border-t">
+                        <td className="p-3 font-medium">{target.metric}</td>
+                        <td className="p-3 text-center">{target.month3}</td>
+                        <td className="p-3 text-center">{target.month6}</td>
+                        <td className="p-3 text-center">{target.month9}</td>
+                        <td className="p-3 text-center">{target.month12}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+                <div key={index} className="p-4 border rounded-lg hover-elevate">
+                  <h5 className="font-medium mb-2">{milestone.phase}</h5>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-muted-foreground">
+                    {milestone.items.map((item, itemIndex) => (
+                      <div key={itemIndex}>• {item}</div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
 
 // Enhanced Competitor Matrix Component
 function CompetitorMatrixSection({ analysisId, industry }: { analysisId: string, industry: string }) {
@@ -1225,7 +2058,21 @@ export default function PremiumResults() {
             primaryKeyword={primaryKeyword} 
           />
 
-          <FinancialModelingSection analysisId={analysisId} />
+          <RedditAnalysisSection 
+            analysisId={analysisId} 
+            subreddits={analysisResults.subreddits || []} 
+            keywords={analysisResults.keywords || []} 
+          />
+
+          <CustomerIntelligenceSection analysisId={analysisId} industry={industry} />
+
+          <FinancialProjectionsSection analysisId={analysisId} industry={industry} />
+
+          <TechnologyOperationsSection analysisId={analysisId} industry={industry} />
+
+          <LegalRegulatorySection analysisId={analysisId} industry={industry} />
+
+          <LaunchRoadmapSection analysisId={analysisId} industry={industry} />
 
           <CompetitorMatrixSection analysisId={analysisId} industry={industry} />
 

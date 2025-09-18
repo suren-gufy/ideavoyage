@@ -179,43 +179,278 @@ export const keywordIntelligenceSchema = z.object({
   locale: z.string().default("US"),
 });
 
-// Financial Modeling - CAC/LTV Simulator
-export const cacByChannelSchema = z.object({
-  channel: z.string(),
-  cac: z.number(),
-  conversionRate: z.number().min(0).max(1),
-  monthlySpend: z.number(),
+// Reddit Analysis - Comprehensive subreddit insights
+export const subredditInsightSchema = z.object({
+  subreddit: z.string(),
+  members: z.number(),
+  dailyPosts: z.number(),
+  engagementRate: z.number(),
+  topTopics: z.array(z.string()),
+  sentiment: z.number().min(-1).max(1),
+  keyInfluencers: z.array(z.string()),
+  trending: z.boolean(),
 });
 
-export const financialInputsSchema = z.object({
-  arpu: z.number().min(0), // Average Revenue Per User
-  grossMargin: z.number().min(0).max(1), // Percentage as decimal
-  monthlyChurn: z.number().min(0).max(1), // Monthly churn rate
-  cacChannels: z.array(cacByChannelSchema),
-  totalMonthlyBudget: z.number(),
-  timeHorizonMonths: z.number().min(12).max(60),
+export const redditDiscussionSchema = z.object({
+  title: z.string(),
+  subreddit: z.string(),
+  upvotes: z.number(),
+  comments: z.number(),
+  url: z.string(),
+  summary: z.string(),
+  painPoints: z.array(z.string()),
+  solutions: z.array(z.string()),
 });
 
-export const financialProjectionSchema = z.object({
-  month: z.number(),
-  newCustomers: z.number(),
-  totalCustomers: z.number(),
-  mrr: z.number(), // Monthly Recurring Revenue
-  ltv: z.number(), // Customer Lifetime Value
-  cashflow: z.number(),
-  cumulativeCashflow: z.number(),
+export const redditAnalysisSchema = z.object({
+  subredditInsights: z.array(subredditInsightSchema),
+  trendingDiscussions: z.array(redditDiscussionSchema),
+  overallSentiment: z.object({
+    positive: z.number(),
+    negative: z.number(), 
+    neutral: z.number(),
+  }),
+  keyPainPoints: z.array(z.object({
+    painPoint: z.string(),
+    frequency: z.number(),
+    subreddits: z.array(z.string()),
+    impact: z.enum(["low", "medium", "high"]),
+  })),
+  marketSignals: z.array(z.string()),
+  generatedAt: z.string(),
 });
 
-export const financialModelSchema = z.object({
-  inputs: financialInputsSchema,
-  ltv: z.number(),
-  blendedCac: z.number(),
-  paybackMonths: z.number(),
-  projections: z.array(financialProjectionSchema),
-  breakEvenMonth: z.number().optional(),
-  romiProjections: z.array(z.object({
+// Customer Intelligence - Real user personas and behavior
+export const customerPersonaSchema = z.object({
+  name: z.string(),
+  demographics: z.object({
+    ageRange: z.string(),
+    location: z.string(),
+    income: z.string(),
+    occupation: z.string(),
+  }),
+  behaviors: z.object({
+    onlineActivity: z.array(z.string()),
+    purchaseDrivers: z.array(z.string()),
+    preferredChannels: z.array(z.string()),
+    spendingPatterns: z.string(),
+  }),
+  painPoints: z.array(z.string()),
+  goals: z.array(z.string()),
+  redditActivity: z.object({
+    activeSubreddits: z.array(z.string()),
+    engagementLevel: z.enum(["low", "medium", "high"]),
+    topConcerns: z.array(z.string()),
+  }),
+});
+
+export const customerIntelligenceSchema = z.object({
+  primaryPersonas: z.array(customerPersonaSchema),
+  marketSegmentation: z.object({
+    segments: z.array(z.object({
+      name: z.string(),
+      size: z.number(),
+      characteristics: z.array(z.string()),
+      revenue_potential: z.string(),
+    })),
+  }),
+  customerJourney: z.array(z.object({
+    stage: z.string(),
+    touchpoints: z.array(z.string()),
+    painPoints: z.array(z.string()),
+    opportunities: z.array(z.string()),
+  })),
+  behaviorInsights: z.array(z.object({
+    insight: z.string(),
+    evidence: z.array(z.string()),
+    implication: z.string(),
+  })),
+  generatedAt: z.string(),
+});
+
+// Financial Projections - Realistic revenue forecasts
+export const revenueStreamSchema = z.object({
+  name: z.string(),
+  model: z.enum(["subscription", "one-time", "usage-based", "freemium", "advertising"]),
+  monthlyProjection: z.array(z.object({
     month: z.number(),
-    romi: z.number(), // Return on Marketing Investment
+    revenue: z.number(),
+    users: z.number(),
+  })),
+});
+
+export const costStructureSchema = z.object({
+  category: z.string(),
+  monthlyProjection: z.array(z.object({
+    month: z.number(),
+    cost: z.number(),
+  })),
+  scalingFactor: z.string(),
+});
+
+export const financialProjectionsSchema = z.object({
+  revenueStreams: z.array(revenueStreamSchema),
+  costStructure: z.array(costStructureSchema),
+  profitabilityAnalysis: z.object({
+    breakEvenMonth: z.number(),
+    grossMarginTarget: z.number(),
+    burnRate: z.array(z.object({
+      month: z.number(),
+      burnRate: z.number(),
+    })),
+  }),
+  fundingRequirements: z.object({
+    totalNeeded: z.number(),
+    runway: z.number(),
+    milestones: z.array(z.object({
+      milestone: z.string(),
+      month: z.number(),
+      funding: z.number(),
+    })),
+  }),
+  generatedAt: z.string(),
+});
+
+// Technology & Operations - Tech stack and development roadmap
+export const technologyStackSchema = z.object({
+  category: z.string(),
+  technologies: z.array(z.object({
+    name: z.string(),
+    purpose: z.string(),
+    pros: z.array(z.string()),
+    cons: z.array(z.string()),
+    complexity: z.enum(["low", "medium", "high"]),
+    cost: z.enum(["free", "low", "medium", "high"]),
+  })),
+});
+
+export const developmentPhaseSchema = z.object({
+  phase: z.string(),
+  duration: z.string(),
+  deliverables: z.array(z.string()),
+  resources: z.array(z.string()),
+  risks: z.array(z.string()),
+  estimatedCost: z.number(),
+});
+
+export const operationalRequirementSchema = z.object({
+  area: z.string(),
+  requirements: z.array(z.object({
+    requirement: z.string(),
+    priority: z.enum(["low", "medium", "high", "critical"]),
+    timeline: z.string(),
+    cost: z.number().optional(),
+  })),
+});
+
+export const technologyOperationsSchema = z.object({
+  recommendedStack: z.array(technologyStackSchema),
+  developmentRoadmap: z.array(developmentPhaseSchema),
+  operationalRequirements: z.array(operationalRequirementSchema),
+  teamStructure: z.object({
+    coreTeam: z.array(z.object({
+      role: z.string(),
+      skills: z.array(z.string()),
+      hiringPriority: z.enum(["immediate", "within-3-months", "within-6-months"]),
+      salaryRange: z.string(),
+    })),
+    advisors: z.array(z.string()),
+  }),
+  generatedAt: z.string(),
+});
+
+// Legal & Regulatory - Compliance and legal structure
+export const legalRequirementSchema = z.object({
+  area: z.string(),
+  requirements: z.array(z.object({
+    requirement: z.string(),
+    jurisdiction: z.string(),
+    priority: z.enum(["low", "medium", "high", "critical"]),
+    timeline: z.string(),
+    estimatedCost: z.string(),
+  })),
+});
+
+export const complianceFrameworkSchema = z.object({
+  framework: z.string(),
+  applicability: z.string(),
+  requirements: z.array(z.string()),
+  implementationSteps: z.array(z.string()),
+  cost: z.string(),
+});
+
+export const legalRegulatorySchema = z.object({
+  businessStructure: z.object({
+    recommendedType: z.string(),
+    rationale: z.string(),
+    steps: z.array(z.string()),
+    cost: z.string(),
+  }),
+  intellectualProperty: z.object({
+    protections: z.array(z.object({
+      type: z.string(),
+      description: z.string(),
+      cost: z.string(),
+      timeline: z.string(),
+    })),
+    risks: z.array(z.string()),
+  }),
+  regulatoryRequirements: z.array(legalRequirementSchema),
+  complianceFrameworks: z.array(complianceFrameworkSchema),
+  contractsAndAgreements: z.array(z.object({
+    type: z.string(),
+    priority: z.enum(["immediate", "short-term", "medium-term"]),
+    description: z.string(),
+  })),
+  generatedAt: z.string(),
+});
+
+// 12-Month Launch Roadmap - Detailed timeline with milestones
+export const milestoneSchema = z.object({
+  month: z.number(),
+  milestone: z.string(),
+  description: z.string(),
+  dependencies: z.array(z.string()),
+  deliverables: z.array(z.string()),
+  success_criteria: z.array(z.string()),
+  risks: z.array(z.object({
+    risk: z.string(),
+    impact: z.enum(["low", "medium", "high"]),
+    mitigation: z.string(),
+  })),
+});
+
+export const quarterlyGoalSchema = z.object({
+  quarter: z.string(),
+  objectives: z.array(z.string()),
+  key_metrics: z.array(z.object({
+    metric: z.string(),
+    target: z.number(),
+    unit: z.string(),
+  })),
+  budget: z.number(),
+});
+
+export const launchRoadmapSchema = z.object({
+  milestones: z.array(milestoneSchema),
+  quarterlyGoals: z.array(quarterlyGoalSchema),
+  criticalPath: z.array(z.object({
+    activity: z.string(),
+    startMonth: z.number(),
+    endMonth: z.number(),
+    dependencies: z.array(z.string()),
+  })),
+  resourceAllocation: z.array(z.object({
+    resource: z.string(),
+    allocation: z.array(z.object({
+      month: z.number(),
+      percentage: z.number(),
+    })),
+  })),
+  contingencyPlans: z.array(z.object({
+    scenario: z.string(),
+    triggers: z.array(z.string()),
+    response: z.string(),
   })),
   generatedAt: z.string(),
 });
@@ -391,7 +626,12 @@ export const exportResultSchema = z.object({
 export const premiumAnalysisSchema = z.object({
   analysisId: z.string(),
   keywordIntelligence: keywordIntelligenceSchema,
-  financialModel: financialModelSchema,
+  redditAnalysis: redditAnalysisSchema,
+  customerIntelligence: customerIntelligenceSchema,
+  financialProjections: financialProjectionsSchema,
+  technologyOperations: technologyOperationsSchema,
+  legalRegulatory: legalRegulatorySchema,
+  launchRoadmap: launchRoadmapSchema,
   competitorMatrix: competitorMatrixSchema,
   gtmPlan: gtmPlanSchema,
   marketSizing: marketSizingSchema,
@@ -409,9 +649,7 @@ export const keywordGenerationInputSchema = z.object({
   locale: z.string().default("US"),
 });
 
-export const financialModelInputSchema = z.object({
-  analysisId: z.string(),
-}).merge(financialInputsSchema);
+// Remove old financial model input schema
 
 export const competitorAnalysisInputSchema = z.object({
   analysisId: z.string(),
@@ -435,18 +673,19 @@ export const marketSizingInputSchema = z.object({
 
 // Type exports for all premium schemas
 export type KeywordGenerationInput = z.infer<typeof keywordGenerationInputSchema>;
-export type FinancialModelInput = z.infer<typeof financialModelInputSchema>;
 export type CompetitorAnalysisInput = z.infer<typeof competitorAnalysisInputSchema>;
 export type GtmPlanInput = z.infer<typeof gtmPlanInputSchema>;
 export type MarketSizingInput = z.infer<typeof marketSizingInputSchema>;
+export type RedditAnalysis = z.infer<typeof redditAnalysisSchema>;
+export type CustomerIntelligence = z.infer<typeof customerIntelligenceSchema>;
+export type FinancialProjections = z.infer<typeof financialProjectionsSchema>;
+export type TechnologyOperations = z.infer<typeof technologyOperationsSchema>;
+export type LegalRegulatory = z.infer<typeof legalRegulatorySchema>;
+export type LaunchRoadmap = z.infer<typeof launchRoadmapSchema>;
 export type SourceRef = z.infer<typeof sourceRefSchema>;
 export type KeywordTrendPoint = z.infer<typeof keywordTrendPointSchema>;
 export type KeywordIntelligenceItem = z.infer<typeof keywordIntelligenceItemSchema>;
 export type KeywordIntelligence = z.infer<typeof keywordIntelligenceSchema>;
-export type CacByChannel = z.infer<typeof cacByChannelSchema>;
-export type FinancialInputs = z.infer<typeof financialInputsSchema>;
-export type FinancialProjection = z.infer<typeof financialProjectionSchema>;
-export type FinancialModel = z.infer<typeof financialModelSchema>;
 export type CompetitorPricingTier = z.infer<typeof competitorPricingTierSchema>;
 export type CompetitorIntelligence = z.infer<typeof competitorIntelligenceSchema>;
 export type CompetitorMatrix = z.infer<typeof competitorMatrixSchema>;

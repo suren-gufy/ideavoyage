@@ -2,7 +2,12 @@ import {
   type User, 
   type InsertUser,
   type KeywordIntelligence,
-  type FinancialModel,
+  type RedditAnalysis,
+  type CustomerIntelligence,
+  type FinancialProjections,
+  type TechnologyOperations,
+  type LegalRegulatory,
+  type LaunchRoadmap,
   type CompetitorMatrix,
   type GtmPlan,
   type MarketSizing,
@@ -32,9 +37,29 @@ export interface IStorage {
   getKeywordIntelligence(analysisId: string): Promise<KeywordIntelligence | undefined>;
   setKeywordIntelligence(analysisId: string, data: KeywordIntelligence, ttlHours?: number): Promise<void>;
 
-  // Premium Analytics - Financial Modeling
-  getFinancialModel(analysisId: string): Promise<FinancialModel | undefined>;
-  setFinancialModel(analysisId: string, data: FinancialModel, ttlHours?: number): Promise<void>;
+  // Premium Analytics - Reddit Analysis
+  getRedditAnalysis(analysisId: string): Promise<RedditAnalysis | undefined>;
+  setRedditAnalysis(analysisId: string, data: RedditAnalysis, ttlHours?: number): Promise<void>;
+
+  // Premium Analytics - Customer Intelligence
+  getCustomerIntelligence(analysisId: string): Promise<CustomerIntelligence | undefined>;
+  setCustomerIntelligence(analysisId: string, data: CustomerIntelligence, ttlHours?: number): Promise<void>;
+
+  // Premium Analytics - Financial Projections
+  getFinancialProjections(analysisId: string): Promise<FinancialProjections | undefined>;
+  setFinancialProjections(analysisId: string, data: FinancialProjections, ttlHours?: number): Promise<void>;
+
+  // Premium Analytics - Technology Operations
+  getTechnologyOperations(analysisId: string): Promise<TechnologyOperations | undefined>;
+  setTechnologyOperations(analysisId: string, data: TechnologyOperations, ttlHours?: number): Promise<void>;
+
+  // Premium Analytics - Legal Regulatory
+  getLegalRegulatory(analysisId: string): Promise<LegalRegulatory | undefined>;
+  setLegalRegulatory(analysisId: string, data: LegalRegulatory, ttlHours?: number): Promise<void>;
+
+  // Premium Analytics - Launch Roadmap
+  getLaunchRoadmap(analysisId: string): Promise<LaunchRoadmap | undefined>;
+  setLaunchRoadmap(analysisId: string, data: LaunchRoadmap, ttlHours?: number): Promise<void>;
 
   // Premium Analytics - Competitor Matrix
   getCompetitorMatrix(analysisId: string): Promise<CompetitorMatrix | undefined>;
@@ -69,7 +94,12 @@ export interface IStorage {
 export class MemStorage implements IStorage {
   private users: Map<string, User>;
   private keywordIntelligence: Map<string, CachedData<KeywordIntelligence>>;
-  private financialModels: Map<string, CachedData<FinancialModel>>;
+  private redditAnalyses: Map<string, CachedData<RedditAnalysis>>;
+  private customerIntelligence: Map<string, CachedData<CustomerIntelligence>>;
+  private financialProjections: Map<string, CachedData<FinancialProjections>>;
+  private technologyOperations: Map<string, CachedData<TechnologyOperations>>;
+  private legalRegulatory: Map<string, CachedData<LegalRegulatory>>;
+  private launchRoadmaps: Map<string, CachedData<LaunchRoadmap>>;
   private competitorMatrices: Map<string, CachedData<CompetitorMatrix>>;
   private gtmPlans: Map<string, CachedData<GtmPlan>>;
   private marketSizing: Map<string, CachedData<MarketSizing>>;
@@ -80,7 +110,12 @@ export class MemStorage implements IStorage {
   constructor() {
     this.users = new Map();
     this.keywordIntelligence = new Map();
-    this.financialModels = new Map();
+    this.redditAnalyses = new Map();
+    this.customerIntelligence = new Map();
+    this.financialProjections = new Map();
+    this.technologyOperations = new Map();
+    this.legalRegulatory = new Map();
+    this.launchRoadmaps = new Map();
     this.competitorMatrices = new Map();
     this.gtmPlans = new Map();
     this.marketSizing = new Map();
@@ -142,18 +177,88 @@ export class MemStorage implements IStorage {
     this.keywordIntelligence.set(analysisId, this.createCachedData(data, ttlHours));
   }
 
-  // Premium Analytics - Financial Modeling
-  async getFinancialModel(analysisId: string): Promise<FinancialModel | undefined> {
-    const cached = this.financialModels.get(analysisId);
+  // Premium Analytics - Reddit Analysis
+  async getRedditAnalysis(analysisId: string): Promise<RedditAnalysis | undefined> {
+    const cached = this.redditAnalyses.get(analysisId);
     if (!cached || this.isExpired(cached)) {
-      this.financialModels.delete(analysisId);
+      this.redditAnalyses.delete(analysisId);
       return undefined;
     }
     return cached.data;
   }
 
-  async setFinancialModel(analysisId: string, data: FinancialModel, ttlHours: number = 24): Promise<void> {
-    this.financialModels.set(analysisId, this.createCachedData(data, ttlHours));
+  async setRedditAnalysis(analysisId: string, data: RedditAnalysis, ttlHours: number = 24): Promise<void> {
+    this.redditAnalyses.set(analysisId, this.createCachedData(data, ttlHours));
+  }
+
+  // Premium Analytics - Customer Intelligence
+  async getCustomerIntelligence(analysisId: string): Promise<CustomerIntelligence | undefined> {
+    const cached = this.customerIntelligence.get(analysisId);
+    if (!cached || this.isExpired(cached)) {
+      this.customerIntelligence.delete(analysisId);
+      return undefined;
+    }
+    return cached.data;
+  }
+
+  async setCustomerIntelligence(analysisId: string, data: CustomerIntelligence, ttlHours: number = 24): Promise<void> {
+    this.customerIntelligence.set(analysisId, this.createCachedData(data, ttlHours));
+  }
+
+  // Premium Analytics - Financial Projections
+  async getFinancialProjections(analysisId: string): Promise<FinancialProjections | undefined> {
+    const cached = this.financialProjections.get(analysisId);
+    if (!cached || this.isExpired(cached)) {
+      this.financialProjections.delete(analysisId);
+      return undefined;
+    }
+    return cached.data;
+  }
+
+  async setFinancialProjections(analysisId: string, data: FinancialProjections, ttlHours: number = 24): Promise<void> {
+    this.financialProjections.set(analysisId, this.createCachedData(data, ttlHours));
+  }
+
+  // Premium Analytics - Technology Operations
+  async getTechnologyOperations(analysisId: string): Promise<TechnologyOperations | undefined> {
+    const cached = this.technologyOperations.get(analysisId);
+    if (!cached || this.isExpired(cached)) {
+      this.technologyOperations.delete(analysisId);
+      return undefined;
+    }
+    return cached.data;
+  }
+
+  async setTechnologyOperations(analysisId: string, data: TechnologyOperations, ttlHours: number = 24): Promise<void> {
+    this.technologyOperations.set(analysisId, this.createCachedData(data, ttlHours));
+  }
+
+  // Premium Analytics - Legal Regulatory
+  async getLegalRegulatory(analysisId: string): Promise<LegalRegulatory | undefined> {
+    const cached = this.legalRegulatory.get(analysisId);
+    if (!cached || this.isExpired(cached)) {
+      this.legalRegulatory.delete(analysisId);
+      return undefined;
+    }
+    return cached.data;
+  }
+
+  async setLegalRegulatory(analysisId: string, data: LegalRegulatory, ttlHours: number = 24): Promise<void> {
+    this.legalRegulatory.set(analysisId, this.createCachedData(data, ttlHours));
+  }
+
+  // Premium Analytics - Launch Roadmap
+  async getLaunchRoadmap(analysisId: string): Promise<LaunchRoadmap | undefined> {
+    const cached = this.launchRoadmaps.get(analysisId);
+    if (!cached || this.isExpired(cached)) {
+      this.launchRoadmaps.delete(analysisId);
+      return undefined;
+    }
+    return cached.data;
+  }
+
+  async setLaunchRoadmap(analysisId: string, data: LaunchRoadmap, ttlHours: number = 24): Promise<void> {
+    this.launchRoadmaps.set(analysisId, this.createCachedData(data, ttlHours));
   }
 
   // Premium Analytics - Competitor Matrix
@@ -258,7 +363,12 @@ export class MemStorage implements IStorage {
 
     // Clear expired items from all caches
     clearExpired(this.keywordIntelligence as Map<string, CachedData<any>>);
-    clearExpired(this.financialModels as Map<string, CachedData<any>>);
+    clearExpired(this.redditAnalyses as Map<string, CachedData<any>>);
+    clearExpired(this.customerIntelligence as Map<string, CachedData<any>>);
+    clearExpired(this.financialProjections as Map<string, CachedData<any>>);
+    clearExpired(this.technologyOperations as Map<string, CachedData<any>>);
+    clearExpired(this.legalRegulatory as Map<string, CachedData<any>>);
+    clearExpired(this.launchRoadmaps as Map<string, CachedData<any>>);
     clearExpired(this.competitorMatrices as Map<string, CachedData<any>>);
     clearExpired(this.gtmPlans as Map<string, CachedData<any>>);
     clearExpired(this.marketSizing as Map<string, CachedData<any>>);
@@ -272,7 +382,12 @@ export class MemStorage implements IStorage {
     // Count all cache maps
     const allCaches = [
       this.keywordIntelligence,
-      this.financialModels,
+      this.redditAnalyses,
+      this.customerIntelligence,
+      this.financialProjections,
+      this.technologyOperations,
+      this.legalRegulatory,
+      this.launchRoadmaps,
       this.competitorMatrices,
       this.gtmPlans,
       this.marketSizing,
