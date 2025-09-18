@@ -7,6 +7,12 @@ import { MetricsOverview } from "@/components/metrics-overview"
 import { SentimentChart } from "@/components/sentiment-chart"
 import { PainPointsDisplay } from "@/components/pain-points-display"
 import { AppIdeasGenerator } from "@/components/app-ideas-generator"
+import { GoogleTrends } from "@/components/google-trends"
+import { ICPDisplay } from "@/components/icp-display"
+import { ProblemStatements } from "@/components/problem-statements"
+import { FinancialRisks } from "@/components/financial-risks"
+import { CompetitorsAnalysis } from "@/components/competitors-analysis"
+import { RevenueModels } from "@/components/revenue-models"
 import { MethodologyModal } from "@/components/methodology-modal"
 import type { AnalysisResponse } from "@shared/schema"
 
@@ -148,6 +154,42 @@ export default function Results() {
           <div className="space-y-6">
             <h2 className="text-2xl font-bold">Generated App Ideas</h2>
             <AppIdeasGenerator appIdeas={analysisResults.app_ideas} />
+          </div>
+
+          {/* Google Trends */}
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold">Google Trends Analysis</h2>
+            <GoogleTrends trends={analysisResults.google_trends} />
+          </div>
+
+          {/* Ideal Customer Profile */}
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold">Ideal Customer Profile (ICP)</h2>
+            <ICPDisplay icp={analysisResults.icp} />
+          </div>
+
+          {/* Problem Statements */}
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold">Problem Statements</h2>
+            <ProblemStatements problemStatements={analysisResults.problem_statements} />
+          </div>
+
+          {/* Financial Risks */}
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold">Financial Risk Assessment</h2>
+            <FinancialRisks risks={analysisResults.financial_risks} />
+          </div>
+
+          {/* Competitors Analysis */}
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold">Competitive Landscape</h2>
+            <CompetitorsAnalysis competitors={analysisResults.competitors} />
+          </div>
+
+          {/* Revenue Models */}
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold">Revenue Strategy & Models</h2>
+            <RevenueModels revenueModels={analysisResults.revenue_models} />
           </div>
 
           {/* Methodology */}

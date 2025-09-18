@@ -361,6 +361,63 @@ RULES:
           app_ideas: parsedContent.app_ideas || [
             {"title": "Market Research Tool", "description": "AI-powered startup validation platform", "market_validation": "medium", "difficulty": "medium"}
           ],
+          google_trends: parsedContent.google_trends || [
+            {"keyword": validatedData.idea.split(' ')[0], "trend_direction": "stable", "interest_level": 50, "related_queries": ["market research", "startup validation"]}
+          ],
+          icp: parsedContent.icp || {
+            demographics: {
+              age_range: "25-40",
+              gender: "Mixed",
+              income_level: "Middle to High",
+              education: "College Graduate"
+            },
+            psychographics: {
+              interests: ["Technology", "Entrepreneurship", "Innovation"],
+              values: ["Efficiency", "Growth", "Quality"],
+              lifestyle: "Tech-savvy professionals"
+            },
+            behavioral: {
+              pain_points: ["Market validation challenges", "Limited research time"],
+              preferred_channels: ["Online search", "Social media", "Professional networks"],
+              buying_behavior: "Research-driven decision making"
+            }
+          },
+          problem_statements: parsedContent.problem_statements || [
+            {
+              problem: "Entrepreneurs struggle to validate their startup ideas effectively",
+              impact: "High failure rates and wasted resources in startup development",
+              evidence: ["High startup failure statistics", "Limited access to market research"],
+              market_size: "Multi-billion dollar startup ecosystem"
+            }
+          ],
+          financial_risks: parsedContent.financial_risks || [
+            {
+              risk_type: "Market Risk",
+              severity: "medium",
+              description: "Uncertainty about market demand and competition",
+              mitigation_strategy: "Conduct thorough market research and start with MVP"
+            }
+          ],
+          competitors: parsedContent.competitors || [
+            {
+              name: "Traditional Market Research",
+              description: "Established market research firms and tools",
+              strengths: ["Experience", "Established methods"],
+              weaknesses: ["Expensive", "Time-consuming"],
+              market_share: "Significant",
+              pricing_model: "High-cost consulting"
+            }
+          ],
+          revenue_models: parsedContent.revenue_models || [
+            {
+              model_type: "Freemium",
+              description: "Basic features free, premium features paid",
+              pros: ["Low barrier to entry", "User acquisition"],
+              cons: ["Lower conversion rates", "Higher support costs"],
+              implementation_difficulty: "medium",
+              potential_revenue: "Moderate with scale"
+            }
+          ],
           market_interest_level: parsedContent.market_interest_level || "medium",
           total_posts_analyzed: totalSearches || 0,
           overall_score: typeof parsedContent.overall_score === 'number' && parsedContent.overall_score >= 1 && parsedContent.overall_score <= 10 
@@ -392,6 +449,63 @@ RULES:
             ],
             app_ideas: parsedContent.app_ideas || [
               {"title": "Market Research Tool", "description": "A tool to validate startup ideas", "market_validation": "medium", "difficulty": "medium"}
+            ],
+            google_trends: parsedContent.google_trends || [
+              {"keyword": validatedData.idea.split(' ')[0], "trend_direction": "stable", "interest_level": 50, "related_queries": ["market research", "startup validation"]}
+            ],
+            icp: parsedContent.icp || {
+              demographics: {
+                age_range: "25-40",
+                gender: "Mixed",
+                income_level: "Middle to High",
+                education: "College Graduate"
+              },
+              psychographics: {
+                interests: ["Technology", "Entrepreneurship", "Innovation"],
+                values: ["Efficiency", "Growth", "Quality"],
+                lifestyle: "Tech-savvy professionals"
+              },
+              behavioral: {
+                pain_points: ["Market validation challenges", "Limited research time"],
+                preferred_channels: ["Online search", "Social media", "Professional networks"],
+                buying_behavior: "Research-driven decision making"
+              }
+            },
+            problem_statements: parsedContent.problem_statements || [
+              {
+                problem: "Entrepreneurs struggle to validate their startup ideas effectively",
+                impact: "High failure rates and wasted resources in startup development",
+                evidence: ["High startup failure statistics", "Limited access to market research"],
+                market_size: "Multi-billion dollar startup ecosystem"
+              }
+            ],
+            financial_risks: parsedContent.financial_risks || [
+              {
+                risk_type: "Market Risk",
+                severity: "medium",
+                description: "Uncertainty about market demand and competition",
+                mitigation_strategy: "Conduct thorough market research and start with MVP"
+              }
+            ],
+            competitors: parsedContent.competitors || [
+              {
+                name: "Traditional Market Research",
+                description: "Established market research firms and tools",
+                strengths: ["Experience", "Established methods"],
+                weaknesses: ["Expensive", "Time-consuming"],
+                market_share: "Significant",
+                pricing_model: "High-cost consulting"
+              }
+            ],
+            revenue_models: parsedContent.revenue_models || [
+              {
+                model_type: "Freemium",
+                description: "Basic features free, premium features paid",
+                pros: ["Low barrier to entry", "User acquisition"],
+                cons: ["Lower conversion rates", "Higher support costs"],
+                implementation_difficulty: "medium",
+                potential_revenue: "Moderate with scale"
+              }
             ],
             market_interest_level: parsedContent.market_interest_level || "medium",
             total_posts_analyzed: totalSearches || 0,
