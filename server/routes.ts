@@ -281,9 +281,32 @@ function parseRedditThreadHTML(htmlContent: string, permalink: string) {
   }
 }
 
+// Premium verification middleware
+function checkPremiumAccess(req: any, res: any, next: any) {
+  // In development, allow all premium features
+  if (process.env.NODE_ENV === 'development') {
+    req.isPremium = true;
+    return next();
+  }
+  
+  // In production, check for premium status (placeholder for real auth)
+  const premiumHeader = req.headers['x-premium-access'];
+  req.isPremium = premiumHeader === 'true'; // In real implementation, verify JWT/session
+  
+  next();
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Premium status endpoint
+  app.get('/api/premium-status', checkPremiumAccess, (req: any, res) => {
+    res.json({ 
+      isPremium: req.isPremium,
+      environment: process.env.NODE_ENV || 'development'
+    });
+  });
+
   // Startup Idea Analysis Route
-  app.post("/api/analyze", async (req, res) => {
+  app.post("/api/analyze", checkPremiumAccess, async (req, res) => {
     const requestId = Date.now();
     console.log(`[${requestId}] Starting analysis request`);
     

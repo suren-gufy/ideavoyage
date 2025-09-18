@@ -1,6 +1,10 @@
-import { SearchInterface } from "@/components/search-interface"
+import { SearchInterface } from "@/components/search-interface";
+import { UpgradeCTA } from "@/components/upgrade-cta";
+import { PremiumBadge } from "@/components/premium-badge";
+import { usePremium } from "@/contexts/premium-context";
 
 export default function Dashboard() {
+  const { isPremium } = usePremium();
 
   return (
     <div className="min-h-screen">
@@ -16,6 +20,21 @@ export default function Dashboard() {
               </span>{" "}
               with real user evidence.
             </h1>
+            
+            {/* Premium Status Banner */}
+            {isPremium ? (
+              <div className="flex items-center justify-center gap-2">
+                <div className="bg-gradient-to-r from-[hsl(var(--neon-green))]/10 to-[hsl(var(--neon-green))]/5 border border-[hsl(var(--neon-green))]/20 rounded-full px-4 py-2">
+                  <span className="text-sm font-medium text-[hsl(var(--neon-green))]">
+                    🚀 Premium Access Active - All Features Unlocked!
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center">
+                <UpgradeCTA text="Unlock Premium Analysis" size="lg" />
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -51,7 +70,8 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {/* Evidence chips */}
             <div className="relative group bg-card border-2 border-primary/20 hover:border-primary/50 rounded-2xl p-6 space-y-4 hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
-              <div className="absolute top-4 right-4">
+              <div className="absolute top-4 right-4 flex items-center gap-2">
+                <PremiumBadge variant="sparkles" />
                 <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
               </div>
               <div className="space-y-4">
@@ -64,15 +84,20 @@ export default function Dashboard() {
                 </p>
               </div>
               <div className="pt-4 border-t border-border/50">
-                <p className="text-sm font-medium text-[hsl(var(--bright-orange))]">
-                  Unlock the full numbers & playbook → <span className="font-bold text-lg">$39</span>
-                </p>
+                {!isPremium ? (
+                  <UpgradeCTA variant="card" feature="exact source counts and analysis" />
+                ) : (
+                  <p className="text-sm font-medium text-[hsl(var(--neon-green))]">
+                    ✅ Premium Access: Full numbers & playbook included
+                  </p>
+                )}
               </div>
             </div>
 
             {/* Problem clusters */}
             <div className="relative group bg-card border-2 border-[hsl(var(--hot-pink))/20] hover:border-[hsl(var(--hot-pink))/50] rounded-2xl p-6 space-y-4 hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
-              <div className="absolute top-4 right-4">
+              <div className="absolute top-4 right-4 flex items-center gap-2">
+                <PremiumBadge variant="crown" />
                 <div className="w-2 h-2 bg-[hsl(var(--hot-pink))] rounded-full animate-pulse"></div>
               </div>
               <div className="space-y-4">
@@ -85,15 +110,20 @@ export default function Dashboard() {
                 </p>
               </div>
               <div className="pt-4 border-t border-border/50">
-                <p className="text-sm font-medium text-[hsl(var(--bright-orange))]">
-                  Unlock the full numbers & playbook → <span className="font-bold text-lg">$39</span>
-                </p>
+                {!isPremium ? (
+                  <UpgradeCTA variant="card" feature="complete problem analysis with quotes" />
+                ) : (
+                  <p className="text-sm font-medium text-[hsl(var(--neon-green))]">
+                    ✅ Premium Access: Full analysis with linked quotes
+                  </p>
+                )}
               </div>
             </div>
 
             {/* Market signals */}
             <div className="relative group bg-card border-2 border-[hsl(var(--neon-green))/20] hover:border-[hsl(var(--neon-green))/50] rounded-2xl p-6 space-y-4 hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
-              <div className="absolute top-4 right-4">
+              <div className="absolute top-4 right-4 flex items-center gap-2">
+                <PremiumBadge variant="lock" />
                 <div className="w-2 h-2 bg-[hsl(var(--neon-green))] rounded-full animate-pulse"></div>
               </div>
               <div className="space-y-4">
@@ -106,15 +136,20 @@ export default function Dashboard() {
                 </p>
               </div>
               <div className="pt-4 border-t border-border/50">
-                <p className="text-sm font-medium text-[hsl(var(--bright-orange))]">
-                  Unlock the full numbers & playbook → <span className="font-bold text-lg">$39</span>
-                </p>
+                {!isPremium ? (
+                  <UpgradeCTA variant="card" feature="24-month trends and exact volumes" />
+                ) : (
+                  <p className="text-sm font-medium text-[hsl(var(--neon-green))]">
+                    ✅ Premium Access: 24-month data with exact numbers
+                  </p>
+                )}
               </div>
             </div>
 
             {/* Action plan */}
             <div className="relative group bg-card border-2 border-[hsl(var(--bright-orange))/20] hover:border-[hsl(var(--bright-orange))/50] rounded-2xl p-6 space-y-4 hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
-              <div className="absolute top-4 right-4">
+              <div className="absolute top-4 right-4 flex items-center gap-2">
+                <PremiumBadge variant="sparkles" />
                 <div className="w-2 h-2 bg-[hsl(var(--bright-orange))] rounded-full animate-pulse"></div>
               </div>
               <div className="space-y-4">
@@ -127,9 +162,13 @@ export default function Dashboard() {
                 </p>
               </div>
               <div className="pt-4 border-t border-border/50">
-                <p className="text-sm font-medium text-[hsl(var(--bright-orange))]">
-                  Unlock the full numbers & playbook → <span className="font-bold text-lg">$39</span>
-                </p>
+                {!isPremium ? (
+                  <UpgradeCTA variant="card" feature="complete 90-day GTM plan and risk analysis" />
+                ) : (
+                  <p className="text-sm font-medium text-[hsl(var(--neon-green))]">
+                    ✅ Premium Access: Full GTM plan with risk assessment
+                  </p>
+                )}
               </div>
             </div>
           </div>

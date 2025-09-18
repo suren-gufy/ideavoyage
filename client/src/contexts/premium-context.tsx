@@ -1,0 +1,101 @@
+import { createContext, useContext, useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+
+interface PremiumContextType {
+  isPremium: boolean;
+  isDevelopment: boolean;
+  upgradeToPremium: () => void;
+  showUpgradeModal: boolean;
+  setShowUpgradeModal: (show: boolean) => void;
+  setDevPremiumOverride: (forceNonPremium: boolean) => void;
+}
+
+const PremiumContext = createContext<PremiumContextType | undefined>(undefined);
+
+export function PremiumProvider({ children }: { children: React.ReactNode }) {
+  // Environment-based premium access - true for development, false for production
+  const isDevelopment = import.meta.env.MODE === 'development';
+  const [isPremium, setIsPremium] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+
+  const upgradeToPremium = () => {
+    // Only allow upgrade in development mode
+    if (!isDevelopment) {
+      console.warn('Premium upgrade blocked in production - requires payment flow');
+      setShowUpgradeModal(false);
+      return;
+    }
+    
+    // For development - instant premium access without payment
+    setIsPremium(true);
+    setShowUpgradeModal(false);
+    localStorage.setItem('premium_access', 'true');
+  };
+
+  const setDevPremiumOverride = (forceNonPremium: boolean) => {
+    localStorage.setItem('force_non_premium', forceNonPremium.toString());
+    // Recalculate premium status
+    const premiumAccess = localStorage.getItem('premium_access');
+    const forceNonPremiumFlag = localStorage.getItem('force_non_premium') === 'true';
+    
+    if (forceNonPremiumFlag) {
+      setIsPremium(false);
+    } else if (isDevelopment || premiumAccess === 'true') {
+      setIsPremium(true);
+    } else {
+      setIsPremium(false);
+    }
+  };
+
+  // Fetch premium status from server in production
+  const { data: serverPremiumStatus } = useQuery({
+    queryKey: ['premium-status'],
+    queryFn: async () => {
+      const response = await fetch('/api/premium-status');
+      if (!response.ok) throw new Error('Failed to fetch premium status');
+      return response.json();
+    },
+    enabled: !isDevelopment,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  useEffect(() => {
+    if (isDevelopment) {
+      // In development, use localStorage with dev override
+      const premiumAccess = localStorage.getItem('premium_access');
+      const forceNonPremium = localStorage.getItem('force_non_premium') === 'true';
+      
+      if (forceNonPremium) {
+        setIsPremium(false);
+      } else {
+        setIsPremium(true); // Auto-premium in development
+      }
+    } else {
+      // In production, trust server response only
+      if (serverPremiumStatus) {
+        setIsPremium(serverPremiumStatus.isPremium || false);
+      }
+    }
+  }, [isDevelopment, serverPremiumStatus]);
+
+  return (
+    <PremiumContext.Provider value={{
+      isPremium,
+      isDevelopment,
+      upgradeToPremium,
+      showUpgradeModal,
+      setShowUpgradeModal,
+      setDevPremiumOverride
+    }}>
+      {children}
+    </PremiumContext.Provider>
+  );
+}
+
+export function usePremium() {
+  const context = useContext(PremiumContext);
+  if (context === undefined) {
+    throw new Error('usePremium must be used within a PremiumProvider');
+  }
+  return context;
+}
