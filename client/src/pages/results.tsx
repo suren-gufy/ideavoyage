@@ -14,6 +14,10 @@ import { FinancialRisks } from "@/components/financial-risks"
 import { CompetitorsAnalysis } from "@/components/competitors-analysis"
 import { RevenueModels } from "@/components/revenue-models"
 import { MethodologyModal } from "@/components/methodology-modal"
+import { PremiumBadge } from "@/components/premium-badge"
+import { UpgradeCTA } from "@/components/upgrade-cta"
+import { Card, CardHeader, CardContent } from "@/components/ui/card"
+import { Crown, Sparkles, TrendingUp } from "lucide-react"
 import type { AnalysisResponse } from "@shared/schema"
 
 export default function Results() {
@@ -73,6 +77,7 @@ export default function Results() {
               <div className="hidden sm:block h-6 border-l border-border"></div>
               <h1 className="text-xl font-semibold" data-testid="results-page-title">
                 Startup Validation Report
+                <PremiumBadge />
               </h1>
             </div>
             
@@ -91,6 +96,24 @@ export default function Results() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Free Report Banner */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <Card className="bg-gradient-to-r from-primary/5 to-[hsl(var(--hot-pink))/5] border-primary/20">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-3">
+                <Crown className="h-5 w-5 text-primary" />
+                <div>
+                  <h3 className="font-semibold">Free Analysis Report</h3>
+                  <p className="text-sm text-muted-foreground">Upgrade to Premium for deeper insights & unlimited reports</p>
+                </div>
+              </div>
+              <UpgradeCTA size="sm" text="Upgrade to Premium - $39" />
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Results content */}
@@ -140,7 +163,10 @@ export default function Results() {
 
           {/* Sentiment Analysis */}
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold">Market Sentiment Analysis</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-2xl font-bold">Market Sentiment Analysis</h2>
+              <PremiumBadge />
+            </div>
             <SentimentChart sentimentData={analysisResults.sentiment_data} />
           </div>
 
@@ -150,15 +176,40 @@ export default function Results() {
             <PainPointsDisplay painPoints={analysisResults.pain_points} />
           </div>
 
+          {/* Premium Upgrade CTA */}
+          <div className="my-8">
+            <Card className="bg-gradient-to-r from-[hsl(var(--hot-pink))/5] to-primary/5 border-primary/20">
+              <CardContent className="p-6">
+                <div className="text-center space-y-4">
+                  <div className="flex items-center justify-center gap-2">
+                    <Sparkles className="h-6 w-6 text-primary" />
+                    <h3 className="text-xl font-semibold">Want Deeper Market Insights?</h3>
+                  </div>
+                  <p className="text-muted-foreground max-w-2xl mx-auto">
+                    Upgrade to Premium for advanced competitor analysis, detailed financial projections, 
+                    market sizing data, and unlimited validation reports.
+                  </p>
+                  <UpgradeCTA text="Upgrade to Premium - $39/month" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
           {/* App Ideas */}
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold">Generated App Ideas</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-2xl font-bold">Generated App Ideas</h2>
+              <PremiumBadge />
+            </div>
             <AppIdeasGenerator appIdeas={analysisResults.app_ideas} />
           </div>
 
           {/* Google Trends */}
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold">Google Trends Analysis</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-2xl font-bold">Google Trends Analysis</h2>
+              <PremiumBadge />
+            </div>
             <GoogleTrends trends={analysisResults.google_trends} />
           </div>
 
@@ -176,20 +227,56 @@ export default function Results() {
 
           {/* Financial Risks */}
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold">Financial Risk Assessment</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-2xl font-bold">Financial Risk Assessment</h2>
+              <PremiumBadge />
+            </div>
             <FinancialRisks risks={analysisResults.financial_risks} />
           </div>
 
           {/* Competitors Analysis */}
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold">Competitive Landscape</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-2xl font-bold">Competitive Landscape</h2>
+              <PremiumBadge />
+            </div>
             <CompetitorsAnalysis competitors={analysisResults.competitors} />
           </div>
 
           {/* Revenue Models */}
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold">Revenue Strategy & Models</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-2xl font-bold">Revenue Strategy & Models</h2>
+              <PremiumBadge />
+            </div>
             <RevenueModels revenueModels={analysisResults.revenue_models} />
+          </div>
+
+          {/* Final Premium CTA */}
+          <div className="mt-12 mb-8">
+            <Card className="bg-gradient-to-r from-primary/10 to-[hsl(var(--neon-green))/10] border-primary/30">
+              <CardContent className="p-8">
+                <div className="text-center space-y-6">
+                  <div className="flex items-center justify-center gap-2">
+                    <TrendingUp className="h-8 w-8 text-primary" />
+                    <h3 className="text-2xl font-bold">Ready to Validate Your Next Big Idea?</h3>
+                  </div>
+                  <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+                    Get unlimited validation reports, advanced market analysis, competitor deep-dives, 
+                    and financial projections. Join thousands of successful entrepreneurs.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                    <UpgradeCTA size="lg" text="Start Premium - $39/month" />
+                    <Button variant="outline" onClick={handleNewAnalysis} data-testid="button-new-analysis">
+                      Try Another Free Analysis
+                    </Button>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    30-day money-back guarantee • Cancel anytime • Unlimited reports
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Methodology */}
