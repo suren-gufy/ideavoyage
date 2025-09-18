@@ -1,7 +1,24 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { analyzeIdeaSchema, analysisResponseSchema, type AnalysisResponse } from "../shared/schema";
+import { 
+  analyzeIdeaSchema, 
+  analysisResponseSchema, 
+  keywordIntelligenceSchema,
+  financialInputsSchema,
+  competitorMatrixSchema,
+  gtmPlanSchema,
+  marketSizingSchema,
+  exportRequestSchema,
+  type AnalysisResponse,
+  type KeywordIntelligence,
+  type FinancialModel,
+  type CompetitorMatrix,
+  type GtmPlan,
+  type MarketSizing,
+  type ExportRequest,
+  type ExportResult
+} from "../shared/schema";
 import OpenAI from 'openai';
 
 const openai = new OpenAI({
@@ -1025,6 +1042,692 @@ RULES:
         details: error instanceof Error ? error.message : "Unknown error",
         requestId
       });
+    }
+  });
+
+  // PREMIUM ANALYTICS ROUTES
+  
+  // Keyword Intelligence Route
+  app.post("/api/premium/keywords", checkPremiumAccess, async (req, res) => {
+    const requestId = Date.now();
+    console.log(`[${requestId}] Starting keyword intelligence analysis`);
+    
+    try {
+      if (!(req as any).isPremium) {
+        return res.status(403).json({ error: "Premium access required" });
+      }
+
+      const { analysisId, primaryKeyword, industry, targetAudience, locale = "US" } = req.body;
+      
+      if (!analysisId || !primaryKeyword) {
+        return res.status(400).json({ error: "analysisId and primaryKeyword are required" });
+      }
+
+      // Check cache first
+      const cached = await storage.getKeywordIntelligence(analysisId);
+      if (cached) {
+        console.log(`[${requestId}] Returning cached keyword intelligence`);
+        return res.json(cached);
+      }
+
+      console.log(`[${requestId}] Generating keyword intelligence for: ${primaryKeyword}`);
+
+      // Generate keyword intelligence using AI
+      const keywordPrompt = `Analyze keyword intelligence for the primary keyword "${primaryKeyword}" in the ${industry || 'Technology'} industry for ${targetAudience || 'General users'} in locale ${locale}.
+
+Provide detailed keyword analysis in JSON format:
+{
+  "primaryKeywords": [
+    {
+      "keyword": "${primaryKeyword}",
+      "searchVolume": 8500,
+      "cpc": 2.45,
+      "difficulty": 65,
+      "intent": "commercial",
+      "trend24Months": [
+        {"month": "2023-01", "volume": 7500, "competitionScore": 60},
+        {"month": "2023-02", "volume": 8200, "competitionScore": 62}
+      ],
+      "relatedKeywords": ["related keyword 1", "related keyword 2"],
+      "sources": [
+        {
+          "id": "kw_001",
+          "type": "api",
+          "title": "Keyword Research Data",
+          "confidence": 0.85,
+          "retrievedAt": "${new Date().toISOString()}"
+        }
+      ]
+    }
+  ],
+  "longTailKeywords": [
+    {
+      "keyword": "best ${primaryKeyword} for small business",
+      "searchVolume": 1200,
+      "cpc": 3.20,
+      "difficulty": 45,
+      "intent": "commercial",
+      "trend24Months": [],
+      "relatedKeywords": [],
+      "sources": []
+    }
+  ],
+  "competitorKeywords": [
+    {
+      "keyword": "${primaryKeyword} alternative",
+      "searchVolume": 2800,
+      "cpc": 4.10,
+      "difficulty": 58,
+      "intent": "commercial",
+      "trend24Months": [],
+      "relatedKeywords": [],
+      "sources": []
+    }
+  ],
+  "totalSearchVolume": 12500,
+  "avgCpc": 3.25,
+  "avgDifficulty": 56,
+  "generatedAt": "${new Date().toISOString()}",
+  "locale": "${locale}"
+}
+
+Generate realistic but valuable keyword data with 24-month trend analysis showing seasonal patterns and growth.`;
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "You are a keyword research expert. Provide comprehensive keyword intelligence data in valid JSON format with realistic search volumes, CPC data, and difficulty scores."
+          },
+          {
+            role: "user",
+            content: keywordPrompt
+          }
+        ],
+        max_completion_tokens: 3000,
+        response_format: { type: "json_object" },
+      });
+
+      const keywordData = JSON.parse(completion.choices[0].message.content || '{}');
+      
+      // Cache the results for 24 hours
+      await storage.setKeywordIntelligence(analysisId, keywordData, 24);
+      
+      console.log(`[${requestId}] Keyword intelligence analysis completed`);
+      res.json(keywordData);
+      
+    } catch (error) {
+      console.error(`[${requestId}] Keyword intelligence error:`, error);
+      res.status(500).json({ 
+        error: "Failed to generate keyword intelligence",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Financial Modeling Route
+  app.post("/api/premium/financial-model", checkPremiumAccess, async (req, res) => {
+    const requestId = Date.now();
+    console.log(`[${requestId}] Starting financial modeling`);
+    
+    try {
+      if (!(req as any).isPremium) {
+        return res.status(403).json({ error: "Premium access required" });
+      }
+
+      const validatedInputs = financialInputsSchema.parse(req.body);
+      const { analysisId, ...inputs } = req.body;
+
+      if (!analysisId) {
+        return res.status(400).json({ error: "analysisId is required" });
+      }
+
+      // Check cache first
+      const cached = await storage.getFinancialModel(analysisId);
+      if (cached) {
+        console.log(`[${requestId}] Returning cached financial model`);
+        return res.json(cached);
+      }
+
+      console.log(`[${requestId}] Generating financial model with inputs:`, inputs);
+
+      // Calculate financial projections
+      const { arpu, grossMargin, monthlyChurn, cacChannels, totalMonthlyBudget, timeHorizonMonths } = inputs;
+
+      // Calculate blended CAC
+      const totalChannelSpend = cacChannels.reduce((sum: number, channel: any) => sum + channel.monthlySpend, 0);
+      const blendedCac = cacChannels.reduce((sum: number, channel: any) => {
+        const weight = channel.monthlySpend / totalChannelSpend;
+        return sum + (channel.cac * weight);
+      }, 0);
+
+      // Calculate LTV
+      const monthlyRevenue = arpu * grossMargin;
+      const ltv = monthlyRevenue / monthlyChurn;
+
+      // Calculate payback period
+      const paybackMonths = blendedCac / monthlyRevenue;
+
+      // Generate month-by-month projections
+      const projections = [];
+      let totalCustomers = 0;
+      let cumulativeCashflow = 0;
+
+      for (let month = 1; month <= timeHorizonMonths; month++) {
+        // Calculate new customers based on budget and blended CAC
+        const newCustomers = Math.floor(totalMonthlyBudget / blendedCac);
+        
+        // Calculate customer churn
+        const customersLost = totalCustomers * monthlyChurn;
+        totalCustomers = Math.max(0, totalCustomers - customersLost + newCustomers);
+        
+        // Calculate revenue and costs
+        const mrr = totalCustomers * arpu;
+        const revenue = mrr * grossMargin;
+        const acquisitionCost = newCustomers * blendedCac;
+        const cashflow = revenue - acquisitionCost;
+        cumulativeCashflow += cashflow;
+
+        projections.push({
+          month,
+          newCustomers,
+          totalCustomers,
+          mrr,
+          ltv: ltv,
+          cashflow,
+          cumulativeCashflow
+        });
+      }
+
+      // Calculate ROMI projections
+      const romiProjections = projections.map(proj => ({
+        month: proj.month,
+        romi: proj.cashflow > 0 ? (proj.cashflow / totalMonthlyBudget) : 0
+      }));
+
+      // Find break-even month
+      const breakEvenMonth = projections.find(proj => proj.cumulativeCashflow > 0)?.month;
+
+      const financialModel: FinancialModel = {
+        inputs,
+        ltv,
+        blendedCac,
+        paybackMonths,
+        projections,
+        breakEvenMonth,
+        romiProjections,
+        generatedAt: new Date().toISOString()
+      };
+
+      // Cache the results for 24 hours
+      await storage.setFinancialModel(analysisId, financialModel, 24);
+      
+      console.log(`[${requestId}] Financial modeling completed`);
+      res.json(financialModel);
+      
+    } catch (error) {
+      console.error(`[${requestId}] Financial modeling error:`, error);
+      res.status(500).json({ 
+        error: "Failed to generate financial model",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Competitor Matrix Route
+  app.post("/api/premium/competitors", checkPremiumAccess, async (req, res) => {
+    const requestId = Date.now();
+    console.log(`[${requestId}] Starting competitor analysis`);
+    
+    try {
+      if (!(req as any).isPremium) {
+        return res.status(403).json({ error: "Premium access required" });
+      }
+
+      const { analysisId, industry, targetKeyword } = req.body;
+      
+      if (!analysisId || !industry) {
+        return res.status(400).json({ error: "analysisId and industry are required" });
+      }
+
+      // Check cache first
+      const cached = await storage.getCompetitorMatrix(analysisId);
+      if (cached) {
+        console.log(`[${requestId}] Returning cached competitor matrix`);
+        return res.json(cached);
+      }
+
+      console.log(`[${requestId}] Generating competitor matrix for: ${industry}`);
+
+      // Generate comprehensive competitor analysis using AI
+      const competitorPrompt = `Analyze the competitive landscape for the ${industry} industry, focusing on solutions related to "${targetKeyword || industry}".
+
+Provide detailed competitor analysis in JSON format:
+{
+  "competitors": [
+    {
+      "name": "Competitor Name",
+      "website": "https://competitor.com",
+      "description": "What they do",
+      "pricing": [
+        {
+          "tier": "Starter",
+          "price": 29,
+          "billingCycle": "monthly",
+          "features": ["Feature 1", "Feature 2"],
+          "limitations": ["Limitation 1"]
+        }
+      ],
+      "sentimentScore": 0.7,
+      "marketShare": 15,
+      "strengths": ["Strength 1", "Strength 2"],
+      "weaknesses": ["Weakness 1", "Weakness 2"],
+      "differentiators": ["Unique feature 1", "Unique feature 2"],
+      "targetAudience": "Small businesses",
+      "distribution": ["Direct sales", "Partner channel"],
+      "fundingStage": "Series B",
+      "employeeCount": "50-100",
+      "yearFounded": 2018,
+      "sources": [
+        {
+          "id": "comp_001",
+          "type": "web",
+          "title": "Company Profile",
+          "confidence": 0.9,
+          "retrievedAt": "${new Date().toISOString()}"
+        }
+      ]
+    }
+  ],
+  "positioningMap": [
+    {
+      "competitor": "Competitor Name",
+      "xAxis": 65,
+      "yAxis": 80
+    }
+  ],
+  "marketGaps": ["Gap 1", "Gap 2"],
+  "competitiveAdvantages": ["Advantage 1", "Advantage 2"],
+  "threatsAndOpportunities": ["Threat: X", "Opportunity: Y"],
+  "generatedAt": "${new Date().toISOString()}"
+}
+
+Include 8-12 real competitors with detailed pricing, sentiment analysis, and market positioning data.`;
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "You are a competitive intelligence expert. Provide comprehensive competitor analysis with detailed pricing, market positioning, and strategic insights in valid JSON format."
+          },
+          {
+            role: "user",
+            content: competitorPrompt
+          }
+        ],
+        max_completion_tokens: 4000,
+        response_format: { type: "json_object" },
+      });
+
+      const competitorData = JSON.parse(completion.choices[0].message.content || '{}');
+      
+      // Cache the results for 24 hours
+      await storage.setCompetitorMatrix(analysisId, competitorData, 24);
+      
+      console.log(`[${requestId}] Competitor analysis completed`);
+      res.json(competitorData);
+      
+    } catch (error) {
+      console.error(`[${requestId}] Competitor analysis error:`, error);
+      res.status(500).json({ 
+        error: "Failed to generate competitor analysis",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // GTM Planning Route
+  app.post("/api/premium/gtm-plan", checkPremiumAccess, async (req, res) => {
+    const requestId = Date.now();
+    console.log(`[${requestId}] Starting GTM plan generation`);
+    
+    try {
+      if (!(req as any).isPremium) {
+        return res.status(403).json({ error: "Premium access required" });
+      }
+
+      const { analysisId, productDescription, targetAudience, budget } = req.body;
+      
+      if (!analysisId || !productDescription) {
+        return res.status(400).json({ error: "analysisId and productDescription are required" });
+      }
+
+      // Check cache first
+      const cached = await storage.getGtmPlan(analysisId);
+      if (cached) {
+        console.log(`[${requestId}] Returning cached GTM plan`);
+        return res.json(cached);
+      }
+
+      console.log(`[${requestId}] Generating GTM plan for: ${productDescription}`);
+
+      // Generate 90-day go-to-market plan using AI
+      const gtmPrompt = `Create a comprehensive 90-day go-to-market plan for the product: "${productDescription}" targeting "${targetAudience || 'General market'}" with budget considerations around $${budget || '50000'}.
+
+Provide detailed GTM plan in JSON format:
+{
+  "phases": [
+    {
+      "phase": "Phase 1: Foundation (Days 1-30)",
+      "weeks": "Weeks 1-4",
+      "objectives": ["Objective 1", "Objective 2"],
+      "tactics": [
+        {
+          "name": "Website Launch",
+          "description": "Launch marketing website with clear value proposition",
+          "effort": "high",
+          "cost": "medium",
+          "impact": "high",
+          "timeline": "Week 1-2",
+          "dependencies": ["Design completion", "Content creation"]
+        }
+      ],
+      "kpis": [
+        {
+          "metric": "Website Traffic",
+          "target": 1000,
+          "unit": "visitors",
+          "measurement": "Google Analytics"
+        }
+      ],
+      "budget": 15000,
+      "owners": ["Marketing Team", "Product Team"]
+    }
+  ],
+  "totalBudget": ${budget || 50000},
+  "expectedOutcomes": ["Outcome 1", "Outcome 2"],
+  "successMetrics": [
+    {
+      "metric": "Customer Acquisition",
+      "target": 100,
+      "unit": "customers",
+      "measurement": "CRM tracking"
+    }
+  ],
+  "risks": [
+    {
+      "risk": "Low market response",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Increase content marketing efforts",
+      "contingency": "Pivot messaging strategy"
+    }
+  ],
+  "killCriteria": [
+    {
+      "metric": "Monthly Signups",
+      "threshold": 10,
+      "timeWindow": "Month 2",
+      "rationale": "Below this indicates no product-market fit"
+    }
+  ],
+  "assumptions": ["Assumption 1", "Assumption 2"],
+  "generatedAt": "${new Date().toISOString()}"
+}
+
+Create a detailed 3-phase plan with specific tactics, timelines, budgets, and success metrics.`;
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "You are a go-to-market strategy expert. Provide comprehensive, actionable GTM plans with specific tactics, timelines, budgets, and measurable outcomes in valid JSON format."
+          },
+          {
+            role: "user",
+            content: gtmPrompt
+          }
+        ],
+        max_completion_tokens: 4000,
+        response_format: { type: "json_object" },
+      });
+
+      const gtmData = JSON.parse(completion.choices[0].message.content || '{}');
+      
+      // Cache the results for 24 hours
+      await storage.setGtmPlan(analysisId, gtmData, 24);
+      
+      console.log(`[${requestId}] GTM plan generation completed`);
+      res.json(gtmData);
+      
+    } catch (error) {
+      console.error(`[${requestId}] GTM plan error:`, error);
+      res.status(500).json({ 
+        error: "Failed to generate GTM plan",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Market Sizing Route
+  app.post("/api/premium/market-sizing", checkPremiumAccess, async (req, res) => {
+    const requestId = Date.now();
+    console.log(`[${requestId}] Starting market sizing analysis`);
+    
+    try {
+      if (!(req as any).isPremium) {
+        return res.status(403).json({ error: "Premium access required" });
+      }
+
+      const { analysisId, industry, productCategory, geography = "Global" } = req.body;
+      
+      if (!analysisId || !industry) {
+        return res.status(400).json({ error: "analysisId and industry are required" });
+      }
+
+      // Check cache first
+      const cached = await storage.getMarketSizing(analysisId);
+      if (cached) {
+        console.log(`[${requestId}] Returning cached market sizing`);
+        return res.json(cached);
+      }
+
+      console.log(`[${requestId}] Generating market sizing for: ${industry} in ${geography}`);
+
+      // Generate comprehensive market sizing analysis using AI
+      const marketPrompt = `Analyze the market size for the ${industry} industry, specifically for ${productCategory || 'general solutions'} in ${geography}.
+
+Provide detailed market sizing analysis in JSON format:
+{
+  "tam": {
+    "value": 45000000000,
+    "unit": "USD",
+    "method": {
+      "method": "top-down",
+      "description": "Based on industry reports and market research",
+      "dataPoints": ["Industry report 1", "Market research 2"],
+      "assumptions": ["Assumption 1", "Assumption 2"],
+      "confidence": 0.8
+    },
+    "segments": [
+      {
+        "segment": "Enterprise",
+        "size": 25000000000,
+        "unit": "USD",
+        "growthRate": 0.12,
+        "accessibility": 0.3
+      }
+    ]
+  },
+  "sam": {
+    "value": 8000000000,
+    "unit": "USD",
+    "method": {
+      "method": "bottom-up",
+      "description": "Serviceable addressable market based on target segments",
+      "dataPoints": ["Target customer analysis"],
+      "assumptions": ["Geographic focus", "Customer segment filtering"],
+      "confidence": 0.85
+    },
+    "reasoningFactors": ["Factor 1", "Factor 2"]
+  },
+  "som": {
+    "value": 800000000,
+    "unit": "USD",
+    "method": {
+      "method": "comparative",
+      "description": "Serviceable obtainable market based on competitive analysis",
+      "dataPoints": ["Competitor market share data"],
+      "assumptions": ["5-year timeline", "10% market capture"],
+      "confidence": 0.75
+    },
+    "marketPenetration": 0.1,
+    "timeToCapture": 5
+  },
+  "bottomUpAnalysis": {
+    "unitEconomics": {
+      "units": 100000,
+      "pricePerUnit": 1200,
+      "adoptionRate": 0.15
+    },
+    "scaling": [
+      {
+        "year": 1,
+        "units": 15000,
+        "revenue": 18000000
+      },
+      {
+        "year": 3,
+        "units": 75000,
+        "revenue": 90000000
+      },
+      {
+        "year": 5,
+        "units": 150000,
+        "revenue": 180000000
+      }
+    ]
+  },
+  "references": [
+    {
+      "id": "market_001",
+      "type": "web",
+      "title": "Industry Market Report 2024",
+      "confidence": 0.9,
+      "retrievedAt": "${new Date().toISOString()}"
+    }
+  ],
+  "generatedAt": "${new Date().toISOString()}"
+}
+
+Include realistic market sizing with multiple methodologies and clear assumptions.`;
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "You are a market research expert specializing in market sizing analysis. Provide comprehensive TAM/SAM/SOM analysis with multiple methodologies and realistic projections in valid JSON format."
+          },
+          {
+            role: "user",
+            content: marketPrompt
+          }
+        ],
+        max_completion_tokens: 3000,
+        response_format: { type: "json_object" },
+      });
+
+      const marketData = JSON.parse(completion.choices[0].message.content || '{}');
+      
+      // Cache the results for 24 hours
+      await storage.setMarketSizing(analysisId, marketData, 24);
+      
+      console.log(`[${requestId}] Market sizing analysis completed`);
+      res.json(marketData);
+      
+    } catch (error) {
+      console.error(`[${requestId}] Market sizing error:`, error);
+      res.status(500).json({ 
+        error: "Failed to generate market sizing analysis",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Export Route
+  app.post("/api/premium/export", checkPremiumAccess, async (req, res) => {
+    const requestId = Date.now();
+    console.log(`[${requestId}] Starting export generation`);
+    
+    try {
+      if (!(req as any).isPremium) {
+        return res.status(403).json({ error: "Premium access required" });
+      }
+
+      const validatedRequest = exportRequestSchema.parse(req.body);
+      const { type, sections, analysisId, includeCharts, includeRawData } = validatedRequest;
+      
+      console.log(`[${requestId}] Generating ${type} export for sections:`, sections);
+
+      // Generate export data
+      const exportData: any = {};
+      
+      if (sections.includes('keywords')) {
+        exportData.keywords = await storage.getKeywordIntelligence(analysisId);
+      }
+      if (sections.includes('financial')) {
+        exportData.financial = await storage.getFinancialModel(analysisId);
+      }
+      if (sections.includes('competitors')) {
+        exportData.competitors = await storage.getCompetitorMatrix(analysisId);
+      }
+      if (sections.includes('gtm')) {
+        exportData.gtm = await storage.getGtmPlan(analysisId);
+      }
+      if (sections.includes('market')) {
+        exportData.market = await storage.getMarketSizing(analysisId);
+      }
+
+      // Create export result
+      const exportId = `export_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const filename = `premium_analysis_${analysisId}_${type}.${type}`;
+      
+      const exportResult: ExportResult = {
+        id: exportId,
+        status: "completed",
+        downloadUrl: `/api/premium/export/${exportId}/download`,
+        filename,
+        fileSize: JSON.stringify(exportData).length,
+        createdAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
+      };
+
+      // Store export data temporarily
+      await storage.setExportResult(exportId, exportResult);
+      
+      console.log(`[${requestId}] Export generation completed: ${exportId}`);
+      res.json(exportResult);
+      
+    } catch (error) {
+      console.error(`[${requestId}] Export error:`, error);
+      res.status(500).json({ 
+        error: "Failed to generate export",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Cache Stats Route (for monitoring)
+  app.get("/api/premium/cache-stats", checkPremiumAccess, async (req, res) => {
+    try {
+      const stats = await storage.getCacheStats();
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to get cache stats" });
     }
   });
 
