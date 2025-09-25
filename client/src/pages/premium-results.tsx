@@ -518,21 +518,21 @@ function RedditAnalysisSection({ analysisId, subreddits, keywords, industry }: {
             {redditData.subredditInsights?.slice(0, 3).map((subreddit, index) => (
               <Card key={index} className="border-l-4 border-l-blue-500">
                 <CardContent className="p-4">
-                  <h4 className="font-semibold text-blue-600 dark:text-blue-400">r/{subreddit.name}</h4>
+                  <h4 className="font-semibold text-blue-600 dark:text-blue-400">r/{subreddit.subreddit}</h4>
                   <div className="space-y-2 mt-2">
                     <div className="text-sm">
                       <span className="font-medium">Members: </span>
-                      <span data-testid={`text-${subreddit.name}-members`}>{subreddit.members}</span>
+                      <span data-testid={`text-${subreddit.subreddit}-members`}>{subreddit.members}</span>
                     </div>
                     <div className="text-sm">
-                      <span className="font-medium">Engagement: </span>
-                      <span className={`${subreddit.engagement === 'High' ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400'}`}>
-                        {subreddit.engagement}
+                      <span className="font-medium">Engagement Rate: </span>
+                      <span className={`${subreddit.engagementRate > 0.5 ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400'}`}>
+                        {(subreddit.engagementRate * 100).toFixed(1)}%
                       </span>
                     </div>
                     <div className="text-sm">
-                      <span className="font-medium">Relevance: </span>
-                      <span className="text-sm">{subreddit.relevanceScore}/10</span>
+                      <span className="font-medium">Sentiment: </span>
+                      <span className="text-sm">{subreddit.sentiment > 0 ? 'Positive' : subreddit.sentiment < 0 ? 'Negative' : 'Neutral'}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -544,16 +544,16 @@ function RedditAnalysisSection({ analysisId, subreddits, keywords, industry }: {
           <div className="space-y-4">
             <h4 className="font-semibold">High-Impact Discussions & Pain Points</h4>
             <div className="space-y-4">
-              {redditData.topDiscussions?.slice(0, 3).map((discussion, index) => (
+              {redditData.trendingDiscussions?.slice(0, 3).map((discussion, index) => (
                 <div key={index} className="p-4 border rounded-lg hover-elevate">
                   <div className="flex items-start justify-between">
                     <div className="space-y-2 flex-1">
                       <h5 className="font-medium">{discussion.title}</h5>
-                      <p className="text-sm text-muted-foreground">"{discussion.excerpt}"</p>
+                      <p className="text-sm text-muted-foreground">"{discussion.summary}"</p>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <span>↑ {discussion.upvotes} upvotes</span>
                         <span>💬 {discussion.comments} comments</span>
-                        <span>📊 {discussion.sentiment} sentiment</span>
+                        <span>r/{discussion.subreddit}</span>
                       </div>
                     </div>
                   </div>
@@ -563,16 +563,19 @@ function RedditAnalysisSection({ analysisId, subreddits, keywords, industry }: {
           </div>
 
           {/* Pain Points Analysis */}
-          {redditData.painPointsAnalysis && (
+          {redditData.keyPainPoints && (
             <div className="space-y-4">
               <h4 className="font-semibold">Identified Pain Points from Real Users</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {redditData.painPointsAnalysis.slice(0, 4).map((painPoint, index) => (
+                {redditData.keyPainPoints.slice(0, 4).map((painPoint, index) => (
                   <div key={index} className="p-4 bg-muted rounded-lg">
-                    <h5 className="font-medium text-sm">{painPoint.category}</h5>
-                    <p className="text-sm text-muted-foreground mt-1">{painPoint.description}</p>
+                    <h5 className="font-medium text-sm">{painPoint.painPoint}</h5>
+                    <div className="text-sm text-muted-foreground mt-1">
+                      <Badge variant="outline" className="mr-2">{painPoint.impact} impact</Badge>
+                      Mentioned {painPoint.frequency} times
+                    </div>
                     <div className="text-xs text-muted-foreground mt-2">
-                      Mentioned {painPoint.frequency} times across discussions
+                      Active in: {painPoint.subreddits?.join(', ')}
                     </div>
                   </div>
                 ))}
@@ -662,58 +665,52 @@ function CustomerIntelligenceSection({ analysisId, industry }: { analysisId: str
         <div className="space-y-6">
           {/* Customer Personas */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {customerData.personas?.slice(0, 2).map((persona, index) => (
+            {customerData.primaryPersonas?.slice(0, 2).map((persona, index) => (
               <Card key={index} className={`border-l-4 ${index === 0 ? 'border-l-green-500' : 'border-l-blue-500'}`}>
                 <CardHeader>
                   <h4 className={`font-semibold ${index === 0 ? 'text-green-600 dark:text-green-400' : 'text-blue-600 dark:text-blue-400'}`}>
-                    {persona.type}: {persona.title}
+                    {persona.name}
                   </h4>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div><strong>Demographics:</strong> {persona.demographics}</div>
+                  <div><strong>Age:</strong> {persona.demographics?.ageRange}</div>
+                  <div><strong>Location:</strong> {persona.demographics?.location}</div>
+                  <div><strong>Income:</strong> {persona.demographics?.income}</div>
                   <div><strong>Pain Points:</strong> {persona.painPoints?.join(', ')}</div>
                   <div><strong>Goals:</strong> {persona.goals?.join(', ')}</div>
-                  <div><strong>Buying Triggers:</strong> {persona.buyingTriggers?.join(', ')}</div>
-                  <div><strong>Decision Timeline:</strong> {persona.decisionTimeline}</div>
                 </CardContent>
               </Card>
             ))}
           </div>
 
           {/* Behavioral Analysis */}
-          {customerData.behaviorAnalysis && (
+          {customerData.behaviorInsights && (
             <div className="space-y-4">
               <h4 className="font-semibold">Customer Behavior Analysis</h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-4 bg-muted rounded-lg">
-                  <h5 className="font-medium">Purchasing Patterns</h5>
-                  <p className="text-sm text-muted-foreground mt-2">{customerData.behaviorAnalysis.purchasingPatterns}</p>
-                </div>
-                <div className="p-4 bg-muted rounded-lg">
-                  <h5 className="font-medium">Communication Preferences</h5>
-                  <p className="text-sm text-muted-foreground mt-2">{customerData.behaviorAnalysis.communicationPreferences}</p>
-                </div>
-                <div className="p-4 bg-muted rounded-lg">
-                  <h5 className="font-medium">Decision Factors</h5>
-                  <p className="text-sm text-muted-foreground mt-2">{customerData.behaviorAnalysis.decisionFactors}</p>
-                </div>
+                {customerData.behaviorInsights?.slice(0, 3).map((insight, index) => (
+                  <div key={index} className="p-4 bg-muted rounded-lg">
+                    <h5 className="font-medium">Insight {index + 1}</h5>
+                    <p className="text-sm text-muted-foreground mt-2">{insight.insight}</p>
+                  </div>
+                ))}
               </div>
             </div>
           )}
 
           {/* Market Segments */}
-          {customerData.marketSegments && (
+          {customerData.marketSegmentation && (
             <div className="space-y-4">
               <h4 className="font-semibold">Market Segmentation</h4>
               <div className="space-y-3">
-                {customerData.marketSegments.map((segment, index) => (
+                {customerData.marketSegmentation.segments?.map((segment, index) => (
                   <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
                     <div>
                       <h5 className="font-medium">{segment.name}</h5>
-                      <p className="text-sm text-muted-foreground">{segment.description}</p>
+                      <p className="text-sm text-muted-foreground">{segment.revenue_potential}</p>
                     </div>
                     <div className="text-right">
-                      <div className="font-semibold">{segment.marketShare}%</div>
+                      <div className="font-semibold">{segment.size}%</div>
                       <div className="text-sm text-muted-foreground">Market Share</div>
                     </div>
                   </div>
@@ -802,67 +799,65 @@ function FinancialProjectionsSection({ analysisId, industry }: { analysisId: str
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
-          {/* Revenue Model Options */}
+          {/* Revenue Streams */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {projectionsData.revenueModels?.[0]?.tiers?.map((tier, index) => (
+            {projectionsData.revenueStreams?.slice(0, 3).map((stream, index) => (
               <Card key={index} className={`border-l-4 ${index === 0 ? 'border-l-green-500' : index === 1 ? 'border-l-blue-500' : 'border-l-purple-500'}`}>
                 <CardContent className="p-4">
                   <h5 className={`font-semibold ${index === 0 ? 'text-green-600 dark:text-green-400' : index === 1 ? 'text-blue-600 dark:text-blue-400' : 'text-purple-600 dark:text-purple-400'}`}>
-                    {tier.name}
+                    {stream.name}
                   </h5>
                   <div className="space-y-2 mt-2 text-sm">
-                    <div>${tier.price}/{tier.billingCycle}</div>
-                    <div>Target: {Math.round(tier.targetPercentage * 100)}% of users</div>
-                    <div className="space-y-1">
-                      {tier.features?.slice(0, 3).map((feature, fIndex) => (
-                        <div key={fIndex} className="text-xs">{feature}</div>
-                      ))}
-                    </div>
+                    <div>Model: {stream.model}</div>
+                    <div>Monthly Users: {stream.monthlyProjection?.[0]?.users?.toLocaleString() || 'N/A'}</div>
+                    <div>Monthly Revenue: ${stream.monthlyProjection?.[0]?.revenue?.toLocaleString() || 'N/A'}</div>
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
 
-          {/* 3-Year Financial Outlook */}
+          {/* Profitability Analysis */}
           <div className="space-y-4">
-            <h4 className="font-semibold">3-Year Growth Projections</h4>
+            <h4 className="font-semibold">Profitability Projections</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {projectionsData.projections?.slice(0, 3).map((year, index) => (
-                <div key={index} className="p-4 border rounded-lg text-center hover-elevate">
-                  <h5 className="font-semibold mb-2">Year {year.year}</h5>
-                  <div className="space-y-1 text-sm">
-                    <div>Customers: {year.customers?.toLocaleString()}</div>
-                    <div>Revenue: ${year.revenue?.toLocaleString()}</div>
-                    {year.growthRate && <div>Growth: {year.growthRate}x</div>}
-                    {year.churnRate && <div>Churn: {Math.round(year.churnRate * 100)}%</div>}
-                  </div>
+              <div className="p-4 border rounded-lg text-center hover-elevate">
+                <h5 className="font-semibold mb-2">Year 1</h5>
+                <div className="space-y-1 text-sm">
+                  <div>Gross Margin: {projectionsData.profitabilityAnalysis?.grossMarginTarget || 'N/A'}%</div>
+                  <div>Break-even: Month {projectionsData.profitabilityAnalysis?.breakEvenMonth || 'N/A'}</div>
                 </div>
-              ))}
+              </div>
+              <div className="p-4 border rounded-lg text-center hover-elevate">
+                <h5 className="font-semibold mb-2">Cost Structure</h5>
+                <div className="space-y-1 text-sm">
+                  {projectionsData.costStructure?.slice(0, 2).map((cost, costIndex) => (
+                    <div key={costIndex}>{cost.category}: ${cost.monthlyProjection?.[0]?.cost || 'N/A'}</div>
+                  ))}
+                </div>
+              </div>
+              <div className="p-4 border rounded-lg text-center hover-elevate">
+                <h5 className="font-semibold mb-2">Funding</h5>
+                <div className="space-y-1 text-sm">
+                  <div>Needed: ${projectionsData.fundingRequirements?.totalNeeded?.toLocaleString() || 'N/A'}</div>
+                  <div>Runway: {projectionsData.fundingRequirements?.runway || 'N/A'} months</div>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Unit Economics */}
-          {projectionsData.unitEconomics && (
+          {/* Cost Structure Overview */}
+          {projectionsData.costStructure && (
             <div className="space-y-4">
-              <h4 className="font-semibold">Unit Economics</h4>
+              <h4 className="font-semibold">Cost Structure</h4>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="p-4 bg-muted rounded-lg text-center">
-                  <h5 className="font-medium">CAC</h5>
-                  <p className="text-2xl font-bold">${projectionsData.unitEconomics.customerAcquisitionCost}</p>
-                </div>
-                <div className="p-4 bg-muted rounded-lg text-center">
-                  <h5 className="font-medium">LTV</h5>
-                  <p className="text-2xl font-bold">${projectionsData.unitEconomics.lifetimeValue?.toLocaleString()}</p>
-                </div>
-                <div className="p-4 bg-muted rounded-lg text-center">
-                  <h5 className="font-medium">LTV:CAC</h5>
-                  <p className="text-2xl font-bold">{projectionsData.unitEconomics.ltvCacRatio}:1</p>
-                </div>
-                <div className="p-4 bg-muted rounded-lg text-center">
-                  <h5 className="font-medium">Payback</h5>
-                  <p className="text-2xl font-bold">{projectionsData.unitEconomics.paybackPeriod} mo</p>
-                </div>
+                {projectionsData.costStructure?.slice(0, 4).map((cost, index) => (
+                  <div key={index} className="p-4 bg-muted rounded-lg text-center">
+                    <h5 className="font-medium">{cost.category}</h5>
+                    <p className="text-2xl font-bold">${cost.monthlyProjection?.[0]?.cost || 'N/A'}</p>
+                    <p className="text-sm text-muted-foreground">{cost.scalingFactor}</p>
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -951,22 +946,21 @@ function TechnologyOperationsSection({ analysisId, industry }: { analysisId: str
           <div className="space-y-4">
             <h4 className="font-semibold">Recommended Technology Stack</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {technologyData.technologyStack?.mvp?.concat(technologyData.technologyStack?.production || []).slice(0, 4).map((tech, index) => (
+              {technologyData.recommendedStack?.slice(0, 4).map((category, index) => (
                 <Card key={index} className="border-l-4 border-l-blue-500">
                   <CardContent className="p-4">
-                    <h5 className="font-semibold text-blue-600 dark:text-blue-400">{tech.category}</h5>
+                    <h5 className="font-semibold text-blue-600 dark:text-blue-400">{category.category}</h5>
                     <div className="space-y-2 mt-2">
-                      <div className="text-sm font-medium">{tech.technology}</div>
-                      <div className="text-sm text-muted-foreground">{tech.reasoning}</div>
-                      <div className="flex items-center justify-between text-xs">
-                        <span>Cost: {tech.cost}</span>
-                        <span>Learning: {tech.learningCurve}</span>
-                      </div>
-                      {tech.alternatives && (
-                        <div className="text-xs text-muted-foreground">
-                          Alternatives: {tech.alternatives.join(', ')}
+                      {category.technologies?.slice(0, 3).map((tech, techIndex) => (
+                        <div key={techIndex} className="text-sm">
+                          <div className="font-medium">{tech.name}</div>
+                          <div className="text-muted-foreground text-xs">{tech.purpose}</div>
+                          <div className="flex items-center justify-between text-xs">
+                            <span>Cost: {tech.cost}</span>
+                            <span>Complexity: {tech.complexity}</span>
+                          </div>
                         </div>
-                      )}
+                      ))}
                     </div>
                   </CardContent>
                 </Card>
@@ -975,56 +969,43 @@ function TechnologyOperationsSection({ analysisId, industry }: { analysisId: str
           </div>
 
           {/* Team Requirements */}
-          {technologyData.team && (
+          {technologyData.teamStructure && (
             <div className="space-y-4">
               <h4 className="font-semibold">Team & Resource Planning</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-4 border rounded-lg">
-                  <h5 className="font-medium mb-3">MVP Phase</h5>
+                  <h5 className="font-medium mb-3">Core Team</h5>
                   <div className="space-y-2 text-sm">
-                    <div>Developers: {technologyData.team.mvpPhase?.developers}</div>
-                    <div>Designer: {technologyData.team.mvpPhase?.designer}</div>
-                    <div>Duration: {technologyData.team.mvpPhase?.duration}</div>
-                    <div className="font-medium">Monthly Cost: ${technologyData.team.mvpPhase?.monthlyCost?.toLocaleString()}</div>
+                    <div>Team Size: {technologyData.teamStructure.coreTeam?.length || 'N/A'}</div>
+                    <div>Key Roles: {technologyData.teamStructure.coreTeam?.slice(0, 3).map(member => member.role).join(', ') || 'N/A'}</div>
+                    <div>Salary Range: {technologyData.teamStructure.coreTeam?.[0]?.salaryRange || 'N/A'}</div>
                   </div>
                 </div>
                 <div className="p-4 border rounded-lg">
-                  <h5 className="font-medium mb-3">Growth Phase</h5>
+                  <h5 className="font-medium mb-3">Advisors</h5>
                   <div className="space-y-2 text-sm">
-                    <div>Developers: {technologyData.team.growthPhase?.developers}</div>
-                    <div>Designer: {technologyData.team.growthPhase?.designer}</div>
-                    <div>DevOps: {technologyData.team.growthPhase?.devops}</div>
-                    <div>Duration: {technologyData.team.growthPhase?.duration}</div>
-                    <div className="font-medium">Monthly Cost: ${technologyData.team.growthPhase?.monthlyCost?.toLocaleString()}</div>
+                    <div>Total Advisors: {technologyData.teamStructure.advisors?.length || 'N/A'}</div>
+                    <div>Areas: {technologyData.teamStructure.advisors?.slice(0, 2).join(', ') || 'N/A'}</div>
                   </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Infrastructure */}
-          {technologyData.infrastructure && (
+          {/* Operational Requirements */}
+          {technologyData.operationalRequirements && (
             <div className="space-y-4">
               <h4 className="font-semibold">Infrastructure & Hosting</h4>
               <div className="p-4 border rounded-lg">
-                <h5 className="font-medium mb-2">Hosting Costs (AWS/Vercel)</h5>
-                <div className="grid grid-cols-4 gap-4 text-sm">
-                  <div className="text-center">
-                    <div className="font-bold">${technologyData.infrastructure.hosting?.estimatedCosts?.month1}</div>
-                    <div className="text-muted-foreground">Month 1</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="font-bold">${technologyData.infrastructure.hosting?.estimatedCosts?.month6}</div>
-                    <div className="text-muted-foreground">Month 6</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="font-bold">${technologyData.infrastructure.hosting?.estimatedCosts?.month12}</div>
-                    <div className="text-muted-foreground">Month 12</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="font-bold">${technologyData.infrastructure.hosting?.estimatedCosts?.month24}</div>
-                    <div className="text-muted-foreground">Month 24</div>
-                  </div>
+                <h5 className="font-medium mb-2">Hosting & Infrastructure</h5>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  {technologyData.operationalRequirements?.slice(0, 3).map((req, index) => (
+                    <div key={index} className="text-center">
+                      <div className="font-bold">{req.area}</div>
+                      <div className="text-muted-foreground">{req.requirements?.[0]?.requirement || 'N/A'}</div>
+                      <div className="font-medium">${req.requirements?.[0]?.cost || 'N/A'}</div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -1116,10 +1097,10 @@ function LegalRegulatorySection({ analysisId, industry }: { analysisId: string, 
               <CardContent className="p-4">
                 <h5 className="font-semibold text-blue-600 dark:text-blue-400">Business Structure</h5>
                 <div className="space-y-2 mt-2 text-sm">
-                  <div>Recommended: {legalData.businessStructure?.recommended}</div>
-                  <div>Alternatives: {legalData.businessStructure?.alternatives?.join(', ')}</div>
-                  <div>Filing Cost: ${legalData.businessStructure?.incorporationCosts?.filing}</div>
-                  <div>Timeline: {legalData.businessStructure?.timeline}</div>
+                  <div>Recommended: {legalData.businessStructure?.recommendedType}</div>
+                  <div>Rationale: {legalData.businessStructure?.rationale}</div>
+                  <div>Cost: {legalData.businessStructure?.cost}</div>
+                  <div>Steps: {legalData.businessStructure?.steps?.length || 0} required</div>
                 </div>
               </CardContent>
             </Card>
@@ -1128,9 +1109,9 @@ function LegalRegulatorySection({ analysisId, industry }: { analysisId: string, 
               <CardContent className="p-4">
                 <h5 className="font-semibold text-green-600 dark:text-green-400">Intellectual Property</h5>
                 <div className="space-y-2 mt-2 text-sm">
-                  <div>Trademarks: ${legalData.intellectualProperty?.trademarks?.companyName?.cost}</div>
-                  <div>Copyrights: ${legalData.intellectualProperty?.copyrights?.softwareCode?.cost}</div>
-                  <div>Timeline: {legalData.intellectualProperty?.trademarks?.companyName?.timeline}</div>
+                  <div>Protections: {legalData.intellectualProperty?.protections?.length || 0} available</div>
+                  <div>Risks: {legalData.intellectualProperty?.risks?.length || 0} identified</div>
+                  <div>First Protection: {legalData.intellectualProperty?.protections?.[0]?.type || 'N/A'}</div>
                 </div>
               </CardContent>
             </Card>
@@ -1141,24 +1122,25 @@ function LegalRegulatorySection({ analysisId, industry }: { analysisId: string, 
                 <div className="space-y-2 mt-2 text-sm">
                   <div>Privacy Policy: Required</div>
                   <div>Terms of Service: Required</div>
-                  <div>GDPR: {legalData.compliance?.dataPrivacy?.[0]?.penalties}</div>
-                  <div>Cost: $800-3500</div>
+                  <div>Frameworks: {legalData.complianceFrameworks?.length || 0} required</div>
+                  <div>Requirements: {legalData.regulatoryRequirements?.length || 0} areas</div>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Legal Timeline */}
-          {legalData.timeline && (
+          {/* Regulatory Requirements */}
+          {legalData.regulatoryRequirements && (
             <div className="space-y-4">
-              <h4 className="font-semibold">Legal Implementation Timeline</h4>
+              <h4 className="font-semibold">Regulatory Requirements</h4>
               <div className="space-y-3">
-                {legalData.timeline.map((phase, index) => (
+                {legalData.regulatoryRequirements.slice(0, 3).map((req, index) => (
                   <div key={index} className="p-4 border rounded-lg">
-                    <h5 className="font-medium">{phase.phase}</h5>
-                    <p className="text-sm text-muted-foreground mt-1">{phase.tasks?.join(', ')}</p>
+                    <h5 className="font-medium">{req.area}</h5>
+                    <p className="text-sm text-muted-foreground mt-1">{req.requirements?.[0]?.requirement || 'N/A'}</p>
                     <div className="flex justify-between text-sm mt-2">
-                      <span>Cost: ${phase.cost?.toLocaleString()}</span>
+                      <span>Priority: {req.requirements?.[0]?.priority || 'N/A'}</span>
+                      <span>Cost: {req.requirements?.[0]?.estimatedCost || 'N/A'}</span>
                     </div>
                   </div>
                 ))}
@@ -1248,11 +1230,11 @@ function LaunchRoadmapSection({ analysisId, industry }: { analysisId: string, in
         <div className="space-y-6">
           {/* Quarterly Breakdown */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {roadmapData.quarters?.map((quarter, index) => (
+            {roadmapData.quarterlyGoals?.map((quarter, index) => (
               <Card key={index} className={`border-l-4 ${index === 0 ? 'border-l-blue-500' : index === 1 ? 'border-l-green-500' : index === 2 ? 'border-l-purple-500' : 'border-l-orange-500'}`}>
                 <CardHeader className="pb-2">
                   <h4 className={`font-semibold ${index === 0 ? 'text-blue-600 dark:text-blue-400' : index === 1 ? 'text-green-600 dark:text-green-400' : index === 2 ? 'text-purple-600 dark:text-purple-400' : 'text-orange-600 dark:text-orange-400'}`}>
-                    {quarter.quarter}: {quarter.title}
+                    {quarter.quarter}
                   </h4>
                 </CardHeader>
                 <CardContent className="pt-0">
@@ -1263,42 +1245,38 @@ function LaunchRoadmapSection({ analysisId, industry }: { analysisId: string, in
                         {objective}
                       </div>
                     ))}
-                    <div className="text-xs text-muted-foreground mt-2">
-                      Budget: ${quarter.budget?.toLocaleString()}
-                    </div>
+                    {quarter.key_metrics && (
+                      <div className="text-xs text-muted-foreground mt-2">
+                        Metrics: {quarter.key_metrics.length} key targets
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
 
-          {/* Key Metrics Timeline */}
-          {roadmapData.metricTargets && (
+          {/* Key Milestones Timeline */}
+          {roadmapData.milestones && (
             <div className="space-y-4">
-              <h4 className="font-semibold">Growth Metrics Timeline</h4>
-              <div className="overflow-x-auto">
-                <table className="w-full border rounded-lg">
-                  <thead>
-                    <tr className="bg-muted">
-                      <th className="text-left p-3 font-medium">Metric</th>
-                      <th className="text-center p-3 font-medium">Month 3</th>
-                      <th className="text-center p-3 font-medium">Month 6</th>
-                      <th className="text-center p-3 font-medium">Month 9</th>
-                      <th className="text-center p-3 font-medium">Month 12</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {roadmapData.metricTargets.map((target, index) => (
-                      <tr key={index} className="border-t">
-                        <td className="p-3 font-medium">{target.metric}</td>
-                        <td className="p-3 text-center">{target.month3}</td>
-                        <td className="p-3 text-center">{target.month6}</td>
-                        <td className="p-3 text-center">{target.month9}</td>
-                        <td className="p-3 text-center">{target.month12}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <h4 className="font-semibold">12-Month Milestones</h4>
+              <div className="space-y-3">
+                {roadmapData.milestones.slice(0, 6).map((milestone, index) => (
+                  <div key={index} className="p-4 border rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <h5 className="font-medium">Month {milestone.month}: {milestone.milestone}</h5>
+                      <Badge variant="outline">
+                        {milestone.deliverables?.length || 0} deliverables
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-2">{milestone.description}</p>
+                    {milestone.success_criteria && (
+                      <div className="text-xs">
+                        <strong>Success Criteria:</strong> {milestone.success_criteria.slice(0, 2).join(', ')}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -2068,6 +2046,7 @@ export default function PremiumResults() {
             analysisId={analysisId} 
             subreddits={analysisResults.subreddits || []} 
             keywords={analysisResults.keywords || []} 
+            industry={industry}
           />
 
           <CustomerIntelligenceSection analysisId={analysisId} industry={industry} />

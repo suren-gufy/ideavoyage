@@ -55,8 +55,8 @@ export function SearchInterface({}: SearchInterfaceProps) {
 
   const analyzeIdeaMutation = useMutation({
     mutationFn: async (data: AnalyzeIdeaRequest): Promise<AnalysisResponse> => {
-      const response = await apiRequest("POST", "/api/analyze", data)
-      return await response.json() as AnalysisResponse
+      const response = await apiRequest("/api/analyze", "POST", data)
+      return response as AnalysisResponse
     },
     onSuccess: (results) => {
       console.log('Analysis completed successfully:', results)

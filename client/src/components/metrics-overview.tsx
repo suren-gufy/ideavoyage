@@ -60,8 +60,8 @@ export function MetricsOverview({ analysisData }: MetricsOverviewProps) {
              analysisData.market_interest_level === "medium" ? "Moderate interest shown" : 
              "Limited interest observed",
       icon: TrendingUp,
-      trend: (analysisData.market_interest_level === "high" ? "up" : 
-             analysisData.market_interest_level === "medium" ? "neutral" : "down") as const
+      trend: analysisData.market_interest_level === "high" ? "up" as const : 
+             analysisData.market_interest_level === "medium" ? "neutral" as const : "down" as const
     },
     {
       title: "Pain Points Found",
