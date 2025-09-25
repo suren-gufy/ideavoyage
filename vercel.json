@@ -3,10 +3,12 @@
   "buildCommand": "npm install && npm run vercel-build",
   "outputDirectory": "dist/public",
   "functions": {
-    "api/*.ts": { "runtime": "@vercel/node@20.x" }
+    "api/index.ts": {
+      "runtime": "@vercel/node@3.0.7"
+    }
   },
-  "routes": [
-    { "src": "/api/(.*)", "dest": "/api/index.ts" },
-    { "src": "/(.*)", "dest": "/index.html" }
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/index" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
