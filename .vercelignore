@@ -1,0 +1,16 @@
+# Vercel ignore file
+node_modules/
+.env
+.env.local
+.env.*.local
+*.log
+.DS_Store
+.git/
+client/node_modules/
+server/
+*.test.ts
+*.test.js
+__tests__/
+coverage/
+.replit
+replit.md
