@@ -41,9 +41,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Health
     if (req.method === 'GET') {
+      const hasOpenAIKey = process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.trim().length > 0;
       return res.json({
         message: 'IdeaVoyage API live',
-        mode: process.env.OPENAI_API_KEY ? 'enhanced' : 'heuristic',
+        mode: hasOpenAIKey ? 'enhanced' : 'heuristic',
+        openai_available: hasOpenAIKey,
         timestamp: new Date().toISOString(),
         url
       });
@@ -317,26 +319,42 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
     examples: Array.from(v.examples)
   })).slice(0,6);
 
-  // 4. Optional OpenAI enrichment
+  // 4. Optional OpenAI enrichment (completely optional - no errors if missing)
   let enriched: Partial<ReturnType<typeof buildBaseResponse>> | null = null;
-  if (process.env.OPENAI_API_KEY) {
+  const hasOpenAIKey = process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.trim().length > 0;
+  
+  if (hasOpenAIKey) {
     try {
+      // Dynamic import to avoid issues if openai module isn't available
       const OpenAI = (await import('openai')).default;
-      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      const openai = new OpenAI({ 
+        apiKey: process.env.OPENAI_API_KEY!,
+        // Add timeout to prevent hanging
+        timeout: 8000,
+        maxRetries: 1
+      });
+      
       const samplePosts = fetchedPosts.slice(0,12).map(p => `- ${p.title}`).join('\n');
       const system = 'You are a startup market validation analyst. Return ONLY valid JSON.';
       const user = `Startup Idea: ${input.idea}\nIndustry: ${input.industry || 'Unknown'}\nTarget Audience: ${input.targetAudience || 'General'}\nPosts Sample (titles):\n${samplePosts}\n\nUsing the sample, extract: keywords (<=10), 3-6 pain points (title, frequency 10-95, urgency low|medium|high, examples array), 1-2 app ideas (title, description, market_validation low|medium|high, difficulty easy|medium|hard), 1-3 competitors (name, description, strengths[], weaknesses[], market_share, pricing_model), 1-2 revenue models (model_type, description, pros[], cons[], implementation_difficulty easy|medium|hard, potential_revenue High|Medium|Moderate). Return JSON with keys: keywords, pain_points, app_ideas, competitors, revenue_models.`;
+      
       const completion = await openai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [ { role:'system', content: system }, { role:'user', content: user } ],
         temperature: 0.5,
         response_format: { type: 'json_object' }
       });
-      const raw = completion.choices[0].message.content || '{}';
+      
+      const raw = completion.choices[0]?.message?.content || '{}';
       enriched = JSON.parse(raw);
+      console.log('OpenAI enrichment successful');
     } catch (e) {
-      console.warn('OpenAI enrichment failed:', (e as Error).message);
+      console.warn('OpenAI enrichment failed (continuing without it):', (e as Error).message);
+      // Don't throw - just continue without OpenAI enhancement
+      enriched = null;
     }
+  } else {
+    console.log('No OpenAI API key found - using heuristic analysis only');
   }
 
   // 5. Build response
@@ -363,7 +381,13 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
   });
 
   const durationMs = Date.now() - started;
-  (response as any).debug = { postsFetched: fetchedPosts.length, enriched: !!enriched, ms: durationMs };
+  (response as any).debug = { 
+    postsFetched: fetchedPosts.length, 
+    enriched: !!enriched, 
+    openai_available: hasOpenAIKey,
+    mode: enriched ? 'ai_enhanced' : 'heuristic_only',
+    ms: durationMs 
+  };
   return response;
 }
 
