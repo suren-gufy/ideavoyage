@@ -1,67 +1,45 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import express from 'express';
-import { registerRoutes } from '../server/routes';
 
-const app = express();
-
-// Basic middleware
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: false, limit: '10mb' }));
-
-// CORS headers
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Enable CORS
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
-    res.sendStatus(200);
-  } else {
-    next();
+    return res.status(200).end();
   }
-});
 
-// Register all routes
-registerRoutes(app);
+  try {
+    // For now, return a basic response to test deployment
+    if (req.method === 'GET') {
+      return res.json({ 
+        message: 'IdeaVoyage API is running on Vercel',
+        timestamp: new Date().toISOString(),
+        endpoint: req.url
+      });
+    }
 
-// Error handling
-app.use((err: any, req: any, res: any, next: any) => {
-  console.error('Error:', err);
-  res.status(err.status || 500).json({ message: err.message || 'Internal Server Error' });
-});
+    if (req.method === 'POST' && req.url?.includes('/analyze')) {
+      // Mock analysis response for testing
+      return res.json({
+        message: 'Analysis endpoint working',
+        idea: req.body?.idea || 'No idea provided',
+        status: 'success'
+      });
+    }
 
-export default async (req: VercelRequest, res: VercelResponse): Promise<void> => {
-  // Set environment variables from Vercel
-  process.env.NODE_ENV = 'production';
-
-  return new Promise<void>((resolve, reject) => {
-    // Create a mock Express request/response from Vercel objects
-    const mockReq = Object.assign(req, {
-      get: (header: string) => req.headers[header.toLowerCase()],
-      header: (header: string) => req.headers[header.toLowerCase()],
+    return res.status(404).json({ 
+      error: 'Endpoint not found',
+      method: req.method,
+      url: req.url
     });
 
-    const mockRes = Object.assign(res, {
-      json: (data: any) => {
-        res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify(data));
-      },
-      send: (data: any) => {
-        res.end(typeof data === 'string' ? data : JSON.stringify(data));
-      },
-      status: (code: number) => {
-        res.statusCode = code;
-        return res;
-      },
+  } catch (error) {
+    console.error('API Error:', error);
+    return res.status(500).json({ 
+      error: 'Internal server error',
+      message: error instanceof Error ? error.message : 'Unknown error'
     });
-
-    app(mockReq as any, mockRes as any, (err?: any) => {
-      if (err) {
-        console.error('App error:', err);
-        reject(err);
-      } else {
-        resolve();
-      }
-    });
-  });
-};
+  }
+}
