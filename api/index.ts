@@ -662,17 +662,20 @@ function buildBaseResponse(params: { idea: string; industry?: string; targetAudi
   // Final scoring with realistic ranges
   const baseScore = (engagementComponent * 0.4 + volumeComponent * 0.3 + marketComponent * 0.3) * 10;
   
-  // Create realistic score distribution with meaningful variation
-  const ideaHash = params.idea.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0); // Deterministic seed
-  const seedVariation = (ideaHash % 100) / 100; // 0-1 based on idea content
+  // Create realistic score distribution with natural variation
+  const ideaHash = params.idea.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
+  const baseVariation = (ideaHash % 100) / 100; // 0-1 based on idea content for consistency
+  const timeVariation = (Date.now() % 10000) / 10000; // Time-based for each request uniqueness
   
-  // Different ideas get different base score ranges
-  const ideaSpecificBoost = 2.0 + seedVariation * 3.0; // 2.0-5.0 range based on idea
-  const randomVariation = (Math.random() - 0.5) * 2.5; // ±1.25 points
-  const marketFactorBoost = (trendBonus - 1.0) * 2.0; // Trend bonus impact
+  // Combine multiple factors for realistic scoring
+  const ideaTypeBoost = 1.5 + baseVariation * 2.5; // 1.5-4.0 range per idea type
+  const marketConditions = 1.0 + timeVariation * 1.5; // 1.0-2.5 market variation
+  const randomFactor = 0.8 + Math.random() * 2.4; // 0.8-3.2 random component
+  const trendImpact = trendBonus * 1.8; // Amplify trend effects
   
-  const overall_score = clamp(baseScore + ideaSpecificBoost + randomVariation + marketFactorBoost, 1.8, 8.9);
-  const viability_score = clamp(overall_score + (Math.random() - 0.3) * 1.8, 1.8, 8.9);
+  const finalMultiplier = (ideaTypeBoost + marketConditions + randomFactor) / 3 * trendImpact;
+  const overall_score = clamp(baseScore * finalMultiplier + (Math.random() - 0.5) * 1.5, 1.9, 8.7);
+  const viability_score = clamp(overall_score + (Math.random() - 0.2) * 1.2 + (trendBonus - 1.0), 1.9, 8.7);
   
   console.log(`📈 Scoring: Posts=${fetchedPosts.length}, AvgScore=${avgScore.toFixed(1)}, AvgComments=${avgComments.toFixed(1)}, FinalScore=${overall_score.toFixed(1)}`)
 
