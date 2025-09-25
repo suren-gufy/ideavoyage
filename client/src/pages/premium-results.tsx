@@ -18,7 +18,7 @@ import type { AnalysisResponse, KeywordIntelligence, RedditAnalysis, CustomerInt
 const usePremiumKeywords = (analysisId: string, enabled: boolean) => {
   return useQuery<KeywordIntelligence>({
     queryKey: ['/api/premium/keywords', analysisId],
-    queryFn: () => apiRequest(`/api/premium/keywords?analysisId=${analysisId}`, 'GET'),
+    queryFn: () => apiRequest('/api/premium/keywords', 'POST', { analysisId }),
     enabled: enabled && !!analysisId,
   })
 }
@@ -27,7 +27,7 @@ const usePremiumKeywords = (analysisId: string, enabled: boolean) => {
 const usePremiumCompetitors = (analysisId: string, enabled: boolean) => {
   return useQuery<CompetitorMatrix>({
     queryKey: ['/api/premium/competitors', analysisId],
-    queryFn: () => apiRequest(`/api/premium/competitors?analysisId=${analysisId}`, 'GET'),
+    queryFn: () => apiRequest('/api/premium/competitors', 'POST', { analysisId }),
     enabled: enabled && !!analysisId,
   })
 }
@@ -51,8 +51,8 @@ const usePremiumMarket = (analysisId: string, enabled: boolean) => {
 // New premium analytics queries
 const usePremiumReddit = (analysisId: string, enabled: boolean) => {
   return useQuery<RedditAnalysis>({
-    queryKey: ['/api/premium/reddit-analysis', analysisId],
-    queryFn: () => apiRequest(`/api/premium/reddit-analysis?analysisId=${analysisId}`, 'GET'),
+    queryKey: ['/api/premium/reddit', analysisId],
+    queryFn: () => apiRequest('/api/premium/reddit', 'POST', { analysisId }),
     enabled: enabled && !!analysisId,
   })
 }
@@ -60,31 +60,31 @@ const usePremiumReddit = (analysisId: string, enabled: boolean) => {
 const usePremiumCustomer = (analysisId: string, enabled: boolean) => {
   return useQuery<CustomerIntelligence>({
     queryKey: ['/api/premium/customer-intelligence', analysisId],
-    queryFn: () => apiRequest(`/api/premium/customer-intelligence?analysisId=${analysisId}`, 'GET'),
+    queryFn: () => apiRequest('/api/premium/customer-intelligence', 'POST', { analysisId }),
     enabled: enabled && !!analysisId,
   })
 }
 
 const usePremiumFinancialProjections = (analysisId: string, enabled: boolean) => {
   return useQuery<FinancialProjections>({
-    queryKey: ['/api/premium/financial-projections', analysisId],
-    queryFn: () => apiRequest(`/api/premium/financial-projections?analysisId=${analysisId}`, 'GET'),
+    queryKey: ['/api/premium/financial', analysisId],
+    queryFn: () => apiRequest('/api/premium/financial', 'POST', { analysisId }),
     enabled: enabled && !!analysisId,
   })
 }
 
 const usePremiumTechnology = (analysisId: string, enabled: boolean) => {
   return useQuery<TechnologyOperations>({
-    queryKey: ['/api/premium/technology-operations', analysisId],
-    queryFn: () => apiRequest(`/api/premium/technology-operations?analysisId=${analysisId}`, 'GET'),
+    queryKey: ['/api/premium/technology', analysisId],
+    queryFn: () => apiRequest('/api/premium/technology', 'POST', { analysisId }),
     enabled: enabled && !!analysisId,
   })
 }
 
 const usePremiumLegal = (analysisId: string, enabled: boolean) => {
   return useQuery<LegalRegulatory>({
-    queryKey: ['/api/premium/legal-regulatory', analysisId],
-    queryFn: () => apiRequest(`/api/premium/legal-regulatory?analysisId=${analysisId}`, 'GET'),
+    queryKey: ['/api/premium/legal', analysisId],
+    queryFn: () => apiRequest('/api/premium/legal', 'POST', { analysisId }),
     enabled: enabled && !!analysisId,
   })
 }
@@ -92,7 +92,7 @@ const usePremiumLegal = (analysisId: string, enabled: boolean) => {
 const usePremiumRoadmap = (analysisId: string, enabled: boolean) => {
   return useQuery<LaunchRoadmap>({
     queryKey: ['/api/premium/launch-roadmap', analysisId],
-    queryFn: () => apiRequest(`/api/premium/launch-roadmap?analysisId=${analysisId}`, 'GET'),
+    queryFn: () => apiRequest('/api/premium/launch-roadmap', 'POST', { analysisId }),
     enabled: enabled && !!analysisId,
   })
 }
