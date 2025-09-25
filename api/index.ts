@@ -14,15 +14,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const url = req.url || '';
     
     // Basic health check
-    if (req.method === 'GET' && url === '/api/simple') {
+    if (req.method === 'GET') {
       return res.json({ 
         message: 'IdeaVoyage API is working',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        url: url
       });
     }
 
     // Analysis endpoint - Intelligent analysis without external APIs
-    if (req.method === 'POST' && url.includes('/analyze')) {
+    if (req.method === 'POST' && (url.includes('/analyze') || url === '/api/index')) {
       const { idea, industry, targetAudience } = req.body || {};
       
       if (!idea) {
