@@ -662,12 +662,17 @@ function buildBaseResponse(params: { idea: string; industry?: string; targetAudi
   // Final scoring with realistic ranges
   const baseScore = (engagementComponent * 0.4 + volumeComponent * 0.3 + marketComponent * 0.3) * 10;
   
-  // Add controlled randomness and realistic base boost for natural variation
-  const naturalVariation = (Math.random() - 0.5) * 2.0; // ±1.0 points variation
-  const realisticBaseBoost = 2.5; // Boost base scores to realistic range
+  // Create realistic score distribution with meaningful variation
+  const ideaHash = params.idea.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0); // Deterministic seed
+  const seedVariation = (ideaHash % 100) / 100; // 0-1 based on idea content
   
-  const overall_score = clamp(baseScore + naturalVariation + realisticBaseBoost, 2.0, 9.2); // More realistic range
-  const viability_score = clamp(overall_score + (trendBonus - 1.0) * 1.5 + (Math.random() - 0.5) * 1.0, 2.0, 9.2);
+  // Different ideas get different base score ranges
+  const ideaSpecificBoost = 2.0 + seedVariation * 3.0; // 2.0-5.0 range based on idea
+  const randomVariation = (Math.random() - 0.5) * 2.5; // ±1.25 points
+  const marketFactorBoost = (trendBonus - 1.0) * 2.0; // Trend bonus impact
+  
+  const overall_score = clamp(baseScore + ideaSpecificBoost + randomVariation + marketFactorBoost, 1.8, 8.9);
+  const viability_score = clamp(overall_score + (Math.random() - 0.3) * 1.8, 1.8, 8.9);
   
   console.log(`📈 Scoring: Posts=${fetchedPosts.length}, AvgScore=${avgScore.toFixed(1)}, AvgComments=${avgComments.toFixed(1)}, FinalScore=${overall_score.toFixed(1)}`)
 
