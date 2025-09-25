@@ -14,3 +14,6 @@ __tests__/
 coverage/
 .replit
 replit.md
+# Exclude all js files to avoid conflicts
+**/*.js
+!api/**/*.js

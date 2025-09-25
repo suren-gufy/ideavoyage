@@ -11,20 +11,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    // For now, return a basic response to test deployment
+    // Simple test endpoint
     if (req.method === 'GET') {
       return res.json({ 
-        message: 'IdeaVoyage API is running on Vercel',
+        message: 'IdeaVoyage API is working!',
         timestamp: new Date().toISOString(),
+        version: '2.0',
         endpoint: req.url
       });
     }
 
-    if (req.method === 'POST' && req.url?.includes('/analyze')) {
-      // Mock analysis response for testing
+    if (req.method === 'POST') {
+      const body = req.body || {};
+      
+      // Mock analysis endpoint
+      if (req.url?.includes('analyze')) {
+        return res.json({
+          message: 'Analysis completed successfully',
+          idea: body.idea || 'Sample idea',
+          score: 8.5,
+          status: 'success',
+          timestamp: new Date().toISOString()
+        });
+      }
+
       return res.json({
-        message: 'Analysis endpoint working',
-        idea: req.body?.idea || 'No idea provided',
+        message: 'POST request received',
+        data: body,
         status: 'success'
       });
     }
