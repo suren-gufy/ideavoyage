@@ -1,4 +1,20 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+// Using type definitions directly to avoid module import issues
+interface VercelRequest {
+  method?: string;
+  url?: string;
+  body?: any;
+  cookies?: Record<string, string>;
+  headers?: Record<string, string>;
+  query?: Record<string, string | string[]>;
+}
+
+interface VercelResponse {
+  status: (statusCode: number) => VercelResponse;
+  json: (jsonBody: any) => VercelResponse;
+  send: (body: any) => VercelResponse;
+  setHeader: (name: string, value: string) => void;
+  end: () => void;
+}
 
 // Utility: clamp numbers
 const clamp = (val: number, min: number, max: number) => Math.min(max, Math.max(min, val));
