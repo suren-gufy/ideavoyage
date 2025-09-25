@@ -1106,7 +1106,31 @@ RULES:
     }
   });
 
-  // Keyword Intelligence Route
+  // Keyword Intelligence Route - GET cached data
+  app.get("/api/premium/keywords", checkPremiumAccess, async (req, res) => {
+    try {
+      if (!(req as any).isPremium) {
+        return res.status(403).json({ error: "Premium access required" });
+      }
+
+      const { analysisId } = req.query;
+      if (!analysisId) {
+        return res.status(400).json({ error: "analysisId is required" });
+      }
+
+      const cached = await storage.getKeywordIntelligence(analysisId as string);
+      if (cached) {
+        return res.json(cached);
+      }
+
+      return res.status(404).json({ error: "No keyword intelligence data found for this analysis" });
+    } catch (error) {
+      console.error("Get keyword intelligence error:", error);
+      res.status(500).json({ error: "Failed to retrieve keyword intelligence" });
+    }
+  });
+
+  // Keyword Intelligence Route - Generate new data
   app.post("/api/premium/keywords", checkPremiumAccess, async (req, res) => {
     const requestId = Date.now();
     console.log(`[${requestId}] Starting keyword intelligence analysis`);
@@ -1225,7 +1249,31 @@ Generate realistic but valuable keyword data with 24-month trend analysis showin
     }
   });
 
-  // Reddit Analysis Route - leverages existing Reddit scraping functionality
+  // Reddit Analysis Route - GET cached data
+  app.get("/api/premium/reddit-analysis", checkPremiumAccess, async (req, res) => {
+    try {
+      if (!(req as any).isPremium) {
+        return res.status(403).json({ error: "Premium access required" });
+      }
+
+      const { analysisId } = req.query;
+      if (!analysisId) {
+        return res.status(400).json({ error: "analysisId is required" });
+      }
+
+      const cached = await storage.getRedditAnalysis(analysisId as string);
+      if (cached) {
+        return res.json(cached);
+      }
+
+      return res.status(404).json({ error: "No Reddit analysis data found for this analysis" });
+    } catch (error) {
+      console.error("Get Reddit analysis error:", error);
+      res.status(500).json({ error: "Failed to retrieve Reddit analysis" });
+    }
+  });
+
+  // Reddit Analysis Route - Generate new data - leverages existing Reddit scraping functionality
   app.post("/api/premium/reddit-analysis", checkPremiumAccess, async (req, res) => {
     const requestId = Date.now();
     console.log(`[${requestId}] Starting Reddit analysis`);
@@ -1360,7 +1408,31 @@ Provide comprehensive Reddit analysis in JSON format:
     }
   });
 
-  // Customer Intelligence Route
+  // Customer Intelligence Route - GET cached data
+  app.get("/api/premium/customer-intelligence", checkPremiumAccess, async (req, res) => {
+    try {
+      if (!(req as any).isPremium) {
+        return res.status(403).json({ error: "Premium access required" });
+      }
+
+      const { analysisId } = req.query;
+      if (!analysisId) {
+        return res.status(400).json({ error: "analysisId is required" });
+      }
+
+      const cached = await storage.getCustomerIntelligence(analysisId as string);
+      if (cached) {
+        return res.json(cached);
+      }
+
+      return res.status(404).json({ error: "No customer intelligence data found for this analysis" });
+    } catch (error) {
+      console.error("Get customer intelligence error:", error);
+      res.status(500).json({ error: "Failed to retrieve customer intelligence" });
+    }
+  });
+
+  // Customer Intelligence Route - Generate new data
   app.post("/api/premium/customer-intelligence", checkPremiumAccess, async (req, res) => {
     const requestId = Date.now();
     console.log(`[${requestId}] Starting customer intelligence analysis`);

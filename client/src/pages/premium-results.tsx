@@ -18,6 +18,7 @@ import type { AnalysisResponse, KeywordIntelligence, RedditAnalysis, CustomerInt
 const usePremiumKeywords = (analysisId: string, enabled: boolean) => {
   return useQuery<KeywordIntelligence>({
     queryKey: ['/api/premium/keywords', analysisId],
+    queryFn: () => apiRequest(`/api/premium/keywords?analysisId=${analysisId}`, 'GET'),
     enabled: enabled && !!analysisId,
   })
 }
@@ -26,6 +27,7 @@ const usePremiumKeywords = (analysisId: string, enabled: boolean) => {
 const usePremiumCompetitors = (analysisId: string, enabled: boolean) => {
   return useQuery<CompetitorMatrix>({
     queryKey: ['/api/premium/competitors', analysisId],
+    queryFn: () => apiRequest(`/api/premium/competitors?analysisId=${analysisId}`, 'GET'),
     enabled: enabled && !!analysisId,
   })
 }
@@ -33,6 +35,7 @@ const usePremiumCompetitors = (analysisId: string, enabled: boolean) => {
 const usePremiumGtm = (analysisId: string, enabled: boolean) => {
   return useQuery<GtmPlan>({
     queryKey: ['/api/premium/gtm-plan', analysisId],
+    queryFn: () => apiRequest(`/api/premium/gtm-plan?analysisId=${analysisId}`, 'GET'),
     enabled: enabled && !!analysisId,
   })
 }
@@ -40,6 +43,7 @@ const usePremiumGtm = (analysisId: string, enabled: boolean) => {
 const usePremiumMarket = (analysisId: string, enabled: boolean) => {
   return useQuery<MarketSizing>({
     queryKey: ['/api/premium/market-sizing', analysisId],
+    queryFn: () => apiRequest(`/api/premium/market-sizing?analysisId=${analysisId}`, 'GET'),
     enabled: enabled && !!analysisId,
   })
 }
@@ -48,6 +52,7 @@ const usePremiumMarket = (analysisId: string, enabled: boolean) => {
 const usePremiumReddit = (analysisId: string, enabled: boolean) => {
   return useQuery<RedditAnalysis>({
     queryKey: ['/api/premium/reddit-analysis', analysisId],
+    queryFn: () => apiRequest(`/api/premium/reddit-analysis?analysisId=${analysisId}`, 'GET'),
     enabled: enabled && !!analysisId,
   })
 }
@@ -55,6 +60,7 @@ const usePremiumReddit = (analysisId: string, enabled: boolean) => {
 const usePremiumCustomer = (analysisId: string, enabled: boolean) => {
   return useQuery<CustomerIntelligence>({
     queryKey: ['/api/premium/customer-intelligence', analysisId],
+    queryFn: () => apiRequest(`/api/premium/customer-intelligence?analysisId=${analysisId}`, 'GET'),
     enabled: enabled && !!analysisId,
   })
 }
@@ -62,6 +68,7 @@ const usePremiumCustomer = (analysisId: string, enabled: boolean) => {
 const usePremiumFinancialProjections = (analysisId: string, enabled: boolean) => {
   return useQuery<FinancialProjections>({
     queryKey: ['/api/premium/financial-projections', analysisId],
+    queryFn: () => apiRequest(`/api/premium/financial-projections?analysisId=${analysisId}`, 'GET'),
     enabled: enabled && !!analysisId,
   })
 }
@@ -69,6 +76,7 @@ const usePremiumFinancialProjections = (analysisId: string, enabled: boolean) =>
 const usePremiumTechnology = (analysisId: string, enabled: boolean) => {
   return useQuery<TechnologyOperations>({
     queryKey: ['/api/premium/technology-operations', analysisId],
+    queryFn: () => apiRequest(`/api/premium/technology-operations?analysisId=${analysisId}`, 'GET'),
     enabled: enabled && !!analysisId,
   })
 }
@@ -76,6 +84,7 @@ const usePremiumTechnology = (analysisId: string, enabled: boolean) => {
 const usePremiumLegal = (analysisId: string, enabled: boolean) => {
   return useQuery<LegalRegulatory>({
     queryKey: ['/api/premium/legal-regulatory', analysisId],
+    queryFn: () => apiRequest(`/api/premium/legal-regulatory?analysisId=${analysisId}`, 'GET'),
     enabled: enabled && !!analysisId,
   })
 }
@@ -83,6 +92,7 @@ const usePremiumLegal = (analysisId: string, enabled: boolean) => {
 const usePremiumRoadmap = (analysisId: string, enabled: boolean) => {
   return useQuery<LaunchRoadmap>({
     queryKey: ['/api/premium/launch-roadmap', analysisId],
+    queryFn: () => apiRequest(`/api/premium/launch-roadmap?analysisId=${analysisId}`, 'GET'),
     enabled: enabled && !!analysisId,
   })
 }
@@ -206,7 +216,7 @@ function KeywordIntelligenceSection({ analysisId, industry, primaryKeyword }: { 
         locale: "US"
       })
     }
-  }, [isPremium, analysisId, primaryKeyword, industry])
+  }, [isPremium, analysisId, primaryKeyword, industry, keywordsQuery.data, keywordsQuery.isLoading, generateKeywords])
 
   if (!isPremium) return null
   if (keywordsQuery.isLoading || generateKeywords.isPending) {
@@ -442,7 +452,7 @@ function RedditAnalysisSection({ analysisId, subreddits, keywords, industry }: {
         industry
       })
     }
-  }, [isPremium, analysisId, subreddits, keywords, industry])
+  }, [isPremium, analysisId, subreddits, keywords, industry, redditQuery.data, redditQuery.isLoading, generateReddit])
 
   if (!isPremium || !subreddits || !keywords) return null
 
@@ -589,7 +599,7 @@ function CustomerIntelligenceSection({ analysisId, industry }: { analysisId: str
         targetAudience: "General market"
       })
     }
-  }, [isPremium, analysisId, industry])
+  }, [isPremium, analysisId, industry, customerQuery.data, customerQuery.isLoading, generateCustomer])
 
   if (!isPremium) return null
 
