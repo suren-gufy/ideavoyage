@@ -809,3 +809,5 @@ function buildBaseResponse(params: { idea: string; industry?: string; targetAudi
     viability_score
   };
 }
+/ /   t o u c h   2 0 2 5 - 0 9 - 2 5 T 1 9 : 1 9 : 5 6 . 3 2 5 4 0 3 5 + 0 5 : 3 0  
+ 
