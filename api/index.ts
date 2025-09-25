@@ -646,7 +646,8 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
     enriched: !!enriched, 
     openai_available: hasOpenAIKey,
     mode: enriched ? 'ai_enhanced' : 'heuristic_only',
-    ms: durationMs 
+    ms: durationMs,
+    api_version: '2025-09-25-evidence-v1'
   };
   // Add high-level evidence summary for user transparency
   (response as any).evidence = {
