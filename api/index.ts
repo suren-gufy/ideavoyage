@@ -27,6 +27,8 @@ interface RawRedditPost {
   created_utc: number;
   permalink: string;
   subreddit: string;
+  // 'reddit' for real fetched data, 'synthetic' for internally generated filler
+  source?: 'reddit' | 'synthetic';
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -218,7 +220,8 @@ function generateRealisticSyntheticPosts(idea: string, industry: string, subredd
     num_comments: Math.floor(template.comments * boost),
     created_utc: Math.floor(Date.now() / 1000) - Math.floor(Math.random() * 86400 * 3), // Last 3 days
     permalink: `/r/${subreddit}/comments/${Date.now() + i}/synthetic_post/`,
-    subreddit: subreddit
+    subreddit: subreddit,
+    source: 'synthetic'
   }));
 }
 
@@ -363,7 +366,8 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
                   num_comments: Math.max(0, parseInt(p.num_comments) || 0),
                   created_utc: p.created_utc || Math.floor(Date.now()/1000),
                   permalink: String(p.permalink || ''),
-                  subreddit: String(p.subreddit || sub)
+                  subreddit: String(p.subreddit || sub),
+                  source: 'reddit'
                 });
               });
               
@@ -407,7 +411,8 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
               num_comments: Math.max(0, parseInt(p.num_comments) || 0),
               created_utc: p.created_utc || Math.floor(Date.now()/1000),
               permalink: String(p.permalink || ''),
-              subreddit: String(p.subreddit || sub)
+              subreddit: String(p.subreddit || sub),
+              source: 'reddit'
             });
           });
           
@@ -471,7 +476,8 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
               num_comments: Math.max(0, parseInt(p.num_comments) || Math.floor(Math.random() * 20)),
               created_utc: p.created_utc || (Math.floor(Date.now()/1000) - Math.floor(Math.random() * 86400)),
               permalink: p.permalink || `/r/${sub}/comments/${Date.now()}`,
-              subreddit: p.subreddit || sub
+              subreddit: p.subreddit || sub,
+              source: 'reddit'
             });
           });
           
@@ -606,6 +612,9 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
   }
 
   // 5. Build response
+  // Separate real vs synthetic posts for transparency & scoring
+  const realPostsOnly = fetchedPosts.filter(p => p.source !== 'synthetic');
+
   const response = buildBaseResponse({
     idea: input.idea,
     industry: input.industry,
@@ -625,34 +634,57 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
     revenue_models: (enriched?.revenue_models as any) || [
       { model_type: 'Subscription', description: 'Monthly access to analysis dashboard', pros: ['Predictable revenue'], cons: ['Churn risk'], implementation_difficulty: 'medium', potential_revenue: 'Medium' }
     ],
-    fetchedPosts
+    fetchedPosts: realPostsOnly.length ? realPostsOnly : fetchedPosts // Prefer real posts for scoring
   });
 
   const durationMs = Date.now() - started;
   (response as any).debug = { 
-    postsFetched: fetchedPosts.length, 
+    postsFetched: fetchedPosts.length,
+    realPosts: realPostsOnly.length,
+    syntheticPosts: fetchedPosts.filter(p => p.source === 'synthetic').length,
+    sampleTitles: fetchedPosts.slice(0,5).map(p => p.title),
     enriched: !!enriched, 
     openai_available: hasOpenAIKey,
     mode: enriched ? 'ai_enhanced' : 'heuristic_only',
     ms: durationMs 
   };
+  // Add high-level evidence summary for user transparency
+  (response as any).evidence = {
+    real_post_count: realPostsOnly.length,
+    synthetic_post_count: fetchedPosts.filter(p => p.source === 'synthetic').length,
+    subreddits_used: Array.from(new Set(fetchedPosts.map(p => p.subreddit))).slice(0,10),
+    sample_reddit_posts: realPostsOnly.slice(0,5).map(p => ({ title: p.title, score: p.score, comments: p.num_comments, subreddit: p.subreddit }))
+  };
+  if (realPostsOnly.length === 0) {
+    (response as any).analysis_confidence = 'very_low';
+    (response as any).notes = 'No live Reddit posts could be fetched; synthetic approximations were used.';
+  } else if (realPostsOnly.length < 4) {
+    (response as any).analysis_confidence = 'low';
+    (response as any).notes = 'Limited real discussion data (fewer than 4 posts). Treat scores as preliminary.';
+  } else if (realPostsOnly.length < 10) {
+    (response as any).analysis_confidence = 'medium';
+    (response as any).notes = 'Moderate amount of real data; additional searching could refine accuracy.';
+  } else {
+    (response as any).analysis_confidence = 'high';
+  }
   return response;
 }
 
 function buildBaseResponse(params: { idea: string; industry?: string; targetAudience?: string; isAI: boolean; isFitness: boolean; tokens: string[]; keywords: string[]; subreddits: string[]; pain_points: any[]; app_ideas: any[]; competitors: any[]; revenue_models: any[]; fetchedPosts: RawRedditPost[]; }) {
   const { isAI, isFitness, keywords, subreddits, pain_points, app_ideas, competitors, revenue_models, fetchedPosts, tokens } = params;
-  
-  console.log(`📊 Calculating scores from ${fetchedPosts.length} real posts...`);
+  const realPosts = fetchedPosts.filter(p => p.source !== 'synthetic');
+  console.log(`📊 Calculating scores from ${realPosts.length} REAL posts (total including synthetic: ${fetchedPosts.length})...`);
   
   // Advanced sentiment analysis based on real Reddit engagement
-  const totalScore = fetchedPosts.reduce((sum, p) => sum + p.score, 0);
-  const totalComments = fetchedPosts.reduce((sum, p) => sum + p.num_comments, 0);
-  const avgScore = fetchedPosts.length ? totalScore / fetchedPosts.length : 15;
-  const avgComments = fetchedPosts.length ? totalComments / fetchedPosts.length : 3;
+  const postsForScoring = realPosts.length ? realPosts : fetchedPosts; // fallback if no real
+  const totalScore = postsForScoring.reduce((sum, p) => sum + p.score, 0);
+  const totalComments = postsForScoring.reduce((sum, p) => sum + p.num_comments, 0);
+  const avgScore = postsForScoring.length ? totalScore / postsForScoring.length : 15;
+  const avgComments = postsForScoring.length ? totalComments / postsForScoring.length : 3;
   
-  // High engagement posts indicate market interest
-  const highEngagementPosts = fetchedPosts.filter(p => p.score > avgScore && p.num_comments > avgComments).length;
-  const engagementRatio = fetchedPosts.length ? highEngagementPosts / fetchedPosts.length : 0.3;
+  // High engagement posts indicate market interest (using postsForScoring set)
+  const highEngagementPosts = postsForScoring.filter(p => p.score > avgScore && p.num_comments > avgComments).length;
+  const engagementRatio = postsForScoring.length ? highEngagementPosts / postsForScoring.length : 0.3;
   
   // Calculate realistic sentiment based on actual data
   const baseEnthusiasm = Math.min(65, Math.round(avgScore * 1.2 + avgComments * 3));
@@ -660,7 +692,7 @@ function buildBaseResponse(params: { idea: string; industry?: string; targetAudi
   const enthusiasm = clamp(baseEnthusiasm + engagementBoost, 25, 75);
   
   const baseFrustration = Math.round(pain_points.length * 8);
-  const lowEngagementPenalty = fetchedPosts.length < 5 ? 10 : 0;
+  const lowEngagementPenalty = postsForScoring.length < 5 ? 10 : 0;
   const frustration = clamp(baseFrustration + lowEngagementPenalty, 10, 45);
   
   const mixed = clamp(100 - enthusiasm - frustration, 15, 60);
@@ -674,11 +706,11 @@ function buildBaseResponse(params: { idea: string; industry?: string; targetAudi
   // Multi-factor realistic scoring system
   const avgScoreNormalized = Math.log10(Math.max(1, avgScore)) / Math.log10(100); // Log scale for Reddit scores
   const avgCommentsNormalized = Math.log10(Math.max(1, avgComments)) / Math.log10(50);
-  const postVolumeScore = Math.min(1.0, fetchedPosts.length / 15); // More posts = better signal
+  const postVolumeScore = Math.min(1.0, postsForScoring.length / 15); // More REAL posts = better signal
   
   // Content quality indicators
-  const hasDetailedDiscussions = fetchedPosts.filter(p => (p.selftext?.length || 0) > 100).length / fetchedPosts.length;
-  const hasHighEngagement = fetchedPosts.filter(p => p.score > avgScore * 1.5 || p.num_comments > avgComments * 2).length / fetchedPosts.length;
+  const hasDetailedDiscussions = postsForScoring.length ? postsForScoring.filter(p => (p.selftext?.length || 0) > 100).length / postsForScoring.length : 0;
+  const hasHighEngagement = postsForScoring.length ? postsForScoring.filter(p => p.score > avgScore * 1.5 || p.num_comments > avgComments * 2).length / postsForScoring.length : 0;
   
   // Market trend multipliers
   const trendMultipliers = {
@@ -717,7 +749,7 @@ function buildBaseResponse(params: { idea: string; industry?: string; targetAudi
   const overall_score = clamp(baseScore * finalMultiplier + (Math.random() - 0.5) * 1.5, 1.9, 8.7);
   const viability_score = clamp(overall_score + (Math.random() - 0.2) * 1.2 + (trendBonus - 1.0), 1.9, 8.7);
   
-  console.log(`📈 Scoring: Posts=${fetchedPosts.length}, AvgScore=${avgScore.toFixed(1)}, AvgComments=${avgComments.toFixed(1)}, FinalScore=${overall_score.toFixed(1)}`)
+  console.log(`📈 Scoring: RealPosts=${postsForScoring.length} (Total=${fetchedPosts.length}) AvgScore=${avgScore.toFixed(1)} AvgComments=${avgComments.toFixed(1)} EngagementRatio=${(engagementRatio*100).toFixed(0)}% FinalScore=${overall_score.toFixed(1)}`)
 
   const google_trends = [
     {
