@@ -51,19 +51,57 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // Treat any POST under this function as /api/analyze for compatibility
-    if (req.method === 'POST') {
-      const { idea, industry, targetAudience, country = 'global', platform = 'web-app', fundingMethod = 'self-funded', timeRange = 'month' } = req.body || {};
-      
-      // Validate input
-      if (!idea || typeof idea !== 'string') {
-        return res.status(400).json({ error: 'Please provide a startup idea in the "idea" field.' });
-      }
-      
-      const trimmedIdea = idea.trim();
-      if (trimmedIdea.length < 10) {
-        return res.status(400).json({ error: 'Please provide a more detailed description (>= 10 chars) in "idea" field.' });
-      }
+    // Only allow POST for analysis
+    if (req.method !== 'POST') {
+      return res.status(405).json({ 
+        error: 'Method not allowed', 
+        allowed: ['GET', 'POST'],
+        received: req.method 
+      });
+    }
+
+    // Enhanced input validation with better error handling
+    let body;
+    try {
+      body = req.body || {};
+    } catch (parseError) {
+      return res.status(400).json({ 
+        error: 'Invalid JSON in request body',
+        detail: 'Please send valid JSON data'
+      });
+    }
+
+    const { idea, industry, targetAudience, country = 'global', platform = 'web-app', fundingMethod = 'self-funded', timeRange = 'month' } = body;
+    
+    // Comprehensive input validation
+    if (!idea) {
+      return res.status(400).json({ 
+        error: 'Missing required field: idea',
+        required: 'Please provide a startup idea in the "idea" field.'
+      });
+    }
+    
+    if (typeof idea !== 'string') {
+      return res.status(400).json({ 
+        error: 'Invalid idea format',
+        detail: 'The "idea" field must be a string.'
+      });
+    }
+    
+    const trimmedIdea = idea.trim();
+    if (trimmedIdea.length < 10) {
+      return res.status(400).json({ 
+        error: 'Idea too short',
+        detail: 'Please provide a more detailed description (at least 10 characters).'
+      });
+    }
+
+    if (trimmedIdea.length > 1000) {
+      return res.status(400).json({ 
+        error: 'Idea too long',
+        detail: 'Please keep your idea description under 1000 characters.'
+      });
+    }
 
       try {
         // Attempt real analysis with timeout protection
@@ -89,20 +127,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const fallbackResult = generateEmergencyAnalysis(trimmedIdea, industry, targetAudience);
         return res.json(fallbackResult);
       }
-    }
 
-    return res.status(404).json({ error: 'Not found', method: req.method, url });
   } catch (err) {
     console.error('Fatal API error', err);
     // Even in case of fatal error, try to return a valid analysis structure
     try {
-      const idea = req.body?.idea || 'startup idea';
-      const industry = req.body?.industry;
-      const targetAudience = req.body?.targetAudience;
+      const idea = (req.body && typeof req.body === 'object' && req.body.idea) || 'startup idea';
+      const industry = (req.body && typeof req.body === 'object' && req.body.industry) || undefined;
+      const targetAudience = (req.body && typeof req.body === 'object' && req.body.targetAudience) || undefined;
       const fallbackResult = generateEmergencyAnalysis(idea, industry, targetAudience);
       return res.json(fallbackResult);
     } catch {
-      return res.status(500).json({ error: 'Internal server error', detail: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({ 
+        error: 'Internal server error', 
+        detail: err instanceof Error ? err.message : String(err),
+        timestamp: new Date().toISOString()
+      });
     }
   }
 }
