@@ -33,5 +33,12 @@ export default defineConfig({
       strict: true,
       deny: ["**/.*"],
     },
+    proxy: {
+      '/api': {
+        target: 'https://ideavoyage.vercel.app',
+        changeOrigin: true,
+        secure: true,
+      },
+    },
   },
 });
