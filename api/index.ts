@@ -108,7 +108,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       try {
         // Attempt real analysis with timeout protection (increased for AI calls)
         const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Analysis timed out')), 20000)
+          setTimeout(() => reject(new Error('Analysis timed out')), 45000)
         );
         
         const analysisPromise = performRealAnalysis({ 
@@ -520,9 +520,9 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
           response_format: { type: 'json_object' }
         });
         
-        // Race the OpenAI call against a shorter timeout
+        // Race the OpenAI call against a timeout (increased for production)
         const openaiTimeout = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('OpenAI call timed out')), 10000)
+          setTimeout(() => reject(new Error('OpenAI call timed out')), 30000)
         );
         
         const completion = await Promise.race([openaiPromise, openaiTimeout]) as any;
