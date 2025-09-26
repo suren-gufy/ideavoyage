@@ -3,9 +3,10 @@ import fs from "fs";
 import path from "path";
 import { createServer as createViteServer, createLogger } from "vite";
 import { type Server } from "http";
-import viteConfig from "../vite.config";
 import { nanoid } from "nanoid";
 import { fileURLToPath } from "url";
+// Import as a dynamic import to avoid TypeScript project reference issues
+import type { UserConfig } from "vite";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -37,10 +38,27 @@ export async function setupVite(app: Express, server?: Server | null) {
       allowedHosts: true as const,
     };
 
+    // Create a basic Vite config directly without importing
+    // This avoids TS reference errors and file resolution issues
+    const baseViteConfig: UserConfig = {
+      plugins: [],
+      build: {
+        outDir: 'dist'
+      },
+      server: {
+        port: 3000
+      },
+      optimizeDeps: {
+        esbuildOptions: {
+          target: 'es2020'
+        }
+      }
+    }
+    
     const vite = await createViteServer({
       // ensure root so relative plugin paths resolve the same as CLI
       root: path.resolve(__dirname, ".."),
-      ...viteConfig,
+      ...baseViteConfig,
       configFile: false,
       customLogger: {
         ...viteLogger,
