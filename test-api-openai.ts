@@ -1,10 +1,14 @@
 #!/usr/bin/env node
+// @ts-nocheck
 
+// Import the handler (treat as any to simplify local mock testing)
 import handler from './api/index.js';
+
+// NOTE: We intentionally avoid strict Vercel types here to keep this debug harness simple.
 
 console.log('=== Testing API with OpenAI ===');
 
-const mockReq = {
+const mockReq: any = {
   method: 'POST',
   url: '/api/analyze',
   body: {
@@ -14,9 +18,10 @@ const mockReq = {
   }
 };
 
-const mockRes = {
-  status: (code) => mockRes,
-  json: (data) => {
+const mockRes: any = {
+  _status: 200,
+  status(code: number) { this._status = code; return this; },
+  json(data: any) {
     console.log(`\n📊 Response (${JSON.stringify(data).length} chars):`);
     console.log('Mode:', data.debug?.mode || 'unknown');
     console.log('OpenAI Available:', data.debug?.openai_available || false);
@@ -31,10 +36,11 @@ const mockRes = {
       console.log('⚠️ WARNING: Only heuristic analysis was used');
     }
     
-    return mockRes;
+    return this;
   },
-  setHeader: () => {},
-  end: () => {}
+  send(body: any) { console.log('Raw send body:', body); return this; },
+  setHeader() { return this; },
+  end() { return this; }
 };
 
 async function main() {

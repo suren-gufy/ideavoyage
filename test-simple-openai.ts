@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+// @ts-nocheck
+
+export {};
 
 async function main() {
   console.log('=== Testing Simple OpenAI Call ===');

@@ -50,6 +50,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       try {
         const testResponse = await fetch('https://api.reddit.com/r/startups/hot?limit=1', {
           headers: { 'User-Agent': 'IdeaVoyage/1.0' },
+          // @ts-ignore - Ignore AbortSignal compatibility issue between DOM and Node.js types
           signal: AbortSignal.timeout(5000)
         });
         redditTest = testResponse.ok ? 'working' : `error_${testResponse.status}`;
@@ -335,6 +336,7 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
       try {
         const response = await fetch(url, {
           headers: { 'User-Agent': 'IdeaVoyage/1.0', 'Accept': 'application/json' },
+          // @ts-ignore - Ignore AbortSignal compatibility issue between DOM and Node.js types
           signal: AbortSignal.timeout(8000)
         });
         if (response.ok) {

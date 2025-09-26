@@ -1,4 +1,8 @@
 #!/usr/bin/env node
+// @ts-nocheck
+
+// Make this file a module to avoid polluting global scope (prevents duplicate function impl errors)
+export {};
 
 async function main() {
   console.log('=== OpenAI Debug Check ===');

@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "target": "ESNext",
+    "lib": ["ESNext"],
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "types": ["node"]
+  },
+  "include": [
+    "debug-openai.ts", 
+    "test-simple-openai.ts", 
+    "test-api-openai.ts"
+  ],
+  "exclude": ["node_modules"]
+}
