@@ -1,5 +1,9 @@
 {
-  "extends": "./tsconfig.json",
+  "extends": "./tsconfig.base.json",
   "include": ["client/src/**/*", "shared/**/*"],
-  "exclude": ["node_modules", "server/**/*", "api/**/*"]
+  "exclude": ["node_modules", "server/**/*", "api/**/*"],
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/typescript/.tsbuildinfo.client",
+    "lib": ["esnext", "dom", "dom.iterable"]
+  }
 }

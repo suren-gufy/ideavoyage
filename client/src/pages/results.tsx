@@ -32,6 +32,11 @@ export default function Results() {
     if (savedResults) {
       try {
         const parsedResults = JSON.parse(savedResults)
+        console.log('🔍 Analysis results loaded:', parsedResults)
+        console.log('🔍 Startup idea analyzed:', parsedResults.idea || 'No idea field found')
+        console.log('🔍 Subreddits analyzed:', parsedResults.subreddits || 'No subreddits field found')
+        console.log('🔍 Pain points:', parsedResults.pain_points)
+        console.log('🔍 Full results keys:', Object.keys(parsedResults))
         setAnalysisResults(parsedResults)
       } catch (error) {
         console.error('Failed to parse analysis results:', error)
@@ -190,7 +195,7 @@ export default function Results() {
           {/* Pain Points */}
           <div className="space-y-6">
             <h2 className="text-2xl font-bold">Pain Points Discovered</h2>
-            <PainPointsDisplay painPoints={analysisResults.pain_points} />
+            <PainPointsDisplay painPoints={analysisResults.pain_points} subreddits={analysisResults.subreddits} />
           </div>
 
           {/* Premium Upgrade CTA */}

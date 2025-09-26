@@ -1,29 +1,8 @@
 {
-  "include": [],
+  /* Root config that only references other projects */
   "files": [],
   "references": [
     { "path": "./tsconfig.server.json" },
     { "path": "./tsconfig.client.json" }
-  ],
-  "compilerOptions": {
-    "incremental": true,
-    "tsBuildInfoFile": "./node_modules/typescript/tsbuildinfo",
-    "noEmit": true,
-    "module": "ESNext",
-    "strict": true,
-    "lib": ["esnext"],
-    "jsx": "preserve",
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "allowImportingTsExtensions": true,
-    "moduleResolution": "bundler",
-    "baseUrl": ".",
-    "composite": true,
-    "declaration": true,
-    "types": ["node"],
-    "paths": {
-      "@/*": ["./client/src/*"],
-      "@shared/*": ["./shared/*"]
-    }
-  }
+  ]
 }

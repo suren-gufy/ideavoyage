@@ -1,3 +1,7 @@
+import dotenv from 'dotenv';
+// Load environment variables first
+dotenv.config({ override: true });
+
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
@@ -23,13 +27,8 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Initialize Perplexity API
-const perplexityApiKey = process.env.PERPLEXITY_API_KEY;
-if (!perplexityApiKey) {
-  console.warn("PERPLEXITY_API_KEY not found - research will be limited");
-} else {
-  console.log("Perplexity API initialized successfully");
-}
+// Using OpenAI for all analysis - no additional API keys needed
+console.log("OpenAI API initialized for comprehensive startup analysis");
 
 // Reddit public JSON API - with multiple fallback strategies
 async function fetchRedditData(subreddit: string, limit: number = 25) {
@@ -298,12 +297,16 @@ function parseRedditThreadHTML(htmlContent: string, permalink: string) {
 
 // Premium verification middleware
 function checkPremiumAccess(req: any, res: any, next: any) {
+  console.log('🔍 Premium check - NODE_ENV:', process.env.NODE_ENV);
+  
   // In development, allow all premium features
   if (process.env.NODE_ENV === 'development') {
+    console.log('✅ Development mode - granting premium access');
     req.isPremium = true;
     return next();
   }
   
+  console.log('❌ Not in development mode');
   // In production, check for premium status (placeholder for real auth)
   const premiumHeader = req.headers['x-premium-access'];
   req.isPremium = premiumHeader === 'true'; // In real implementation, verify JWT/session
@@ -311,7 +314,7 @@ function checkPremiumAccess(req: any, res: any, next: any) {
   next();
 }
 
-export async function registerRoutes(app: Express): Promise<Server> {
+export async function registerRoutes(app: Express): Promise<void> {
   // Premium status endpoint
   app.get('/api/premium-status', checkPremiumAccess, (req: any, res) => {
     res.json({ 
@@ -327,6 +330,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     try {
       const validatedData = analyzeIdeaSchema.parse(req.body);
+      
+      // Generate a unique analysis ID for this request
+      const analysisId = `analysis_${requestId}_${Math.random().toString(36).substr(2, 9)}`;
+      console.log(`[${requestId}] Generated analysisId: ${analysisId}`);
       
       console.log(`[${requestId}] Analyzing startup idea:`, validatedData);
       
@@ -389,20 +396,20 @@ Adjust keywords to the user's audience/geo/platform.
 }
 
 REQUIREMENTS
-- Generate 5 specific, targeted search queries for Perplexity
-- Focus on Reddit, G2, Amazon reviews, Trustpilot, Product Hunt, Hacker News
-- Prefer public sources with rich user discourse
-- De-duplicate aggressively
+- Generate research framework for comprehensive analysis
+- Focus on understanding user pain points, market dynamics, and competitive landscape
+- Cover different aspects: problems, competitors, demand, user behavior patterns
+- Prioritize realistic market assessment based on known industry patterns
 
 5. CONCLUDE — Before returning, validate:
-- Every query targets specific pain points or market insights
-- Queries cover different aspects: problems, competitors, demand, reviews`;
+- Research plan covers key market validation areas
+- Analysis framework addresses user needs and market opportunities`;
 
       console.log(`[${requestId}] Generating sophisticated research plan...`);
       
-      // Using gpt-4o-mini for reliable API compatibility
+      // Using gpt-4o for superior analysis quality
       const researchPlanCompletion = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
@@ -443,102 +450,93 @@ REQUIREMENTS
       const keywords = researchPlan.meta?.keywords || [validatedData.idea.split(' ')[0], "startup", "business"];
       const subreddits = researchPlan.meta?.subreddits || ["startups", "entrepreneur", "business"];
 
-      // Step 2: Use Perplexity for comprehensive internet research
+      // Step 2: Generate comprehensive market research using OpenAI
+      console.log(`[${requestId}] Starting comprehensive market research with OpenAI...`);
+      
       let researchData = "";
       let totalSearches = 0;
       
-      if (perplexityApiKey) {
-        console.log(`[${requestId}] Starting comprehensive market research with Perplexity...`);
-        
-        try {
-          const comprehensiveQuery = `Research the startup idea "${validatedData.idea}" in the ${validatedData.industry || "Technology"} industry for ${validatedData.targetAudience || "General users"}. 
+      try {
+        const comprehensiveQuery = `Analyze the startup idea "${validatedData.idea}" in the ${validatedData.industry || "Technology"} industry for ${validatedData.targetAudience || "General users"}.
 
-Provide a comprehensive JSON research report with the following structure:
+Based on your knowledge of market trends, competitor landscapes, and common user pain points, provide a comprehensive analysis in the following JSON format:
+
 {
   "pain_points": [
     {
       "title": "pain point title",
-      "frequency": "how often mentioned",
-      "user_quotes": [{"text": "exact user quote", "source": "URL"}],
+      "frequency": "how often this pain point occurs",
+      "user_scenarios": ["specific scenarios where this pain occurs"],
       "urgency": "high/medium/low"
     }
   ],
   "competitors": [
     {
-      "name": "competitor name",
+      "name": "competitor name", 
       "what_they_do": "description",
-      "pricing": "pricing info",
-      "user_sentiment": "positive/negative/mixed",
-      "source_url": "URL"
+      "pricing_model": "pricing approach",
+      "market_position": "strengths and market share",
+      "weaknesses": ["areas where they fall short"]
     }
   ],
-  "demand_signals": {
-    "search_trends": "trend analysis",
-    "reddit_discussions": [{"title": "discussion title", "url": "URL", "sentiment": "positive/negative/neutral"}],
-    "social_proof": ["evidence of demand"]
-  },
   "market_validation": {
-    "opportunity_size": "assessment",
+    "opportunity_size": "market size assessment",
     "competition_level": "high/medium/low",
-    "user_willingness_to_pay": "assessment",
-    "implementation_difficulty": "easy/medium/hard"
+    "user_willingness_to_pay": "payment likelihood assessment", 
+    "implementation_difficulty": "easy/medium/hard",
+    "key_success_factors": ["what makes solutions successful in this space"]
+  },
+  "demand_indicators": {
+    "market_trends": ["relevant industry trends"],
+    "user_behaviors": ["how target users currently solve this problem"],
+    "growth_opportunities": ["areas of potential expansion"]
   }
 }
 
-Focus on Reddit discussions, G2 reviews, Amazon reviews, Trustpilot, Product Hunt, and Hacker News. Prioritize recent content from the last 12 months. Include specific user quotes with source URLs whenever possible.`;
+Focus on realistic market dynamics, common user frustrations, and proven solution patterns in this space.`;
 
-          const response = await fetch('https://api.perplexity.ai/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${perplexityApiKey}`,
-              'Content-Type': 'application/json'
+        const aiResponse = await openai.chat.completions.create({
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a market research expert with deep knowledge of startup ecosystems, user behavior patterns, and competitive landscapes. Provide comprehensive, realistic market analysis based on established industry knowledge and common user pain points.'
             },
-            body: JSON.stringify({
-              model: 'sonar',
-              messages: [
-                {
-                  role: 'system',
-                  content: 'You are a market research expert. Provide comprehensive research in valid JSON format. Always include specific user quotes with source URLs when available. Focus on real user feedback and market validation data from Reddit, G2, Amazon, Trustpilot, Product Hunt, and similar platforms.'
-                },
-                {
-                  role: 'user',
-                  content: comprehensiveQuery
-                }
-              ],
-              max_tokens: 3000,
-              temperature: 0.2,
-              search_recency_filter: 'year',
-              return_citations: true
-            })
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            const content = data.choices[0]?.message?.content || '';
-            const citations = data.citations || [];
-            
-            researchData = content;
-            totalSearches = 1;
-            
-            // Safely handle citations array
-            if (Array.isArray(citations) && citations.length > 0) {
-              const citationUrls = citations.slice(0, 5).map(citation => 
-                typeof citation === 'string' ? citation : citation?.url || 'Unknown source'
-              );
-              researchData += `\n\nSOURCES: ${citationUrls.join(', ')}\n`;
+            {
+              role: 'user',
+              content: comprehensiveQuery
             }
-            
-            console.log(`[${requestId}] Comprehensive Perplexity research completed`);
-          } else {
-            const errorText = await response.text();
-            console.warn(`[${requestId}] Perplexity API request failed:`, response.status, errorText);
+          ],
+          max_tokens: 3000,
+          temperature: 0.3,
+          response_format: { type: 'json_object' }
+        });
+        
+        researchData = aiResponse.choices[0]?.message?.content || '';
+        totalSearches = 1;
+        
+        console.log(`[${requestId}] OpenAI market research completed successfully`);
+        
+      } catch (error) {
+        console.warn(`[${requestId}] OpenAI research failed, using fallback analysis:`, error);
+        // Fallback to basic analysis if OpenAI fails
+        researchData = JSON.stringify({
+          pain_points: [
+            {
+              title: "Market Research Limitation", 
+              frequency: "Current session",
+              user_scenarios: ["Unable to complete comprehensive analysis"],
+              urgency: "medium"
+            }
+          ],
+          competitors: [],
+          market_validation: {
+            opportunity_size: "Requires further research",
+            competition_level: "unknown",
+            user_willingness_to_pay: "Needs validation",
+            implementation_difficulty: "medium"
           }
-          
-        } catch (error) {
-          console.warn(`[${requestId}] Failed to complete Perplexity research:`, error);
-        }
-      } else {
-        console.log(`[${requestId}] Perplexity API not available - using AI-generated insights`);
+        });
       }
 
       // Step 2.5: Scrape real Reddit data for authentic sentiment analysis
@@ -557,25 +555,69 @@ Focus on Reddit discussions, G2 reviews, Amazon reviews, Trustpilot, Product Hun
               console.log(`[${requestId}] Scraping r/${cleanSubreddit}...`);
               
               // Get hot posts from the subreddit
-              const subredditData = await fetchRedditData(cleanSubreddit, 25);
+              const subredditData = await fetchRedditData(cleanSubreddit, 25) as any;
+              
+              if (!subredditData) {
+                console.log(`[${requestId}] No data returned from Reddit for r/${cleanSubreddit}`);
+                continue;
+              }
+              
+              console.log(`[${requestId}] Reddit API response structure:`, {
+                hasData: !!subredditData.data,
+                hasChildren: !!(subredditData.data && subredditData.data.children),
+                type: typeof subredditData
+              });
               
               if (subredditData && subredditData.data && subredditData.data.children) {
                 const posts = subredditData.data.children;
+                console.log(`[${requestId}] Found ${posts.length} total posts in r/${cleanSubreddit}`);
+                console.log(`[${requestId}] Keywords for matching:`, keywords);
                 
-                // Filter posts that are relevant to our keywords
+                // Sample a few post titles for debugging
+                const sampleTitles = posts.slice(0, 3).map((post: any) => post.data.title);
+                console.log(`[${requestId}] Sample post titles:`, sampleTitles);
+                
+                // Filter posts that are relevant to our keywords (more flexible matching)
                 const relevantPosts = posts.filter((post: any) => {
                   const postData = post.data;
                   const title = (postData.title || '').toLowerCase();
                   const text = (postData.selftext || '').toLowerCase();
                   const combinedText = title + ' ' + text;
                   
-                  // Check if post contains any of our keywords
-                  return keywords.some((keyword: string) => 
-                    combinedText.includes(keyword.toLowerCase())
-                  );
-                }).slice(0, 10); // Limit to 10 relevant posts per subreddit
+                  // More flexible keyword matching - split multi-word keywords and check individual words
+                  const isRelevant = keywords.some((keyword: string) => {
+                    const keywordLower = keyword.toLowerCase();
+                    // Direct match
+                    if (combinedText.includes(keywordLower)) return true;
+                    
+                    // Split keyword into words and check if most words are present
+                    const keywordWords = keywordLower.split(/\s+/).filter(w => w.length > 2);
+                    if (keywordWords.length > 1) {
+                      const matchingWords = keywordWords.filter(word => combinedText.includes(word));
+                      return matchingWords.length >= Math.ceil(keywordWords.length * 0.6); // 60% of words must match
+                    }
+                    
+                    return false;
+                  });
+                  
+                  // If no keyword match, still include posts with high engagement in relevant subreddits
+                  if (!isRelevant && postData.score > 100 && postData.num_comments > 20) {
+                    return true;
+                  }
+                  
+                  return isRelevant;
+                }).slice(0, 15); // Increased limit to get more posts
                 
-                for (const post of relevantPosts) {
+                console.log(`[${requestId}] Found ${relevantPosts.length} relevant posts in r/${cleanSubreddit} after keyword filtering`);
+                
+                // If no relevant posts found, take top posts regardless of keyword matching
+                let postsToProcess = relevantPosts;
+                if (relevantPosts.length === 0) {
+                  console.log(`[${requestId}] No keyword matches found, taking top posts from r/${cleanSubreddit}`);
+                  postsToProcess = posts.slice(0, 5);
+                }
+                
+                for (const post of postsToProcess) {
                   if (totalRedditPosts >= 15) break;
                   
                   const postData = post.data;
@@ -669,7 +711,7 @@ ${post.comments.map((comment: any) => `- ${comment.text.substring(0, 150)}${comm
         console.log(`[${requestId}] No subreddits identified - skipping Reddit scraping`);
       }
 
-      // Step 3: Use 'Startup Validation Expert' prompt to synthesize Perplexity + Reddit results
+      // Step 3: Use 'Startup Validation Expert' prompt to synthesize OpenAI research + Reddit results
       const hasResearchData = researchData.length > 0;
       const hasRedditData = redditData.length > 0;
       
@@ -816,9 +858,9 @@ RULES:
 - ${hasResearchData || hasRedditData ? `Base analysis on the ${hasRedditData ? 'real Reddit data + ' : ''}comprehensive research data provided` : 'Generate realistic insights based on the startup idea and market knowledge'}
 - DO NOT use placeholder or demo data - generate authentic analysis for each section based on the real data provided`;
 
-      // Using gpt-4o-mini for reliable API compatibility
+      // Using gpt-4o for superior analysis quality
       const completion = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
@@ -1031,6 +1073,10 @@ RULES:
       console.log(`[${requestId}] Analysis completed successfully`);
       console.log(`[${requestId}] Overall score: ${analysisResult.overall_score}, Viability score: ${analysisResult.viability_score}`);
       
+      // Add the analysisId to the response
+      (analysisResult as any).analysisId = analysisId;
+      (analysisResult as any).requestId = requestId;
+      
       res.json(analysisResult);
       
     } catch (error) {
@@ -1217,7 +1263,7 @@ Provide detailed keyword analysis in JSON format:
 Generate realistic but valuable keyword data with 24-month trend analysis showing seasonal patterns and growth.`;
 
       const completion = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
@@ -1302,10 +1348,10 @@ Generate realistic but valuable keyword data with 24-month trend analysis showin
       const redditData = [];
       for (const subreddit of subreddits.slice(0, 3)) { // Limit to 3 subreddits for performance
         try {
-          const posts = await fetchRedditData(subreddit, 25);
+          const posts = await fetchRedditData(subreddit, 25) as any;
           redditData.push({
             subreddit,
-            posts: posts.slice(0, 10), // Top 10 relevant posts
+            posts: posts?.slice(0, 10) || [], // Top 10 relevant posts
             memberCount: Math.floor(Math.random() * 500000) + 50000, // Placeholder - would get real data
             engagementRate: Math.round((Math.random() * 40 + 60) * 10) / 10 // 60-100% engagement
           });
@@ -2253,7 +2299,7 @@ Provide detailed competitor analysis in JSON format:
 Include 8-12 real competitors with detailed pricing, sentiment analysis, and market positioning data.`;
 
       const completion = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
@@ -2377,7 +2423,7 @@ Provide detailed GTM plan in JSON format:
 Create a detailed 3-phase plan with specific tactics, timelines, budgets, and success metrics.`;
 
       const completion = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
@@ -2523,7 +2569,7 @@ Provide detailed market sizing analysis in JSON format:
 Include realistic market sizing with multiple methodologies and clear assumptions.`;
 
       const completion = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
@@ -2626,7 +2672,6 @@ Include realistic market sizing with multiple methodologies and clear assumption
     }
   });
 
-  const httpServer = createServer(app);
-
-  return httpServer;
+  // No need to create HTTP server - will use app.listen directly
+  return;
 }

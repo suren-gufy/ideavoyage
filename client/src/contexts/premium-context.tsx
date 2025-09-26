@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
@@ -73,18 +74,26 @@ export function PremiumProvider({ children }: { children: React.ReactNode }) {
   });
 
   useEffect(() => {
+    console.log('🔍 Premium Context - isDevelopment:', isDevelopment);
+    console.log('🔍 Premium Context - import.meta.env.MODE:', import.meta.env.MODE);
+    console.log('🔍 Premium Context - serverPremiumStatus:', serverPremiumStatus);
+    
     if (isDevelopment) {
       // In development, grant premium access automatically for easier testing
       const forceNonPremium = localStorage.getItem('force_non_premium') === 'true';
+      console.log('🔍 Premium Context - forceNonPremium:', forceNonPremium);
       
       if (forceNonPremium) {
+        console.log('❌ Premium Context - Force non-premium flag set');
         setIsPremium(false);
       } else {
+        console.log('✅ Premium Context - Auto-granting premium in development');
         setIsPremium(true); // Auto-grant premium in development
         localStorage.setItem('premium_access', 'true');
       }
     } else {
       // In production, trust server response only
+      console.log('🏭 Premium Context - In production mode, using server response');
       if (serverPremiumStatus) {
         setIsPremium(serverPremiumStatus.isPremium || false);
       }

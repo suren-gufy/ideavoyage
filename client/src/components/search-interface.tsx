@@ -88,6 +88,10 @@ export function SearchInterface({}: SearchInterfaceProps) {
       return
     }
     
+    // Clear any previous analysis results to prevent stale data
+    sessionStorage.removeItem('analysis-results')
+    console.log('🗑️ Cleared previous analysis results')
+    
     console.log('Analysis triggered', { idea, industry, targetAudience, country, platform, fundingMethod, timeRange })
     
     analyzeIdeaMutation.mutate({

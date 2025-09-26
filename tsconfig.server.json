@@ -1,8 +1,9 @@
 {
-  "extends": "./tsconfig.json",
+  "extends": "./tsconfig.base.json",
   "include": ["server/**/*", "shared/**/*", "api/**/*"],
   "exclude": ["node_modules", "client/**/*"],
   "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/typescript/.tsbuildinfo.server",
     "lib": ["esnext"],
     "types": ["node"]
   }

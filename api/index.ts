@@ -8,6 +8,8 @@ interface VercelRequest {
   query?: Record<string, string | string[]>;
 }
 
+
+
 interface VercelResponse {
   status: (statusCode: number) => VercelResponse;
   json: (jsonBody: any) => VercelResponse;
@@ -48,10 +50,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // Test Reddit API connectivity
       let redditTest = 'unknown';
       try {
+        // Create two abort signals: one for timeout and one for manual abortion if needed
+        const timeoutSignal = AbortSignal.timeout(5000);
+        const controller = new AbortController();
+        
+        // Combine signals using AbortSignal.any() - aborts if either signal triggers
+        const combinedSignal = (AbortSignal as any).any([
+          timeoutSignal,
+          controller.signal
+        ]);
+        
         const testResponse = await fetch('https://api.reddit.com/r/startups/hot?limit=1', {
           headers: { 'User-Agent': 'IdeaVoyage/1.0' },
-          // @ts-ignore - Ignore AbortSignal compatibility issue between DOM and Node.js types
-          signal: AbortSignal.timeout(5000)
+          // Using combined signal - will abort on timeout or manual abort
+          signal: combinedSignal
         });
         redditTest = testResponse.ok ? 'working' : `error_${testResponse.status}`;
       } catch (err) {
@@ -336,8 +348,8 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
       try {
         const response = await fetch(url, {
           headers: { 'User-Agent': 'IdeaVoyage/1.0', 'Accept': 'application/json' },
-          // @ts-ignore - Ignore AbortSignal compatibility issue between DOM and Node.js types
-          signal: AbortSignal.timeout(8000)
+          // Using AbortSignal.timeout() for request timeout
+          signal: AbortSignal.timeout(8000) as unknown as AbortSignal
         });
         if (response.ok) {
           const data = await response.json() as any;
@@ -396,7 +408,7 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
             'User-Agent': 'Mozilla/5.0 (compatible; RedditReader/1.0)',
             'Accept': 'application/json'
           },
-          signal: AbortSignal.timeout(3000)
+          signal: AbortSignal.timeout(3000) as unknown as AbortSignal
         });
         
         if (response.ok) {

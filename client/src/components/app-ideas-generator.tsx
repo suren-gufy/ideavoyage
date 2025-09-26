@@ -34,7 +34,7 @@ export function AppIdeasGenerator({ appIdeas: propAppIdeas }: AppIdeasGeneratorP
   const [selectedIdea, setSelectedIdea] = useState<string | null>(null)
   const [generatingNew, setGeneratingNew] = useState(false)
 
-  // Convert API app ideas to local format or use mock data
+  // Convert API app ideas to local format - no fallback demo data
   const appIdeas: AppIdea[] = propAppIdeas ? propAppIdeas.map((idea, index) => ({
     id: index.toString(),
     title: idea.title,
@@ -48,68 +48,7 @@ export function AppIdeasGenerator({ appIdeas: propAppIdeas }: AppIdeasGeneratorP
     potentialRevenue: idea.market_validation === "high" ? "$2-5M ARR" : "$500K-2M ARR",
     timeToMarket: idea.difficulty === "easy" ? "2-3 months" : idea.difficulty === "medium" ? "3-6 months" : "6-12 months",
     basedOnPainPoints: ["AI-identified pain points"]
-  })) : [
-    {
-      id: "1",
-      title: "SimpleBudget",
-      description: "A minimalist budgeting app that focuses on just the essentials: income, expenses, and savings goals. Uses smart categorization with minimal user input required.",
-      targetAudience: "Budget-conscious individuals who find traditional apps too complex",
-      marketOpportunity: 85,
-      feasibility: 90,
-      competitiveness: 75,
-      category: "Personal Finance",
-      features: [
-        "One-tap expense logging",
-        "Smart category detection",
-        "Visual spending overview",
-        "Simple savings goals",
-        "Bank sync integration"
-      ],
-      potentialRevenue: "$2-5M ARR",
-      timeToMarket: "3-4 months",
-      basedOnPainPoints: ["Budgeting apps are too complex", "Manual transaction entry is tedious"]
-    },
-    {
-      id: "2", 
-      title: "GoalTracker Pro",
-      description: "A specialized app focused entirely on financial goal setting and tracking with gamification elements to keep users motivated.",
-      targetAudience: "Goal-oriented individuals and families planning major purchases",
-      marketOpportunity: 70,
-      feasibility: 80,
-      competitiveness: 60,
-      category: "Goal Management",
-      features: [
-        "Visual goal progress",
-        "Achievement milestones",
-        "Family goal sharing",
-        "Automated savings recommendations",
-        "Goal celebration features"
-      ],
-      potentialRevenue: "$1-3M ARR", 
-      timeToMarket: "2-3 months",
-      basedOnPainPoints: ["Lack of goal tracking features"]
-    },
-    {
-      id: "3",
-      title: "AutoBudget AI",
-      description: "An AI-powered budgeting assistant that requires zero manual input. Connects to all accounts and creates budgets automatically based on spending patterns.",
-      targetAudience: "Busy professionals who want automated financial management",
-      marketOpportunity: 95,
-      feasibility: 60,
-      competitiveness: 85,
-      category: "AI Finance",
-      features: [
-        "Complete automation",
-        "AI spending insights",
-        "Predictive budgeting",
-        "Smart alerts",
-        "Voice interaction"
-      ],
-      potentialRevenue: "$10-20M ARR",
-      timeToMarket: "6-8 months",
-      basedOnPainPoints: ["Manual transaction entry is tedious", "Budgeting apps are too complex"]
-    }
-  ]
+  })) : []
 
   const generateNewIdeas = () => {
     setGeneratingNew(true)
@@ -152,8 +91,15 @@ export function AppIdeasGenerator({ appIdeas: propAppIdeas }: AppIdeasGeneratorP
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid gap-6">
-          {appIdeas.map((idea) => (
+        {appIdeas.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <Lightbulb className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p className="text-lg font-medium">No app ideas available</p>
+            <p className="text-sm">App idea generation is based on the analysis results</p>
+          </div>
+        ) : (
+          <div className="grid gap-6">
+            {appIdeas.map((idea) => (
             <Card key={idea.id} className="hover-elevate">
               <CardHeader>
                 <div className="flex items-start justify-between">
@@ -280,7 +226,8 @@ export function AppIdeasGenerator({ appIdeas: propAppIdeas }: AppIdeasGeneratorP
               </CardContent>
             </Card>
           ))}
-        </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   )

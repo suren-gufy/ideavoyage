@@ -34,14 +34,21 @@ export function SentimentChart({ sentimentData: propSentimentData }: SentimentCh
     },
   ]
 
-  const timelineData = [
-    { time: "Jan", positive: 42, negative: 18, neutral: 40 },
-    { time: "Feb", positive: 48, negative: 15, neutral: 37 },
-    { time: "Mar", positive: 45, negative: 20, neutral: 35 },
-    { time: "Apr", positive: 52, negative: 12, neutral: 36 },
-    { time: "May", positive: 46, negative: 19, neutral: 35 },
-    { time: "Jun", positive: 49, negative: 16, neutral: 35 },
-  ]
+  // Generate timeline based on current sentiment data instead of hardcoded values
+  const generateTimelineFromSentiment = () => {
+    if (!sentimentData) return []
+    
+    const totalValue = sentimentData.reduce((sum, item) => sum + item.value, 0)
+    const positiveBase = sentimentData.find(s => s.name.toLowerCase().includes('enthus') || s.name.toLowerCase().includes('positive'))?.value || 40
+    const negativeBase = sentimentData.find(s => s.name.toLowerCase().includes('frust') || s.name.toLowerCase().includes('negative'))?.value || 20
+    const neutralBase = 100 - positiveBase - negativeBase
+    
+    return [
+      { time: "Recent", positive: Math.round(positiveBase), negative: Math.round(negativeBase), neutral: Math.round(neutralBase) }
+    ]
+  }
+
+  const timelineData = generateTimelineFromSentiment()
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {

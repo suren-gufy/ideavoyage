@@ -15,61 +15,114 @@ import { apiRequest } from "@/lib/queryClient"
 import type { AnalysisResponse, KeywordIntelligence, RedditAnalysis, CustomerIntelligence, FinancialProjections, TechnologyOperations, LegalRegulatory, LaunchRoadmap, CompetitorMatrix, GtmPlan, MarketSizing, KeywordGenerationInput, CompetitorAnalysisInput, GtmPlanInput, MarketSizingInput } from "@shared/schema"
 
 // Premium analytics data fetching
-const usePremiumKeywords = (analysisId: string, enabled: boolean) => {
+const usePremiumKeywords = (analysisId: string, primaryKeyword: string, industry: string, enabled: boolean) => {
   return useQuery<KeywordIntelligence>({
-    queryKey: ['/api/premium/keywords', analysisId],
-    queryFn: () => apiRequest('/api/premium/keywords', 'POST', { analysisId }),
-    enabled: enabled && !!analysisId,
+    queryKey: ['/api/premium/keywords', analysisId, primaryKeyword, industry],
+    queryFn: () => apiRequest('/api/premium/keywords', 'POST', { 
+      analysisId, 
+      primaryKeyword, 
+      industry,
+      targetAudience: "General users",
+      locale: "US" 
+    }),
+    enabled: enabled && !!analysisId && analysisId.length > 10 && !!primaryKeyword && !!industry,
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    staleTime: 300000, // 5 minutes cache
   })
 }
 
 
-const usePremiumCompetitors = (analysisId: string, enabled: boolean) => {
+const usePremiumCompetitors = (analysisId: string, industry: string, enabled: boolean) => {
   return useQuery<CompetitorMatrix>({
-    queryKey: ['/api/premium/competitors', analysisId],
-    queryFn: () => apiRequest('/api/premium/competitors', 'POST', { analysisId }),
-    enabled: enabled && !!analysisId,
+    queryKey: ['/api/premium/competitors', analysisId, industry],
+    queryFn: () => apiRequest('/api/premium/competitors', 'POST', { analysisId, industry }),
+    enabled: enabled && !!analysisId && !!industry,
   })
 }
 
-const usePremiumGtm = (analysisId: string, enabled: boolean) => {
+const usePremiumGtm = (analysisId: string, productDescription: string, enabled: boolean) => {
   return useQuery<GtmPlan>({
-    queryKey: ['/api/premium/gtm-plan', analysisId],
-    queryFn: () => apiRequest(`/api/premium/gtm-plan?analysisId=${analysisId}`, 'GET'),
-    enabled: enabled && !!analysisId,
+    queryKey: ['/api/premium/gtm-plan', analysisId, productDescription],
+    queryFn: () => apiRequest('/api/premium/gtm-plan', 'POST', { 
+      analysisId, 
+      productDescription,
+      targetAudience: "General market",
+      budget: 50000
+    }),
+    enabled: enabled && !!analysisId && !!productDescription,
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    staleTime: 300000, // 5 minutes cache
   })
 }
 
-const usePremiumMarket = (analysisId: string, enabled: boolean) => {
+const usePremiumMarket = (analysisId: string, industry: string, enabled: boolean) => {
   return useQuery<MarketSizing>({
-    queryKey: ['/api/premium/market-sizing', analysisId],
-    queryFn: () => apiRequest(`/api/premium/market-sizing?analysisId=${analysisId}`, 'GET'),
-    enabled: enabled && !!analysisId,
+    queryKey: ['/api/premium/market-sizing', analysisId, industry],
+    queryFn: () => apiRequest('/api/premium/market-sizing', 'POST', { 
+      analysisId, 
+      industry,
+      productCategory: industry,
+      geography: "Global"
+    }),
+    enabled: enabled && !!analysisId && !!industry,
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    staleTime: 300000, // 5 minutes cache
   })
 }
 
 // New premium analytics queries
-const usePremiumReddit = (analysisId: string, enabled: boolean) => {
+const usePremiumReddit = (analysisId: string, subreddits: string[], keywords: string[], industry: string, enabled: boolean) => {
   return useQuery<RedditAnalysis>({
-    queryKey: ['/api/premium/reddit', analysisId],
-    queryFn: () => apiRequest('/api/premium/reddit', 'POST', { analysisId }),
-    enabled: enabled && !!analysisId,
+    queryKey: ['/api/premium/reddit-analysis', analysisId, subreddits, keywords, industry],
+    queryFn: () => apiRequest('/api/premium/reddit-analysis', 'POST', { 
+      analysisId, 
+      subreddits, 
+      keywords, 
+      industry 
+    }),
+    enabled: enabled && !!analysisId && analysisId.length > 10 && !!subreddits?.length && !!keywords?.length && !!industry,
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    staleTime: 300000, // 5 minutes cache
   })
 }
 
-const usePremiumCustomer = (analysisId: string, enabled: boolean) => {
+const usePremiumCustomer = (analysisId: string, industry: string, enabled: boolean) => {
   return useQuery<CustomerIntelligence>({
-    queryKey: ['/api/premium/customer-intelligence', analysisId],
-    queryFn: () => apiRequest('/api/premium/customer-intelligence', 'POST', { analysisId }),
-    enabled: enabled && !!analysisId,
+    queryKey: ['/api/premium/customer-intelligence', analysisId, industry],
+    queryFn: () => apiRequest('/api/premium/customer-intelligence', 'POST', { 
+      analysisId, 
+      industry, 
+      targetAudience: "General market" 
+    }),
+    enabled: enabled && !!analysisId && analysisId.length > 10 && !!industry,
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    staleTime: 300000, // 5 minutes cache
   })
 }
 
-const usePremiumFinancialProjections = (analysisId: string, enabled: boolean) => {
+const usePremiumFinancialProjections = (analysisId: string, industry: string, enabled: boolean) => {
   return useQuery<FinancialProjections>({
-    queryKey: ['/api/premium/financial', analysisId],
-    queryFn: () => apiRequest('/api/premium/financial', 'POST', { analysisId }),
-    enabled: enabled && !!analysisId,
+    queryKey: ['/api/premium/financial-projections', analysisId, industry],
+    queryFn: () => apiRequest('/api/premium/financial-projections', 'POST', { 
+      analysisId, 
+      industry, 
+      revenueModel: "subscription" 
+    }),
+    enabled: enabled && !!analysisId && analysisId.length > 10 && !!industry,
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    staleTime: 300000, // 5 minutes cache
   })
 }
 
@@ -77,7 +130,11 @@ const usePremiumTechnology = (analysisId: string, enabled: boolean) => {
   return useQuery<TechnologyOperations>({
     queryKey: ['/api/premium/technology', analysisId],
     queryFn: () => apiRequest('/api/premium/technology', 'POST', { analysisId }),
-    enabled: enabled && !!analysisId,
+    enabled: enabled && !!analysisId && analysisId.length > 10, // Only enable with valid analysisId
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    staleTime: 300000, // 5 minutes cache
   })
 }
 
@@ -85,15 +142,19 @@ const usePremiumLegal = (analysisId: string, enabled: boolean) => {
   return useQuery<LegalRegulatory>({
     queryKey: ['/api/premium/legal', analysisId],
     queryFn: () => apiRequest('/api/premium/legal', 'POST', { analysisId }),
-    enabled: enabled && !!analysisId,
+    enabled: enabled && !!analysisId && analysisId.length > 10, // Only enable with valid analysisId
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    staleTime: 300000, // 5 minutes cache
   })
 }
 
-const usePremiumRoadmap = (analysisId: string, enabled: boolean) => {
+const usePremiumRoadmap = (analysisId: string, industry: string, enabled: boolean) => {
   return useQuery<LaunchRoadmap>({
-    queryKey: ['/api/premium/launch-roadmap', analysisId],
-    queryFn: () => apiRequest('/api/premium/launch-roadmap', 'POST', { analysisId }),
-    enabled: enabled && !!analysisId,
+    queryKey: ['/api/premium/launch-roadmap', analysisId, industry],
+    queryFn: () => apiRequest('/api/premium/launch-roadmap', 'POST', { analysisId, industry }),
+    enabled: enabled && !!analysisId && !!industry,
   })
 }
 
@@ -203,20 +264,11 @@ const useGenerateRoadmap = () => {
 // Keyword Intelligence Component
 function KeywordIntelligenceSection({ analysisId, industry, primaryKeyword }: { analysisId: string, industry: string, primaryKeyword: string }) {
   const { isPremium } = usePremium()
-  const keywordsQuery = usePremiumKeywords(analysisId, isPremium)
+  const keywordsQuery = usePremiumKeywords(analysisId, primaryKeyword, industry, isPremium)
   const generateKeywords = useGenerateKeywords()
 
-  useEffect(() => {
-    if (isPremium && analysisId && !keywordsQuery.data && !keywordsQuery.isLoading) {
-      generateKeywords.mutate({
-        analysisId,
-        primaryKeyword,
-        industry,
-        targetAudience: "General users",
-        locale: "US"
-      })
-    }
-  }, [isPremium, analysisId, primaryKeyword, industry, keywordsQuery.data, keywordsQuery.isLoading, generateKeywords])
+  // Automatic generation removed to prevent infinite loops
+  // Users can manually generate content using the "Generate" button
 
   if (!isPremium) return null
   if (keywordsQuery.isLoading || generateKeywords.isPending) {
@@ -440,19 +492,11 @@ function KeywordIntelligenceSection({ analysisId, industry, primaryKeyword }: { 
 // Reddit Analysis Component
 function RedditAnalysisSection({ analysisId, subreddits, keywords, industry }: { analysisId: string, subreddits: string[], keywords: string[], industry: string }) {
   const { isPremium } = usePremium()
-  const redditQuery = usePremiumReddit(analysisId, isPremium)
+  const redditQuery = usePremiumReddit(analysisId, subreddits, keywords, industry, isPremium)
   const generateReddit = useGenerateReddit()
 
-  useEffect(() => {
-    if (isPremium && analysisId && subreddits?.length && keywords?.length && !redditQuery.data && !redditQuery.isLoading) {
-      generateReddit.mutate({
-        analysisId,
-        subreddits,
-        keywords,
-        industry
-      })
-    }
-  }, [isPremium, analysisId, subreddits, keywords, industry, redditQuery.data, redditQuery.isLoading, generateReddit])
+  // Automatic generation removed to prevent infinite loops
+  // Users can manually generate content using the "Generate" button
 
   if (!isPremium || !subreddits || !keywords) return null
 
@@ -591,18 +635,11 @@ function RedditAnalysisSection({ analysisId, subreddits, keywords, industry }: {
 // Customer Intelligence Section
 function CustomerIntelligenceSection({ analysisId, industry }: { analysisId: string, industry: string }) {
   const { isPremium } = usePremium()
-  const customerQuery = usePremiumCustomer(analysisId, isPremium)
+  const customerQuery = usePremiumCustomer(analysisId, industry, isPremium)
   const generateCustomer = useGenerateCustomer()
 
-  useEffect(() => {
-    if (isPremium && analysisId && industry && !customerQuery.data && !customerQuery.isLoading) {
-      generateCustomer.mutate({
-        analysisId,
-        industry,
-        targetAudience: "General market"
-      })
-    }
-  }, [isPremium, analysisId, industry, customerQuery.data, customerQuery.isLoading, generateCustomer])
+  // Automatic generation removed to prevent infinite loops
+  // Users can manually generate content using the "Generate" button
 
   if (!isPremium) return null
 
@@ -727,18 +764,11 @@ function CustomerIntelligenceSection({ analysisId, industry }: { analysisId: str
 // Financial Projections Section (not simulator)
 function FinancialProjectionsSection({ analysisId, industry }: { analysisId: string, industry: string }) {
   const { isPremium } = usePremium()
-  const projectionsQuery = usePremiumFinancialProjections(analysisId, isPremium)
+  const projectionsQuery = usePremiumFinancialProjections(analysisId, industry, isPremium)
   const generateProjections = useGenerateFinancialProjections()
 
-  useEffect(() => {
-    if (isPremium && analysisId && industry && !projectionsQuery.data && !projectionsQuery.isLoading) {
-      generateProjections.mutate({
-        analysisId,
-        industry,
-        revenueModel: "subscription"
-      })
-    }
-  }, [isPremium, analysisId, industry])
+  // Automatic generation removed to prevent infinite loops
+  // Users can manually generate content using the "Generate" button
 
   if (!isPremium) return null
 
@@ -1156,7 +1186,7 @@ function LegalRegulatorySection({ analysisId, industry }: { analysisId: string, 
 // 12-Month Launch Roadmap Section
 function LaunchRoadmapSection({ analysisId, industry }: { analysisId: string, industry: string }) {
   const { isPremium } = usePremium()
-  const roadmapQuery = usePremiumRoadmap(analysisId, isPremium)
+  const roadmapQuery = usePremiumRoadmap(analysisId, industry, isPremium)
   const generateRoadmap = useGenerateRoadmap()
 
   useEffect(() => {
@@ -1290,7 +1320,7 @@ function LaunchRoadmapSection({ analysisId, industry }: { analysisId: string, in
 // Enhanced Competitor Matrix Component
 function CompetitorMatrixSection({ analysisId, industry }: { analysisId: string, industry: string }) {
   const { isPremium } = usePremium()
-  const competitorsQuery = usePremiumCompetitors(analysisId, isPremium)
+  const competitorsQuery = usePremiumCompetitors(analysisId, industry, isPremium)
   const generateCompetitors = useGenerateCompetitors()
 
   useEffect(() => {
@@ -1424,7 +1454,7 @@ function CompetitorMatrixSection({ analysisId, industry }: { analysisId: string,
 // GTM Planning Component
 function GtmPlanningSection({ analysisId, productDescription }: { analysisId: string, productDescription: string }) {
   const { isPremium } = usePremium()
-  const gtmQuery = usePremiumGtm(analysisId, isPremium)
+  const gtmQuery = usePremiumGtm(analysisId, productDescription, isPremium)
   const generateGtm = useGenerateGtm()
 
   useEffect(() => {
@@ -1625,7 +1655,7 @@ function GtmPlanningSection({ analysisId, productDescription }: { analysisId: st
 // Market Sizing Component  
 function MarketSizingSection({ analysisId, industry }: { analysisId: string, industry: string }) {
   const { isPremium } = usePremium()
-  const marketQuery = usePremiumMarket(analysisId, isPremium)
+  const marketQuery = usePremiumMarket(analysisId, industry, isPremium)
   const generateMarket = useGenerateMarket()
 
   useEffect(() => {
@@ -1825,25 +1855,28 @@ export default function PremiumResults() {
         // Extract the analysisId from the stored results
         if (parsedResults.analysisId) {
           setAnalysisId(parsedResults.analysisId)
-        } else {
-          // Fallback: generate an ID if not present
-          setAnalysisId(`analysis_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`)
         }
       } catch (error) {
         console.error('Failed to parse analysis results:', error)
-        // Fallback ID in case of error
-        setAnalysisId(`analysis_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`)
       }
-    } else {
-      // No saved results, generate a fallback ID
-      setAnalysisId(`analysis_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`)
+    }
+    
+    // Only generate fallback ID if we don't have one at all
+    if (!analysisId) {
+      // Generate a stable ID that won't change on re-renders
+      let fallbackId = sessionStorage.getItem('fallback-analysis-id')
+      if (!fallbackId) {
+        fallbackId = `analysis_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+        sessionStorage.setItem('fallback-analysis-id', fallbackId)
+      }
+      setAnalysisId(fallbackId)
     }
 
     // Cleanup title on unmount
     return () => {
       document.title = "Reddit Idea Validator - Discover Market Opportunities"
     }
-  }, [])
+  }, []) // Remove analysisId from dependencies to prevent infinite loops
 
   // Auto-open upgrade modal for non-premium users
   useEffect(() => {

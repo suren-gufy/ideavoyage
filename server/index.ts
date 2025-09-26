@@ -1,3 +1,12 @@
+import dotenv from 'dotenv';
+// Load environment variables first, before anything else
+dotenv.config({ override: true });
+
+// Ensure NODE_ENV is set for development
+if (!process.env.NODE_ENV) {
+  process.env.NODE_ENV = 'development';
+}
+
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
@@ -37,7 +46,7 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  const server = await registerRoutes(app);
+  await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -50,9 +59,16 @@ app.use((req, res, next) => {
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
+  console.log('🔍 Server - app.get("env"):', app.get("env"));
+  console.log('🔍 Server - process.env.NODE_ENV:', process.env.NODE_ENV);
+  console.log('🔍 Server - All env vars:', Object.keys(process.env).filter(k => k.includes('NODE')));
+  
+  // Setup Vite in development or serve static files in production
   if (app.get("env") === "development") {
-    await setupVite(app, server);
+    console.log('✅ Setting up Vite development server');
+    await setupVite(app, null); // Pass null for server since we're using app.listen
   } else {
+    console.log('❌ Serving static files (production mode)');
     serveStatic(app);
   }
 
@@ -61,10 +77,19 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
-  server.listen({
-    port,
-    host: "localhost",
-  }, () => {
+  
+  console.log('🔍 About to start server on port:', port);
+  
+  // Try using app.listen directly instead of server.listen
+  const appServer = app.listen(port, () => {
     log(`serving on port ${port}`);
+    console.log('✅ App listening callback executed successfully');
+    console.log('🔍 App server address:', appServer.address());
   });
+  
+  appServer.on('error', (error) => {
+    console.error('❌ App server error:', error);
+  });
+  
+  console.log('🔍 App.listen() called, waiting for callback...');
 })();

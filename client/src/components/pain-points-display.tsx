@@ -29,9 +29,10 @@ interface PainPointsDisplayProps {
     urgency: "low" | "medium" | "high";
     examples: string[];
   }>;
+  subreddits?: string[];
 }
 
-export function PainPointsDisplay({ painPoints: propPainPoints }: PainPointsDisplayProps) {
+export function PainPointsDisplay({ painPoints: propPainPoints, subreddits }: PainPointsDisplayProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
 
@@ -43,10 +44,10 @@ export function PainPointsDisplay({ painPoints: propPainPoints }: PainPointsDisp
     frequency: pp.frequency,
     severity: pp.urgency,
     category: "General", 
-    relatedSubreddits: ["personalfinance", "budgeting"],
+    relatedSubreddits: subreddits || ["unknown"],
     examplePosts: pp.examples.slice(0, 3).map((example, i) => ({
       title: example,
-      subreddit: "personalfinance",
+      subreddit: (subreddits && subreddits[i % subreddits.length]) || "unknown",
       upvotes: Math.floor(Math.random() * 300) + 50,
       url: "#"
     }))
