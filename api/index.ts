@@ -340,7 +340,7 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
           signal: AbortSignal.timeout(8000)
         });
         if (response.ok) {
-          const data = await response.json();
+          const data = await response.json() as any;
           const posts = (data?.data?.children || []).map((c: any) => c.data).filter((p: any) => p.title).slice(0, 8);
           posts.forEach((p: any) => {
             if (fetchedPosts.length < 12) fetchedPosts.push({
@@ -400,7 +400,7 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
         });
         
         if (response.ok) {
-          const data = await response.json();
+          const data = await response.json() as any;
           const posts = (data?.data?.children || [])
             .map((c: any) => c.data)
             .filter((p: any) => p && p.title && p.title.length > 15)
