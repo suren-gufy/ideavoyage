@@ -23,51 +23,75 @@ export function log(message: string, source = "express") {
 }
 
 export async function setupVite(app: Express, server?: Server | null) {
-  const serverOptions = {
-    middlewareMode: true,
-    hmr: server ? { server } : false,
-    allowedHosts: true as const,
-  };
+  // In production we should NOT spin up a Vite dev server – just serve the built assets.
+  if (process.env.NODE_ENV === "production") {
+    log("Detected production environment – skipping Vite dev middleware and serving static build instead", "vite");
+    serveStatic(app);
+    return;
+  }
 
-  const vite = await createViteServer({
-    ...viteConfig,
-    configFile: false,
-    customLogger: {
-      ...viteLogger,
-      error: (msg, options) => {
-        viteLogger.error(msg, options);
-        // Don't exit on Vite errors - just log them
+  try {
+    const serverOptions = {
+      middlewareMode: true,
+      hmr: server ? { server } : false,
+      allowedHosts: true as const,
+    };
+
+    const vite = await createViteServer({
+      // ensure root so relative plugin paths resolve the same as CLI
+      root: path.resolve(__dirname, ".."),
+      ...viteConfig,
+      configFile: false,
+      customLogger: {
+        ...viteLogger,
+        error: (msg, options) => {
+          viteLogger.error(msg, options);
+          // Don't exit on Vite errors - just log them
+        },
       },
-    },
-    server: serverOptions,
-    appType: "custom",
-  });
+      server: serverOptions,
+      appType: "custom",
+    });
 
-  app.use(vite.middlewares);
-  app.use("*", async (req, res, next) => {
-    const url = req.originalUrl;
+    app.use(vite.middlewares);
+    app.use("*", async (req, res, next) => {
+      const url = req.originalUrl;
 
+      try {
+        const clientTemplate = path.resolve(
+          __dirname,
+          "..",
+          "client",
+          "index.html",
+        );
+
+        // Always reload the index.html file from disk in case it changes during dev
+        let template = await fs.promises.readFile(clientTemplate, "utf-8");
+
+        // More robust cache-busting: replace ANY /src/main.(jt|t)sx occurrence
+        template = template.replace(
+          /src="\/src\/main\.(t|j)sx"/,
+          `src="/src/main.tsx?v=${nanoid()}"`,
+        );
+
+        const page = await vite.transformIndexHtml(url, template);
+        res.status(200).set({ "Content-Type": "text/html" }).end(page);
+      } catch (e) {
+        vite.ssrFixStacktrace(e as Error);
+        log(`Error rendering dev index.html: ${(e as Error).message}`, "vite");
+        next(e);
+      }
+    });
+  } catch (err) {
+    log(`Failed to start Vite dev server: ${(err as Error).message}`, "vite");
+    // Fallback to static serving so development isn't completely blocked
     try {
-      const clientTemplate = path.resolve(
-        __dirname,
-        "..",
-        "client",
-        "index.html",
-      );
-
-      // always reload the index.html file from disk incase it changes
-      let template = await fs.promises.readFile(clientTemplate, "utf-8");
-      template = template.replace(
-        `src="/src/main.tsx"`,
-        `src="/src/main.tsx?v=${nanoid()}"`,
-      );
-      const page = await vite.transformIndexHtml(url, template);
-      res.status(200).set({ "Content-Type": "text/html" }).end(page);
-    } catch (e) {
-      vite.ssrFixStacktrace(e as Error);
-      next(e);
+      serveStatic(app);
+    } catch (staticErr) {
+      log(`Static fallback also failed: ${(staticErr as Error).message}`, "vite");
+      throw err; // rethrow original error
     }
-  });
+  }
 }
 
 export function serveStatic(app: Express) {
