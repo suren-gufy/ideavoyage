@@ -78,6 +78,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         env_key_length: process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.length : 0,
         env_key_start: process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.substring(0, 20) + '...' : 'missing',
         timestamp: new Date().toISOString(),
+        version: "2025-09-26-updated",
         url
       });
     }
