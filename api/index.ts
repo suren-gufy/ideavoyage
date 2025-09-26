@@ -106,9 +106,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
       try {
-        // Attempt real analysis with timeout protection
+        // Attempt real analysis with timeout protection (increased for AI calls)
         const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Analysis timed out')), 14000)
+          setTimeout(() => reject(new Error('Analysis timed out')), 20000)
         );
         
         const analysisPromise = performRealAnalysis({ 
@@ -306,123 +306,40 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
   // Deduplicate and cap
   const subreddits = Array.from(new Set(baseSubs)).slice(0,6);
 
-  // 2. Aggressive Reddit data fetching with multiple strategies
-  let fetchedPosts: RawRedditPost[] = [];
-  
-  // Strategy 1: Try different Reddit endpoints and user agents
-  const userAgents = [
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15',
-    'IdeaVoyageBot/1.0 (research; +https://ideavoyage.vercel.app)'
-  ];
-  
-  const redditEndpoints = [
-    (sub: string) => `https://www.reddit.com/r/${sub}/hot.json?limit=15`,
-    (sub: string) => `https://old.reddit.com/r/${sub}/hot.json?limit=15`, 
-    (sub: string) => `https://reddit.com/r/${sub}.json?limit=15`,
-    (sub: string) => `https://www.reddit.com/r/${sub}/top.json?t=week&limit=15`
-  ];
-  
-  for (const sub of subreddits) {
-    if (fetchedPosts.length > 40) break;
-    
-    let subSuccess = false;
-    
-    // Try multiple endpoints and user agents for each subreddit
-    for (const endpoint of redditEndpoints) {
-      if (subSuccess) break;
-      
-      for (const userAgent of userAgents) {
-        if (subSuccess) break;
-        
-        try {
-          const url = endpoint(sub);
-          const response = await fetch(url, { 
-            headers: { 
-              'User-Agent': userAgent,
-              'Accept': 'application/json, text/plain, */*',
-              'Accept-Language': 'en-US,en;q=0.9',
-              'Cache-Control': 'no-cache',
-              'Sec-Fetch-Dest': 'empty',
-              'Sec-Fetch-Mode': 'cors',
-              'Sec-Fetch-Site': 'same-origin'
-            },
-            signal: AbortSignal.timeout(4000)
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            const posts = (data?.data?.children || [])
-              .map((c: any) => c.data)
-              .filter((p: any) => p && p.title && p.title.length > 10)
-              .slice(0, 12);
-            
-            if (posts.length > 0) {
-              posts.forEach((p: any) => {
-                fetchedPosts.push({
-                  title: String(p.title || '').trim(),
-                  selftext: String(p.selftext || '').trim(),
-                  score: Math.max(0, parseInt(p.score) || 0),
-                  num_comments: Math.max(0, parseInt(p.num_comments) || 0),
-                  created_utc: p.created_utc || Math.floor(Date.now()/1000),
-                  permalink: String(p.permalink || ''),
-                  subreddit: String(p.subreddit || sub),
-                  source: 'reddit'
-                });
-              });
-              
-              console.log(`✅ Successfully fetched ${posts.length} posts from r/${sub} using ${endpoint.name}`);
-              subSuccess = true;
-            }
-          }
-        } catch (error) {
-          console.log(`❌ Failed fetching r/${sub} with ${userAgent.substring(0,20)}...: ${(error as Error).message}`);
-          continue;
-        }
-        
-        // Small delay between attempts
-        await new Promise(r => setTimeout(r, 150));
-      }
-    }
-    
-    if (!subSuccess) {
-      console.warn(`⚠️ All methods failed for r/${sub}, trying backup approach...`);
-      
-      // Backup: Use a different approach or add synthetic relevant posts
+    // 2. Fetch top posts by iterating through candidate subreddits until enough real posts
+    const fetchedPosts: RawRedditPost[] = [];
+    for (const sub of subreddits) {
+      if (fetchedPosts.length >= 12) break; // stop once we've reached total desired posts
+      const url = `https://api.reddit.com/r/${sub}/top?limit=8&t=week`;
+      console.log(`🔍 Trying r/${sub}: ${url}`);
       try {
-        const backupUrl = `https://api.reddit.com/r/${sub}/hot?limit=10`;
-        const backupResponse = await fetch(backupUrl, {
-          headers: { 'User-Agent': userAgents[0] },
-          signal: AbortSignal.timeout(2000)
+        const response = await fetch(url, {
+          headers: { 'User-Agent': 'IdeaVoyage/1.0', 'Accept': 'application/json' },
+          signal: AbortSignal.timeout(8000)
         });
-        
-        if (backupResponse.ok) {
-          const backupData = await backupResponse.json();
-          const backupPosts = (backupData?.data?.children || [])
-            .map((c: any) => c.data)
-            .filter((p: any) => p && p.title)
-            .slice(0, 8);
-          
-          backupPosts.forEach((p: any) => {
-            fetchedPosts.push({
-              title: String(p.title || '').trim(),
-              selftext: String(p.selftext || '').trim(), 
-              score: Math.max(0, parseInt(p.score) || 0),
+        if (response.ok) {
+          const data = await response.json();
+          const posts = (data?.data?.children || []).map((c: any) => c.data).filter((p: any) => p.title).slice(0, 8);
+          posts.forEach((p: any) => {
+            if (fetchedPosts.length < 12) fetchedPosts.push({
+              title: String(p.title).trim(),
+              selftext: String(p.selftext || '').trim(),
+              score: Math.max(1, parseInt(p.score) || 1),
               num_comments: Math.max(0, parseInt(p.num_comments) || 0),
               created_utc: p.created_utc || Math.floor(Date.now()/1000),
-              permalink: String(p.permalink || ''),
-              subreddit: String(p.subreddit || sub),
+              permalink: p.permalink || '',
+              subreddit: p.subreddit || sub,
               source: 'reddit'
             });
           });
-          
-          console.log(`✅ Backup method got ${backupPosts.length} posts from r/${sub}`);
+          console.log(`✅ Total real posts so far: ${fetchedPosts.length}`);
+        } else {
+          console.warn(`⚠️ r/${sub} returned ${response.status}`);
         }
-      } catch (backupError) {
-        console.log(`❌ Backup method also failed for r/${sub}`);
+      } catch (err) {
+        console.warn(`❌ r/${sub} fetch error: ${(err as Error).message}`);
       }
     }
-  }
   
   // Log what we actually fetched with detailed information
   console.log(`📊 Reddit fetch results: ${fetchedPosts.length} posts from ${subreddits.length} subreddits`);
@@ -430,15 +347,14 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
     console.log(`  Post ${i+1}: "${post.title.substring(0, 50)}..." - Score: ${post.score}, Comments: ${post.num_comments} (r/${post.subreddit})`);
   });
   
-  // Ensure we always have sufficient data for robust analysis
-  if (fetchedPosts.length < 12) {
-    console.log(`⚠️ Low post count (${fetchedPosts.length}), supplementing with realistic synthetic posts...`);
-    
-    // Generate realistic posts based on the idea and industry
-    const syntheticPosts = generateRealisticSyntheticPosts(input.idea, input.industry || '', subreddits[0] || 'startups');
-    const postsToAdd = Math.min(syntheticPosts.length, 12 - fetchedPosts.length);
+  // Only supplement with synthetic when very few real posts are available
+  if (fetchedPosts.length < 5) {
+    console.log(`⚠️ Very low real post count (${fetchedPosts.length}), adding realistic synthetic posts...`);
+  const fallbackSub = subreddits[0] || 'startups';
+  const syntheticPosts = generateRealisticSyntheticPosts(input.idea, input.industry || '', fallbackSub);
+    const postsToAdd = Math.min(syntheticPosts.length, 5 - fetchedPosts.length);
     fetchedPosts.push(...syntheticPosts.slice(0, postsToAdd));
-    console.log(`✅ Added ${postsToAdd} realistic synthetic posts (now ${fetchedPosts.length} total)`);
+    console.log(`✅ Added ${postsToAdd} synthetic posts (now ${fetchedPosts.length} total)`);
   }
   
   // If we still have very few posts, try a final aggressive approach
@@ -573,39 +489,50 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
     examples: Array.from(v.examples)
   })).slice(0,6);
 
-  // 4. Optional OpenAI enrichment (completely optional - no errors if missing)
+  // 4. Optional OpenAI enrichment (key and package both required)
   let enriched: Partial<ReturnType<typeof buildBaseResponse>> | null = null;
-  const hasOpenAIKey = process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.trim().length > 0;
-  
+  const hasOpenAIKey = !!process.env.OPENAI_API_KEY?.trim();
   if (hasOpenAIKey) {
+    // Try dynamic import and init of OpenAI client
+    let openaiClient: any = null;
     try {
-      // Dynamic import to avoid issues if openai module isn't available
-      const OpenAI = (await import('openai')).default;
-      const openai = new OpenAI({ 
+      const OpenAIDep = await import('openai');
+      const OpenAI = OpenAIDep.default;
+      openaiClient = new OpenAI({
         apiKey: process.env.OPENAI_API_KEY!,
-        // Add timeout to prevent hanging
-        timeout: 8000,
-        maxRetries: 1
+        timeout: 12000,
+        maxRetries: 0
       });
-      
-      const samplePosts = fetchedPosts.slice(0,12).map(p => `- ${p.title}`).join('\n');
-      const system = 'You are a startup market validation analyst. Return ONLY valid JSON.';
-      const user = `Startup Idea: ${input.idea}\nIndustry: ${input.industry || 'Unknown'}\nTarget Audience: ${input.targetAudience || 'General'}\nPosts Sample (titles):\n${samplePosts}\n\nUsing the sample, extract: keywords (<=10), 3-6 pain points (title, frequency 10-95, urgency low|medium|high, examples array), 1-2 app ideas (title, description, market_validation low|medium|high, difficulty easy|medium|hard), 1-3 competitors (name, description, strengths[], weaknesses[], market_share, pricing_model), 1-2 revenue models (model_type, description, pros[], cons[], implementation_difficulty easy|medium|hard, potential_revenue High|Medium|Moderate). Return JSON with keys: keywords, pain_points, app_ideas, competitors, revenue_models.`;
-      
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [ { role:'system', content: system }, { role:'user', content: user } ],
-        temperature: 0.5,
-        response_format: { type: 'json_object' }
-      });
-      
-      const raw = completion.choices[0]?.message?.content || '{}';
-      enriched = JSON.parse(raw);
-      console.log('OpenAI enrichment successful');
-    } catch (e) {
-      console.warn('OpenAI enrichment failed (continuing without it):', (e as Error).message);
-      // Don't throw - just continue without OpenAI enhancement
-      enriched = null;
+    } catch (initErr) {
+      console.warn('OpenAI package/init failed, skipping AI enrichment:', (initErr as Error).message);
+    }
+    if (openaiClient) {
+      try {
+        const samplePosts = fetchedPosts.slice(0, 12).map(p => `- ${p.title} (${p.score} upvotes, ${p.num_comments} comments)`).join('\n');
+        const system = 'You are a startup market validation analyst. Analyze the Reddit posts and return ONLY valid JSON with enhanced insights for keywords, pain_points, app_ideas, competitors, and revenue_models arrays.';
+        const user = `Startup Idea: "${input.idea}"\nIndustry: ${input.industry || 'Technology'}\nTarget Audience: ${input.targetAudience || 'General market'}\n\nReddit Posts Analysis:\n${samplePosts}\n\nProvide enhanced analysis with specific keywords, detailed pain points, innovative app ideas, realistic competitors, and viable revenue models based on the actual Reddit engagement data.`;
+        
+        console.log('🤖 Starting OpenAI enrichment...');
+        const openaiPromise = openaiClient.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
+          temperature: 0.5,
+          response_format: { type: 'json_object' }
+        });
+        
+        // Race the OpenAI call against a shorter timeout
+        const openaiTimeout = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('OpenAI call timed out')), 10000)
+        );
+        
+        const completion = await Promise.race([openaiPromise, openaiTimeout]) as any;
+        const raw = completion.choices[0]?.message?.content || '{}';
+        enriched = JSON.parse(raw);
+        console.log('✅ OpenAI enrichment successful - AI data is now being used!');
+      } catch (enrichErr) {
+        console.warn('⚠️ OpenAI enrichment failed, continuing with heuristic analysis:', (enrichErr as Error).message);
+        enriched = null;
+      }
     }
   } else {
     console.log('No OpenAI API key found - using heuristic analysis only');
@@ -809,5 +736,6 @@ function buildBaseResponse(params: { idea: string; industry?: string; targetAudi
     viability_score
   };
 }
-/ /   t o u c h   2 0 2 5 - 0 9 - 2 5 T 1 9 : 1 9 : 5 6 . 3 2 5 4 0 3 5 + 0 5 : 3 0  
- 
+// touch 2025-09-25T19:19:56.3254035+05:30
+
+

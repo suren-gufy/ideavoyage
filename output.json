@@ -1,0 +1,156 @@
+{
+    "keywords":  [
+                     "productivity",
+                     "assistant",
+                     "remote",
+                     "teams",
+                     "looking",
+                     "advice"
+                 ],
+    "subreddits":  [
+                       "startups",
+                       "Entrepreneur",
+                       "smallbusiness",
+                       "MachineLearning",
+                       "ArtificialInteligence",
+                       "ChatGPT"
+                   ],
+    "sentiment_data":  [
+                           {
+                               "name":  "Enthusiastic",
+                               "value":  30,
+                               "color":  "hsl(var(--chart-2))",
+                               "description":  "Positive market excitement \u0026 interest"
+                           },
+                           {
+                               "name":  "Curious/Mixed",
+                               "value":  50,
+                               "color":  "hsl(var(--chart-3))",
+                               "description":  "Questions \u0026 evaluation behavior"
+                           },
+                           {
+                               "name":  "Frustrated",
+                               "value":  10,
+                               "color":  "hsl(var(--destructive))",
+                               "description":  "Pain points \u0026 unmet needs"
+                           }
+                       ],
+    "pain_points":  [
+                        {
+                            "title":  "Need",
+                            "frequency":  15,
+                            "urgency":  "low",
+                            "examples":  [
+                                             "AI productivity assistant for  - market research needed"
+                                         ]
+                        }
+                    ],
+    "app_ideas":  [
+                      {
+                          "title":  "Smart ai Analyzer",
+                          "description":  "Tool that synthesizes community signals into actionable validation metrics",
+                          "market_validation":  "medium",
+                          "difficulty":  "hard"
+                      }
+                  ],
+    "google_trends":  [
+                          {
+                              "keyword":  "productivity",
+                              "trend_direction":  "rising",
+                              "interest_level":  22,
+                              "related_queries":  [
+                                                      "assistant",
+                                                      "remote",
+                                                      "teams"
+                                                  ]
+                          }
+                      ],
+    "icp":  {
+                "demographics":  {
+                                     "age_range":  "28-40",
+                                     "gender":  "Mixed",
+                                     "income_level":  "High",
+                                     "education":  "College Graduate"
+                                 },
+                "psychographics":  {
+                                       "interests":  [
+                                                         "productivity",
+                                                         "assistant",
+                                                         "remote"
+                                                     ],
+                                       "values":  [
+                                                      "Innovation",
+                                                      "Efficiency",
+                                                      "Growth"
+                                                  ],
+                                       "lifestyle":  "Tech-forward professional"
+                                   },
+                "behavioral":  {
+                                   "pain_points":  [
+                                                       "Need"
+                                                   ],
+                                   "preferred_channels":  [
+                                                              "Reddit",
+                                                              "Communities",
+                                                              "Search"
+                                                          ],
+                                   "buying_behavior":  "Research \u0026 community influenced"
+                               }
+            },
+    "problem_statements":  [
+                               {
+                                   "problem":  "Users face recurring challenges related to ai productivity assistant for remote teams",
+                                   "impact":  "Leads to inefficiency and lost opportunity",
+                                   "evidence":  [
+                                                    "Need"
+                                                ],
+                                   "market_size":  "Growing technology interest signaled by community discussions"
+                               }
+                           ],
+    "financial_risks":  [
+                            {
+                                "risk_type":  "Market Adoption",
+                                "severity":  "high",
+                                "description":  "Need to convert curiosity into sustained usage",
+                                "mitigation_strategy":  "Ship focused MVP, rapid iteration, prove retention metrics"
+                            }
+                        ],
+    "competitors":  [
+                        {
+                            "name":  "Generic Tools",
+                            "description":  "Existing broad solutions lacking niche focus",
+                            "strengths":  [
+                                              "Brand"
+                                          ],
+                            "weaknesses":  [
+                                               "Low specialization"
+                                           ],
+                            "market_share":  "Fragmented",
+                            "pricing_model":  "Subscription"
+                        }
+                    ],
+    "revenue_models":  [
+                           {
+                               "model_type":  "Subscription",
+                               "description":  "Monthly access to analysis dashboard",
+                               "pros":  [
+                                            "Predictable revenue"
+                                        ],
+                               "cons":  [
+                                            "Churn risk"
+                                        ],
+                               "implementation_difficulty":  "medium",
+                               "potential_revenue":  "Medium"
+                           }
+                       ],
+    "market_interest_level":  "low",
+    "total_posts_analyzed":  4,
+    "overall_score":  2.4125,
+    "viability_score":  2.7125000000000004,
+    "debug":  {
+                  "postsFetched":  4,
+                  "enriched":  false,
+                  "mode":  "heuristic_only",
+                  "ms":  190
+              }
+}
