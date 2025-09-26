@@ -120,12 +120,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
       try {
-        // Attempt real analysis with timeout protection (increased for AI calls)
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Analysis timed out')), 45000)
-        );
+        console.log('🚀 Starting performRealAnalysis...');
+        const startTime = Date.now();
         
-        const analysisPromise = performRealAnalysis({ 
+        const result = await performRealAnalysis({ 
           idea: trimmedIdea, 
           industry, 
           targetAudience, 
@@ -135,10 +133,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           timeRange 
         });
         
-        const result = await Promise.race([analysisPromise, timeoutPromise]) as any;
+        const duration = Date.now() - startTime;
+        console.log(`✅ Analysis completed successfully in ${duration}ms`);
         return res.json(result);
       } catch (analysisError) {
-        console.error('Analysis error:', analysisError);
+        console.error('❌ Analysis error:', analysisError);
+        console.error('❌ Error stack:', (analysisError as Error).stack);
         // Generate emergency fallback result based on the idea
         const fallbackResult = generateEmergencyAnalysis(trimmedIdea, industry, targetAudience);
         return res.json(fallbackResult);
@@ -304,8 +304,12 @@ function generateEmergencyAnalysis(idea: string, industry?: string, targetAudien
 
 async function performRealAnalysis(input: { idea: string; industry?: string; targetAudience?: string; country: string; platform: string; fundingMethod: string; timeRange: string; }) {
   const started = Date.now();
-  // 1. Derive seed keywords + candidate subreddits
-  const seed = input.idea.toLowerCase();
+  console.log('📋 performRealAnalysis started with:', input.idea);
+  
+  try {
+    // 1. Derive seed keywords + candidate subreddits
+    console.log('🔤 Processing seed keywords...');
+    const seed = input.idea.toLowerCase();
   const tokens = Array.from(new Set(seed.split(/[^a-z0-9+]+/).filter(Boolean)));
   const isAI = tokens.some(t => ['ai','artificial','intelligence','machine','ml','gpt'].includes(t));
   const isFitness = tokens.some(t => ['fitness','health','workout','exercise','gym','wellness'].includes(t));
@@ -610,6 +614,11 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
     (response as any).analysis_confidence = 'high';
   }
   return response;
+  
+  } catch (error) {
+    console.error('❌ Error in performRealAnalysis:', error);
+    throw error;
+  }
 }
 
 function buildBaseResponse(params: { idea: string; industry?: string; targetAudience?: string; isAI: boolean; isFitness: boolean; tokens: string[]; keywords: string[]; subreddits: string[]; pain_points: any[]; app_ideas: any[]; competitors: any[]; revenue_models: any[]; fetchedPosts: RawRedditPost[]; }) {
