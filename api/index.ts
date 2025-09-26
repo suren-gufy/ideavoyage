@@ -51,10 +51,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       let redditTest = 'unknown';
       try {
         // Create two abort signals: one for timeout and one for manual abortion if needed
-        const timeoutSignal = AbortSignal.timeout(5000);
+        // Create a timeout signal using type assertion to avoid conflicts
+        const timeoutSignal = (AbortSignal as any).timeout(5000);
         const controller = new AbortController();
         
-        // Combine signals using AbortSignal.any() - aborts if either signal triggers
+        // Combine signals using AbortSignal.any() with type assertion
+        // This avoids TypeScript errors from conflicting DOM/Node type definitions
         const combinedSignal = (AbortSignal as any).any([
           timeoutSignal,
           controller.signal

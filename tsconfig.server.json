@@ -5,6 +5,7 @@
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/typescript/.tsbuildinfo.server",
     "lib": ["esnext"],
-    "types": ["node"]
+    "types": ["node"],
+    "typeRoots": ["./node_modules/@types", "./client/src/types"]
   }
 }

@@ -8,6 +8,16 @@ import { fileURLToPath } from "url";
 // Import as a dynamic import to avoid TypeScript project reference issues
 import type { UserConfig } from "vite";
 
+// Helper type to handle AbortSignal correctly
+type AbortSignalWithStatics = AbortSignal & {
+  timeout?: (ms: number) => AbortSignal;
+  any?: (signals: AbortSignal[]) => AbortSignal;
+  abort?: (reason?: any) => AbortSignal;
+};
+
+// Use type assertion when needed
+const AbortSignalEnhanced = AbortSignal as unknown as AbortSignalWithStatics;
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const viteLogger = createLogger();
