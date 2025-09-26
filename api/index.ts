@@ -62,6 +62,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         mode: hasOpenAIKey ? 'enhanced' : 'heuristic',
         openai_available: hasOpenAIKey,
         reddit_test: redditTest,
+        env_key_length: process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.length : 0,
+        env_key_start: process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.substring(0, 20) + '...' : 'missing',
         timestamp: new Date().toISOString(),
         url
       });
