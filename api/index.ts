@@ -44,10 +44,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Health
     if (req.method === 'GET') {
       const hasOpenAIKey = process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.trim().length > 0;
+      
+      // Test Reddit API connectivity
+      let redditTest = 'unknown';
+      try {
+        const testResponse = await fetch('https://api.reddit.com/r/startups/hot?limit=1', {
+          headers: { 'User-Agent': 'IdeaVoyage/1.0' },
+          signal: AbortSignal.timeout(5000)
+        });
+        redditTest = testResponse.ok ? 'working' : `error_${testResponse.status}`;
+      } catch (err) {
+        redditTest = `failed_${(err as Error).message.substring(0,50)}`;
+      }
+      
       return res.json({
         message: 'IdeaVoyage API live',
         mode: hasOpenAIKey ? 'enhanced' : 'heuristic',
         openai_available: hasOpenAIKey,
+        reddit_test: redditTest,
         timestamp: new Date().toISOString(),
         url
       });
