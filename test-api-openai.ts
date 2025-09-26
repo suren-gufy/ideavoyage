@@ -37,8 +37,12 @@ const mockRes = {
   end: () => {}
 };
 
-try {
-  await handler(mockReq, mockRes);
-} catch (error) {
-  console.error('❌ Error:', error.message);
+async function main() {
+  try {
+    await handler(mockReq, mockRes);
+  } catch (error) {
+    console.error('❌ Error:', (error as Error).message);
+  }
 }
+
+main().catch(console.error);
