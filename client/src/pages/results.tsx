@@ -125,6 +125,14 @@ export default function Results() {
 
       {/* Results content */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8" data-testid="analysis-results">
+        {/* Debug logging */}
+        {console.log('🔍 Frontend Debug:', {
+          data_source: analysisResults.data_source,
+          analysis_confidence: analysisResults.analysis_confidence,
+          notes: analysisResults.notes,
+          debug_mode: analysisResults.debug?.mode
+        })}
+        
         {/* Data Source Indicator */}
         {analysisResults.data_source === 'ai_synthetic' && (
           <div className="mb-6 bg-emerald-50 border border-emerald-200 rounded-lg p-4 text-emerald-800">
@@ -152,6 +160,21 @@ export default function Results() {
             </p>
             <p className="text-xs mt-2 text-amber-700">
               💡 <strong>Want real market data?</strong> We're working on alternative data sources for authentic market validation.
+            </p>
+          </div>
+        )}
+        
+        {/* Debug display for unknown data_source values */}
+        {!['ai_synthetic', 'synthetic_only', 'mixed_real_synthetic', 'real_reddit_data', 'limited_real'].includes(analysisResults.data_source) && (
+          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+              <span className="font-semibold">Debug: Unknown Data Source</span>
+            </div>
+            <p className="text-sm">
+              Data Source: <code>{analysisResults.data_source}</code><br/>
+              Analysis Confidence: <code>{analysisResults.analysis_confidence}</code><br/>
+              Debug Mode: <code>{analysisResults.debug?.mode}</code>
             </p>
           </div>
         )}
