@@ -125,6 +125,20 @@ export default function Results() {
 
       {/* Results content */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8" data-testid="analysis-results">
+        {/* TEMPORARY DEBUG PANEL - ALWAYS VISIBLE */}
+        <div className="mb-6 bg-purple-50 border border-purple-200 rounded-lg p-4 text-purple-800">
+          <div className="flex items-center gap-2 mb-2">
+            <Info className="h-5 w-5 text-purple-600" />
+            <span className="font-semibold">DEBUG INFO (TEMP)</span>
+          </div>
+          <div className="text-xs space-y-1">
+            <div>data_source: <code className="bg-purple-100 px-1 rounded">{analysisResults.data_source}</code></div>
+            <div>analysis_confidence: <code className="bg-purple-100 px-1 rounded">{analysisResults.analysis_confidence}</code></div>
+            <div>debug.mode: <code className="bg-purple-100 px-1 rounded">{analysisResults.debug?.mode}</code></div>
+            <div>Match ai_synthetic: <code className="bg-purple-100 px-1 rounded">{String(analysisResults.data_source === 'ai_synthetic')}</code></div>
+          </div>
+        </div>
+
         {/* Debug logging */}
         {console.log('🔍 Frontend Debug:', {
           data_source: analysisResults.data_source,
