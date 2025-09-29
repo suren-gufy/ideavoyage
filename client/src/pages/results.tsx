@@ -132,20 +132,12 @@ export default function Results() {
             <span className="font-semibold">DEBUG INFO (TEMP)</span>
           </div>
           <div className="text-xs space-y-1">
-            <div>data_source: <code className="bg-purple-100 px-1 rounded">{analysisResults.data_source}</code></div>
-            <div>analysis_confidence: <code className="bg-purple-100 px-1 rounded">{analysisResults.analysis_confidence}</code></div>
-            <div>debug.mode: <code className="bg-purple-100 px-1 rounded">{analysisResults.debug?.mode}</code></div>
+            <div>data_source: <code className="bg-purple-100 px-1 rounded">{analysisResults.data_source || 'undefined'}</code></div>
+            <div>analysis_confidence: <code className="bg-purple-100 px-1 rounded">{analysisResults.analysis_confidence || 'undefined'}</code></div>
+            <div>debug.mode: <code className="bg-purple-100 px-1 rounded">{(analysisResults as any).debug?.mode || 'undefined'}</code></div>
             <div>Match ai_synthetic: <code className="bg-purple-100 px-1 rounded">{String(analysisResults.data_source === 'ai_synthetic')}</code></div>
           </div>
         </div>
-
-        {/* Debug logging */}
-        {console.log('🔍 Frontend Debug:', {
-          data_source: analysisResults.data_source,
-          analysis_confidence: analysisResults.analysis_confidence,
-          notes: analysisResults.notes,
-          debug_mode: analysisResults.debug?.mode
-        })}
         
         {/* Data Source Indicator */}
         {analysisResults.data_source === 'ai_synthetic' && (
@@ -179,7 +171,7 @@ export default function Results() {
         )}
         
         {/* Debug display for unknown data_source values */}
-        {!['ai_synthetic', 'synthetic_only', 'mixed_real_synthetic', 'real_reddit_data', 'limited_real'].includes(analysisResults.data_source) && (
+        {analysisResults.data_source && !['ai_synthetic', 'synthetic_only', 'mixed_real_synthetic', 'real_reddit_data', 'limited_real'].includes(analysisResults.data_source) && (
           <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
             <div className="flex items-center gap-2 mb-2">
               <AlertTriangle className="h-5 w-5 text-red-600" />
@@ -188,7 +180,7 @@ export default function Results() {
             <p className="text-sm">
               Data Source: <code>{analysisResults.data_source}</code><br/>
               Analysis Confidence: <code>{analysisResults.analysis_confidence}</code><br/>
-              Debug Mode: <code>{analysisResults.debug?.mode}</code>
+              Debug Mode: <code>{(analysisResults as any).debug?.mode}</code>
             </p>
           </div>
         )}
