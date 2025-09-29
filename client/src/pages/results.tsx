@@ -266,7 +266,12 @@ export default function Results() {
           {/* Pain Points */}
           <div className="space-y-6">
             <h2 className="text-2xl font-bold">Pain Points Discovered</h2>
-            <PainPointsDisplay painPoints={analysisResults.pain_points} subreddits={analysisResults.subreddits} />
+            <PainPointsDisplay 
+              painPoints={analysisResults.pain_points} 
+              subreddits={analysisResults.subreddits} 
+              dataSource={analysisResults.data_source}
+              analysisConfidence={analysisResults.analysis_confidence}
+            />
           </div>
 
           {/* Premium Upgrade CTA */}

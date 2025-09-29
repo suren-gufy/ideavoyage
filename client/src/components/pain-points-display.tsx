@@ -30,9 +30,11 @@ interface PainPointsDisplayProps {
     examples: string[];
   }>;
   subreddits?: string[];
+  dataSource?: string;
+  analysisConfidence?: string;
 }
 
-export function PainPointsDisplay({ painPoints: propPainPoints, subreddits }: PainPointsDisplayProps) {
+export function PainPointsDisplay({ painPoints: propPainPoints, subreddits, dataSource, analysisConfidence }: PainPointsDisplayProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
 
@@ -200,34 +202,37 @@ export function PainPointsDisplay({ painPoints: propPainPoints, subreddits }: Pa
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <h5 className="font-medium text-sm">Example Posts:</h5>
+                    {/* Only show example posts if not using AI enhancement */}
+                    {dataSource !== 'ai_synthetic' && analysisConfidence !== 'ai_enhanced' && (
                       <div className="space-y-2">
-                        {painPoint.examplePosts.map((post, index) => (
-                          <div 
-                            key={index}
-                            className="flex items-center justify-between p-2 rounded-md bg-muted/50"
-                          >
-                            <div className="flex-1">
-                              <p className="text-sm font-medium">{post.title}</p>
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                <span>r/{post.subreddit}</span>
-                                <span>•</span>
-                                <span>{post.upvotes} upvotes</span>
-                              </div>
-                            </div>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => console.log('View post', post.url)}
-                              data-testid={`view-post-${index}`}
+                        <h5 className="font-medium text-sm">Example Posts:</h5>
+                        <div className="space-y-2">
+                          {painPoint.examplePosts.map((post, index) => (
+                            <div 
+                              key={index}
+                              className="flex items-center justify-between p-2 rounded-md bg-muted/50"
                             >
-                              <ExternalLink className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        ))}
+                              <div className="flex-1">
+                                <p className="text-sm font-medium">{post.title}</p>
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                  <span>r/{post.subreddit}</span>
+                                  <span>•</span>
+                                  <span>{post.upvotes} upvotes</span>
+                                </div>
+                              </div>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => console.log('View post', post.url)}
+                                data-testid={`view-post-${index}`}
+                              >
+                                <ExternalLink className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </CardContent>
               </CollapsibleContent>
