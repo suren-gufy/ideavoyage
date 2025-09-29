@@ -1,5 +1,9 @@
 {
   "version": 2,
   "buildCommand": "npm install && npm run vercel-build",
-  "outputDirectory": "dist/public"
+  "outputDirectory": "dist/public",
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/index.js" },
+    { "src": "/(.*)", "dest": "/dist/public/index.html" }
+  ]
 }
