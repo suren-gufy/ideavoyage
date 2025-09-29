@@ -17,7 +17,7 @@ import { MethodologyModal } from "@/components/methodology-modal"
 import { PremiumBadge } from "@/components/premium-badge"
 import { UpgradeCTA } from "@/components/upgrade-cta"
 import { Card, CardHeader, CardContent } from "@/components/ui/card"
-import { Crown, Sparkles, TrendingUp, Lock } from "lucide-react"
+import { Crown, Sparkles, TrendingUp, Lock, AlertTriangle, Info, CheckCircle } from "lucide-react"
 import { usePremium } from "@/contexts/premium-context"
 import type { AnalysisResponse } from "@shared/schema"
 
@@ -125,6 +125,47 @@ export default function Results() {
 
       {/* Results content */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8" data-testid="analysis-results">
+        {/* Data Source Indicator */}
+        {analysisResults.data_source === 'synthetic_only' && (
+          <div className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4 text-amber-800">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle className="h-5 w-5 text-amber-600" />
+              <span className="font-semibold">Demo Mode - Synthetic Data</span>
+            </div>
+            <p className="text-sm">
+              {analysisResults.notes || 'Reddit access is currently blocked. Results are generated using AI-powered market analysis for demonstration purposes.'}
+            </p>
+            <p className="text-xs mt-2 text-amber-700">
+              💡 <strong>Want real market data?</strong> We're working on alternative data sources for authentic market validation.
+            </p>
+          </div>
+        )}
+        
+        {analysisResults.data_source === 'mixed_real_synthetic' && (
+          <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4 text-blue-800">
+            <div className="flex items-center gap-2 mb-2">
+              <Info className="h-5 w-5 text-blue-600" />
+              <span className="font-semibold">Partial Real Data Analysis</span>
+            </div>
+            <p className="text-sm">
+              Analysis based on <strong>{analysisResults.evidence?.real_post_count || 0} real discussions</strong> plus enhanced AI analysis.
+              Confidence: <strong>{analysisResults.analysis_confidence}</strong>
+            </p>
+          </div>
+        )}
+        
+        {analysisResults.data_source === 'real_reddit_data' && (
+          <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4 text-green-800">
+            <div className="flex items-center gap-2 mb-2">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              <span className="font-semibold">Real Market Data Analysis</span>
+            </div>
+            <p className="text-sm">
+              High confidence analysis based on <strong>{analysisResults.evidence?.real_post_count || 0} real market discussions</strong> from Reddit communities.
+            </p>
+          </div>
+        )}
+        
         <div className="space-y-8">
           {/* Executive Summary */}
           <div className="bg-gradient-to-r from-primary/10 to-[hsl(var(--hot-pink))/10] rounded-2xl p-6 border border-primary/20">
