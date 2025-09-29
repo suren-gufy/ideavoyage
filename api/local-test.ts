@@ -1,4 +1,4 @@
-import handler from './index';
+import handler from './index.js';
 
 // Mock Vercel req/res
 class MockRes {
