@@ -669,8 +669,8 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
   if (realPostsOnly.length === 0) {
     (response as any).analysis_confidence = 'demo_mode';
     (response as any).data_source = 'synthetic_only';
-    (response as any).notes = '⚠️ DEMO MODE: Reddit access blocked - using synthetic data approximations. Results are for demonstration purposes only.';
-    (response as any).upgrade_message = 'For real market validation data, please contact support to enable live Reddit analysis.';
+    (response as any).notes = '⚠️ DEMO MODE: Reddit access currently blocked by platform restrictions. Using AI-powered market analysis with realistic business insights.';
+    (response as any).upgrade_message = '🚀 Real market data coming soon! We\'re implementing alternative sources like HackerNews, GitHub trends, and news sentiment analysis.';
   } else if (realPostsOnly.length < 4) {
     (response as any).analysis_confidence = 'low';
     (response as any).data_source = 'limited_real';
