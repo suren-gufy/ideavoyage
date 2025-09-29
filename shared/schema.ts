@@ -123,6 +123,22 @@ export const analysisResponseSchema = z.object({
   total_posts_analyzed: z.number(),
   overall_score: z.number().min(1).max(10),
   viability_score: z.number().min(1).max(10),
+  // Data source transparency fields
+  data_source: z.enum(["synthetic_only", "mixed_real_synthetic", "real_reddit_data", "limited_real"]).optional(),
+  analysis_confidence: z.enum(["demo_mode", "low", "medium", "high"]).optional(),
+  notes: z.string().optional(),
+  upgrade_message: z.string().optional(),
+  evidence: z.object({
+    real_post_count: z.number(),
+    synthetic_post_count: z.number(),
+    subreddits_used: z.array(z.string()),
+    sample_reddit_posts: z.array(z.object({
+      title: z.string(),
+      score: z.number(),
+      comments: z.number(),
+      subreddit: z.string(),
+    })),
+  }).optional(),
 });
 
 export type AnalyzeIdeaRequest = z.infer<typeof analyzeIdeaSchema>;
