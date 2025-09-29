@@ -634,8 +634,8 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
     if (openaiClient) {
       try {
         const samplePosts = fetchedPosts.slice(0, 12).map(p => `- ${p.title} (${p.score} upvotes, ${p.num_comments} comments)`).join('\n');
-        const system = 'You are a startup market validation analyst. Analyze the Reddit posts and return ONLY valid JSON with enhanced insights for keywords, pain_points, app_ideas, competitors, and revenue_models arrays.';
-        const user = `Startup Idea: "${input.idea}"\nIndustry: ${input.industry || 'Technology'}\nTarget Audience: ${input.targetAudience || 'General market'}\n\nReddit Posts Analysis:\n${samplePosts}\n\nProvide enhanced analysis with specific keywords, detailed pain points, innovative app ideas, realistic competitors, and viable revenue models based on the actual Reddit engagement data.`;
+        const system = 'You are a startup market validation analyst. Analyze the Reddit posts and return ONLY valid JSON with enhanced insights for keywords, pain_points, app_ideas, competitors, revenue_models, and realistic_posts arrays.';
+        const user = `Startup Idea: "${input.idea}"\nIndustry: ${input.industry || 'Technology'}\nTarget Audience: ${input.targetAudience || 'General market'}\n\nReddit Posts Analysis:\n${samplePosts}\n\nProvide enhanced analysis with specific keywords, detailed pain points, innovative app ideas, realistic competitors, viable revenue models, AND generate 4 realistic Reddit post titles that would actually appear in startup/business communities discussing this idea. The realistic_posts should be an array of objects with title, score, and num_comments fields.`;
         
         console.log('🤖 Starting OpenAI enrichment...');
         const openaiPromise = openaiClient.chat.completions.create({
@@ -686,18 +686,36 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
     revenue_models: (enriched?.revenue_models as any) || [
       { model_type: 'Subscription', description: 'Monthly access to analysis dashboard', pros: ['Predictable revenue'], cons: ['Churn risk'], implementation_difficulty: 'medium', potential_revenue: 'Medium' }
     ],
-    fetchedPosts: realPostsOnly.length ? realPostsOnly : fetchedPosts // Prefer real posts for scoring
+    fetchedPosts: realPostsOnly.length ? realPostsOnly : (
+      // Use OpenAI-generated posts if available, otherwise fallback to synthetic
+      enriched && (enriched as any).realistic_posts 
+        ? (enriched as any).realistic_posts.map((p: any, i: number) => ({
+            title: p.title || `AI-generated post ${i+1}`,
+            selftext: '',
+            score: p.score || Math.floor(Math.random() * 50) + 10,
+            num_comments: p.num_comments || Math.floor(Math.random() * 20) + 2,
+            created_utc: Math.floor(Date.now() / 1000) - Math.floor(Math.random() * 86400),
+            permalink: `/r/startups/comments/ai_generated_${i}/`,
+            subreddit: 'startups',
+            source: 'ai_generated'
+          }))
+        : fetchedPosts
+    )
   });
 
   const durationMs = Date.now() - started;
+  const aiGeneratedPosts = enriched && (enriched as any).realistic_posts ? (enriched as any).realistic_posts : [];
+  const finalPostsUsed = realPostsOnly.length ? realPostsOnly : (aiGeneratedPosts.length ? aiGeneratedPosts : fetchedPosts);
+  
   (response as any).debug = { 
     postsFetched: fetchedPosts.length,
     realPosts: realPostsOnly.length,
     syntheticPosts: fetchedPosts.filter(p => p.source === 'synthetic').length,
-    sampleTitles: fetchedPosts.slice(0,5).map(p => p.title),
+    aiGeneratedPosts: aiGeneratedPosts.length,
+    sampleTitles: finalPostsUsed.slice(0,5).map((p: any) => p.title || String(p)),
     enriched: !!enriched, 
     openai_available: hasOpenAIKey,
-    mode: enriched ? 'ai_enhanced' : 'heuristic_only',
+    mode: enriched && aiGeneratedPosts.length > 0 ? 'ai_enhanced_with_posts' : enriched ? 'ai_enhanced' : 'heuristic_only',
     ms: durationMs,
     api_version: '2025-09-25-evidence-v1'
   };
