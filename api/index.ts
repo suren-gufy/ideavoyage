@@ -43,8 +43,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const url = req.url || '';
 
-    // Health
+    // Handle different GET routes
     if (req.method === 'GET') {
+      // Premium status endpoint
+      if (url.includes('/premium-status') || url.endsWith('/premium-status')) {
+        return res.json({
+          isPremium: false,
+          plan: 'free',
+          features: {
+            basicAnalysis: true,
+            advancedAnalysis: false,
+            unlimitedReports: false,
+            prioritySupport: false
+          },
+          message: 'Free tier - upgrade for advanced features'
+        });
+      }
+      
+      // Health check (default GET)
       const hasOpenAIKey = process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.trim().length > 0;
       
       // Test Reddit API connectivity
