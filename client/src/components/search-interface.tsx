@@ -55,7 +55,7 @@ export function SearchInterface({}: SearchInterfaceProps) {
 
   const analyzeIdeaMutation = useMutation({
     mutationFn: async (data: AnalyzeIdeaRequest): Promise<AnalysisResponse> => {
-      const response = await apiRequest("/api/analyze", "POST", data)
+      const response = await apiRequest("/api", "POST", data)
       return response as AnalysisResponse
     },
     onSuccess: (results) => {
