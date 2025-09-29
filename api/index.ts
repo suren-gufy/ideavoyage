@@ -634,8 +634,8 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
     if (openaiClient) {
       try {
         const samplePosts = fetchedPosts.slice(0, 12).map(p => `- ${p.title} (${p.score} upvotes, ${p.num_comments} comments)`).join('\n');
-        const system = 'You are a startup market validation analyst. Analyze the Reddit posts and return ONLY valid JSON with enhanced insights for keywords, pain_points, app_ideas, competitors, revenue_models, and realistic_posts arrays.';
-        const user = `Startup Idea: "${input.idea}"\nIndustry: ${input.industry || 'Technology'}\nTarget Audience: ${input.targetAudience || 'General market'}\n\nReddit Posts Analysis:\n${samplePosts}\n\nProvide enhanced analysis with specific keywords, detailed pain points, innovative app ideas, realistic competitors, viable revenue models, AND generate 4 realistic Reddit post titles that would actually appear in startup/business communities discussing this idea. The realistic_posts should be an array of objects with title, score, and num_comments fields.`;
+        const system = 'You are a startup market validation analyst. Analyze the Reddit posts and return ONLY valid JSON with enhanced insights. Response must include: keywords (array), pain_points (array), app_ideas (array), competitors (array), revenue_models (array), realistic_posts (array).';
+        const user = `Startup Idea: "${input.idea}"\nIndustry: ${input.industry || 'Technology'}\nTarget Audience: ${input.targetAudience || 'General market'}\n\nReddit Posts Analysis:\n${samplePosts}\n\nProvide enhanced analysis with:\n1. pain_points: Array of objects with {title: string, frequency: number, urgency: "low"|"medium"|"high", examples: string[]}\n2. keywords: Array of relevant market terms\n3. app_ideas: Array of innovative solution concepts\n4. competitors: Array of competitive analysis\n5. revenue_models: Array of viable monetization strategies\n6. realistic_posts: Array of {title: string, score: number, num_comments: number}\n\nFocus on realistic market insights based on the community discussions provided.`;
         
         console.log('🤖 Starting OpenAI enrichment...');
         const openaiPromise = openaiClient.chat.completions.create({
@@ -654,6 +654,8 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
         const raw = completion.choices[0]?.message?.content || '{}';
         enriched = JSON.parse(raw);
         console.log('✅ OpenAI enrichment successful - AI data is now being used!');
+        console.log('🔍 OpenAI returned pain_points:', enriched?.pain_points ? `${enriched.pain_points.length} items` : 'none');
+        console.log('🔍 First pain point:', enriched?.pain_points?.[0]);
       } catch (enrichErr) {
         console.warn('⚠️ OpenAI enrichment failed, continuing with heuristic analysis:', (enrichErr as Error).message);
         enriched = null;
@@ -674,9 +676,9 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
     isAI, isFitness, tokens,
     keywords: enriched?.keywords || frequentTerms.slice(0,7),
     subreddits,
-    pain_points: (enriched?.pain_points as any) || pain_points_heuristic.length ? pain_points_heuristic : [
+    pain_points: (enriched?.pain_points as any) || (pain_points_heuristic.length ? pain_points_heuristic : [
       { title: 'Validation Gap', frequency: 55, urgency: 'medium', examples: ['Need better evidence for idea viability'] }
-    ],
+    ]),
     app_ideas: (enriched?.app_ideas as any) || [
       { title: `Smart ${tokens[0]||'Market'} Analyzer`, description: 'Tool that synthesizes community signals into actionable validation metrics', market_validation: 'medium', difficulty: isAI ? 'hard' : 'medium' }
     ],
