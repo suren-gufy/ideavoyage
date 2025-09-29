@@ -710,10 +710,17 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
   };
   // Set transparency indicators
   if (realPostsOnly.length === 0) {
-    (response as any).analysis_confidence = 'demo_mode';
-    (response as any).data_source = 'synthetic_only';
-    (response as any).notes = '⚠️ DEMO MODE: Reddit API requires authentication. Using AI-powered market analysis with realistic business insights.';
-    (response as any).upgrade_message = '� Get real Reddit data! Visit /api/reddit/auth to authenticate with Reddit OAuth and enable live market analysis.';
+    if (enriched && hasOpenAIKey) {
+      (response as any).analysis_confidence = 'ai_enhanced';
+      (response as any).data_source = 'ai_synthetic';  
+      (response as any).notes = '🤖 AI-ENHANCED ANALYSIS: Reddit blocked, but using GPT-4 for sophisticated market validation with realistic insights.';
+      (response as any).upgrade_message = '🔑 Upgrade to real Reddit data! Visit /api/reddit/auth for live discussions + AI analysis.';
+    } else {
+      (response as any).analysis_confidence = 'demo_mode';
+      (response as any).data_source = 'synthetic_only';
+      (response as any).notes = '⚠️ DEMO MODE: Reddit API requires authentication. Using AI-powered market analysis with realistic business insights.';
+      (response as any).upgrade_message = '🔑 Get real Reddit data! Visit /api/reddit/auth to authenticate with Reddit OAuth and enable live market analysis.';
+    }
   } else if (realPostsOnly.length < 4) {
     (response as any).analysis_confidence = 'low';
     (response as any).data_source = 'limited_real';

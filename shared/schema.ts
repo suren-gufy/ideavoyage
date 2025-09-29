@@ -124,8 +124,8 @@ export const analysisResponseSchema = z.object({
   overall_score: z.number().min(1).max(10),
   viability_score: z.number().min(1).max(10),
   // Data source transparency fields
-  data_source: z.enum(["synthetic_only", "mixed_real_synthetic", "real_reddit_data", "limited_real"]).optional(),
-  analysis_confidence: z.enum(["demo_mode", "low", "medium", "high"]).optional(),
+  data_source: z.enum(["synthetic_only", "ai_synthetic", "mixed_real_synthetic", "real_reddit_data", "limited_real"]).optional(),
+  analysis_confidence: z.enum(["demo_mode", "ai_enhanced", "low", "medium", "high"]).optional(),
   notes: z.string().optional(),
   upgrade_message: z.string().optional(),
   evidence: z.object({
