@@ -62,6 +62,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       
       // Reddit OAuth endpoints for real data access
       if (url.includes('/reddit/auth')) {
+        console.log('🔑 Reddit OAuth auth endpoint accessed:', url);
         // Generate Reddit OAuth URL
         const clientId = process.env.REDDIT_CLIENT_ID || 'demo_client_id';
         const redirectUri = process.env.REDDIT_REDIRECT_URI || 'https://ideavoyage.vercel.app/api/reddit/callback';
@@ -74,6 +75,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
       
       if (url.includes('/reddit/callback')) {
+        console.log('📞 Reddit OAuth callback endpoint accessed:', url);
         const code = req.query?.code as string;
         const error = req.query?.error as string;
         
