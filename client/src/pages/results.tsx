@@ -126,6 +126,21 @@ export default function Results() {
       {/* Results content */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8" data-testid="analysis-results">
         {/* Data Source Indicator */}
+        {analysisResults.data_source === 'ai_synthetic' && (
+          <div className="mb-6 bg-emerald-50 border border-emerald-200 rounded-lg p-4 text-emerald-800">
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="h-5 w-5 text-emerald-600" />
+              <span className="font-semibold">AI-Enhanced Analysis</span>
+            </div>
+            <p className="text-sm">
+              {analysisResults.notes || 'Using GPT-4 for sophisticated market validation with realistic business insights.'}
+            </p>
+            <p className="text-xs mt-2 text-emerald-700">
+              🚀 <strong>Powered by AI:</strong> {analysisResults.upgrade_message || 'Get real Reddit data for even deeper insights!'}
+            </p>
+          </div>
+        )}
+        
         {analysisResults.data_source === 'synthetic_only' && (
           <div className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4 text-amber-800">
             <div className="flex items-center gap-2 mb-2">
