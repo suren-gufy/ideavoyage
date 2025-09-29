@@ -62,8 +62,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           controller.signal
         ]);
         
-        const testResponse = await fetch('https://api.reddit.com/r/startups/hot?limit=1', {
-          headers: { 'User-Agent': 'IdeaVoyage/1.0' },
+        const testResponse = await fetch('https://www.reddit.com/r/startups/hot.json?limit=1', {
+          headers: { 
+            'User-Agent': 'Mozilla/5.0 (compatible; IdeaVoyage/1.0; +https://ideavoyage.vercel.app)',
+            'Accept': 'application/json'
+          },
           // Using combined signal - will abort on timeout or manual abort
           signal: combinedSignal
         });
@@ -346,11 +349,14 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
     const fetchedPosts: RawRedditPost[] = [];
     for (const sub of subreddits) {
       if (fetchedPosts.length >= 12) break; // stop once we've reached total desired posts
-      const url = `https://api.reddit.com/r/${sub}/top?limit=8&t=week`;
+      const url = `https://www.reddit.com/r/${sub}/top.json?limit=8&t=week`;
       console.log(`🔍 Trying r/${sub}: ${url}`);
       try {
         const response = await fetch(url, {
-          headers: { 'User-Agent': 'IdeaVoyage/1.0', 'Accept': 'application/json' },
+          headers: { 
+            'User-Agent': 'Mozilla/5.0 (compatible; IdeaVoyage/1.0; +https://ideavoyage.vercel.app)',
+            'Accept': 'application/json'
+          },
           // Using AbortSignal.timeout() for request timeout
           signal: AbortSignal.timeout(8000) as unknown as AbortSignal
         });
