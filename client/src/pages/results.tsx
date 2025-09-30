@@ -126,7 +126,16 @@ export default function Results() {
       {/* Results content */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8" data-testid="analysis-results">
         {/* Data Source Indicator */}
-        {analysisResults.data_source === 'ai_synthetic' && (
+        {/* Determine AI enhanced status even if data_source fallback mismatches */}
+        {(() => {
+          const debugMode = (analysisResults as any).debug?.mode as string | undefined;
+          const isAIEnhanced = (
+            analysisResults.data_source === 'ai_synthetic' ||
+            analysisResults.analysis_confidence === 'ai_enhanced' ||
+            (debugMode ? debugMode.startsWith('ai_enhanced') : false)
+          );
+          if (!isAIEnhanced) return null;
+          return (
           <div className="mb-6 bg-emerald-50 border border-emerald-200 rounded-lg p-4 text-emerald-800">
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className="h-5 w-5 text-emerald-600" />
@@ -138,10 +147,16 @@ export default function Results() {
             <p className="text-xs mt-2 text-emerald-700">
               🚀 <strong>Powered by AI:</strong> {analysisResults.upgrade_message || 'Get real Reddit data for even deeper insights!'}
             </p>
+            {analysisResults.data_source === 'synthetic_only' && analysisResults.analysis_confidence === 'ai_enhanced' && (
+              <p className="text-[10px] mt-2 text-emerald-600 italic">
+                (Frontend override: backend reported demo data_source but confidence=ai_enhanced. Showing AI banner.)
+              </p>
+            )}
           </div>
-        )}
+          )
+        })()}
         
-        {analysisResults.data_source === 'synthetic_only' && (
+        {analysisResults.data_source === 'synthetic_only' && analysisResults.analysis_confidence !== 'ai_enhanced' && (
           <div className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4 text-amber-800">
             <div className="flex items-center gap-2 mb-2">
               <AlertTriangle className="h-5 w-5 text-amber-600" />

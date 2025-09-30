@@ -415,50 +415,109 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
   const isEdu = tokens.some(t => ['edu','education','learning','course','tutor'].includes(t));
   const isFin = tokens.some(t => ['fintech','finance','trading','invest','stock','crypto'].includes(t));
 
-  const baseSubs = ['startups','Entrepreneur','smallbusiness'];
-  if (isAI) baseSubs.push('MachineLearning','ArtificialInteligence','ChatGPT');
-  if (isFitness) baseSubs.push('fitness','loseit');
-  if (isEdu) baseSubs.push('edtech','learnprogramming');
-  if (isFin) baseSubs.push('fintech','personalfinance');
-  // Deduplicate and cap
-  const subreddits = Array.from(new Set(baseSubs)).slice(0,6);
+  // Smart subreddit selection based on idea content
+  let subreddits: string[] = [];
+  
+  if (isFitness) {
+    subreddits = ['fitness', 'bodyweightfitness', 'homeworkouts', 'PersonalTrainerTips', 'loseit', 'getmotivated'];
+  } else if (isAI) {
+    subreddits = ['MachineLearning', 'ArtificialIntelligence', 'ChatGPT', 'startups', 'Entrepreneur', 'technology'];
+  } else if (isEdu) {
+    subreddits = ['education', 'teachers', 'studytips', 'learnprogramming', 'OnlineEducation', 'edtech'];
+  } else if (isFin) {
+    subreddits = ['personalfinance', 'investing', 'financialindependence', 'fintech', 'startups', 'Entrepreneur'];
+  } else {
+    // General business/startup subreddits
+    subreddits = ['startups', 'Entrepreneur', 'smallbusiness', 'SideProject', 'business', 'productivity'];
+  }
+  
+  // Limit to 6 subreddits for focused analysis
+  subreddits = subreddits.slice(0, 6);
 
-    // 2. Fetch top posts by iterating through candidate subreddits until enough real posts
-    const fetchedPosts: RawRedditPost[] = [];
-    for (const sub of subreddits) {
-      if (fetchedPosts.length >= 12) break; // stop once we've reached total desired posts
-      const url = `https://www.reddit.com/r/${sub}/top.json?limit=8&t=week`;
-      console.log(`🔍 Trying r/${sub}: ${url}`);
+    // 2. Fetch top posts using Reddit OAuth API first, then fallback to public JSON
+    let fetchedPosts: RawRedditPost[] = [];
+    let usedOAuth = false;
+    
+    // Try Reddit OAuth first if credentials are available
+    const hasRedditCreds = process.env.REDDIT_CLIENT_ID && process.env.REDDIT_CLIENT_SECRET;
+    if (hasRedditCreds) {
       try {
-        const response = await fetch(url, {
-          headers: { 
-            'User-Agent': 'Mozilla/5.0 (compatible; IdeaVoyage/1.0; +https://ideavoyage.vercel.app)',
-            'Accept': 'application/json'
-          },
-          // Using AbortSignal.timeout() for request timeout
-          signal: AbortSignal.timeout(8000) as unknown as AbortSignal
+        console.log('🔑 Attempting Reddit OAuth authentication...');
+        const { RedditOAuthClient } = await import('./reddit-oauth.js');
+        const redditClient = new RedditOAuthClient({
+          clientId: process.env.REDDIT_CLIENT_ID!,
+          clientSecret: process.env.REDDIT_CLIENT_SECRET!,
+          redirectUri: process.env.REDDIT_REDIRECT_URI || 'https://ideavoyage.vercel.app/api/reddit/callback',
+          userAgent: 'IdeaVoyage/1.0 (by /u/ideavoyage)'
         });
-        if (response.ok) {
-          const data = await response.json() as any;
-          const posts = (data?.data?.children || []).map((c: any) => c.data).filter((p: any) => p.title).slice(0, 8);
-          posts.forEach((p: any) => {
-            if (fetchedPosts.length < 12) fetchedPosts.push({
-              title: String(p.title).trim(),
-              selftext: String(p.selftext || '').trim(),
-              score: Math.max(1, parseInt(p.score) || 1),
-              num_comments: Math.max(0, parseInt(p.num_comments) || 0),
-              created_utc: p.created_utc || Math.floor(Date.now()/1000),
-              permalink: p.permalink || '',
-              subreddit: p.subreddit || sub,
-              source: 'reddit'
+        
+        const token = await redditClient.getAppOnlyToken();
+        if (token) {
+          console.log('✅ Reddit OAuth token obtained, fetching posts...');
+          for (const sub of subreddits) {
+            if (fetchedPosts.length >= 12) break;
+            console.log(`🔍 OAuth: Trying r/${sub}`);
+            const posts = await redditClient.getSubredditPosts(sub, token, 8, 'week');
+            posts.forEach((p: any) => {
+              if (fetchedPosts.length < 12) fetchedPosts.push({
+                title: String(p.title).trim(),
+                selftext: String(p.selftext || '').trim(),
+                score: Math.max(1, parseInt(p.score) || 1),
+                num_comments: Math.max(0, parseInt(p.num_comments) || 0),
+                created_utc: p.created_utc || Math.floor(Date.now()/1000),
+                permalink: p.permalink || '',
+                subreddit: p.subreddit || sub,
+                source: 'reddit'
+              });
             });
-          });
-          console.log(`✅ Total real posts so far: ${fetchedPosts.length}`);
-        } else {
-          console.warn(`⚠️ r/${sub} returned ${response.status}`);
+          }
+          usedOAuth = true;
+          console.log(`✅ OAuth: Fetched ${fetchedPosts.length} posts via Reddit API`);
         }
-      } catch (err) {
-        console.warn(`❌ r/${sub} fetch error: ${(err as Error).message}`);
+      } catch (oauthErr) {
+        console.warn('❌ Reddit OAuth failed:', (oauthErr as Error).message);
+      }
+    } else {
+      console.log('⚠️ Reddit OAuth credentials not found, will use public endpoint');
+    }
+    
+    // Fallback to public JSON endpoint if OAuth failed or no credentials
+    if (!usedOAuth || fetchedPosts.length === 0) {
+      console.log('🌐 Falling back to public Reddit JSON endpoints...');
+      for (const sub of subreddits) {
+        if (fetchedPosts.length >= 12) break;
+        const url = `https://www.reddit.com/r/${sub}/top.json?limit=8&t=week`;
+        console.log(`🔍 Public: Trying r/${sub}`);
+        try {
+          const response = await fetch(url, {
+            headers: { 
+              'User-Agent': 'Mozilla/5.0 (compatible; IdeaVoyage/1.0; +https://ideavoyage.vercel.app)',
+              'Accept': 'application/json'
+            },
+            signal: AbortSignal.timeout(8000) as unknown as AbortSignal
+          });
+          if (response.ok) {
+            const data = await response.json() as any;
+            const posts = (data?.data?.children || []).map((c: any) => c.data).filter((p: any) => p.title).slice(0, 8);
+            posts.forEach((p: any) => {
+              if (fetchedPosts.length < 12) fetchedPosts.push({
+                title: String(p.title).trim(),
+                selftext: String(p.selftext || '').trim(),
+                score: Math.max(1, parseInt(p.score) || 1),
+                num_comments: Math.max(0, parseInt(p.num_comments) || 0),
+                created_utc: p.created_utc || Math.floor(Date.now()/1000),
+                permalink: p.permalink || '',
+                subreddit: p.subreddit || sub,
+                source: 'reddit'
+              });
+            });
+            console.log(`✅ Public: Total real posts so far: ${fetchedPosts.length}`);
+          } else {
+            console.warn(`⚠️ r/${sub} returned ${response.status}`);
+          }
+        } catch (err) {
+          console.warn(`❌ r/${sub} fetch error: ${(err as Error).message}`);
+        }
       }
     }
   
@@ -632,15 +691,16 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
       console.warn('OpenAI package/init failed, skipping AI enrichment:', (initErr as Error).message);
     }
     if (openaiClient) {
+      const samplePosts = fetchedPosts.slice(0, 12).map(p => `- ${p.title} (${p.score} upvotes, ${p.num_comments} comments)`).join('\n');
+      const system = 'You are a startup market validation analyst. Return ONLY valid JSON with enhanced insights.';
+      const userPrompt = `Startup Idea: "${input.idea}"\nIndustry: ${input.industry || 'Technology'}\nCurrent Subreddits: ${subreddits.join(', ')}\n\nAnalyze this startup idea and provide realistic market insights in JSON format with:\n{\n  "keywords": ["relevant", "market", "terms"],\n  "subreddits": ["most_relevant_subreddit_1", "specific_community_2", "niche_audience_3"],\n  "pain_points": [{"title": "Clear Problem Name", "frequency": 75, "urgency": "high", "examples": ["Real user complaints or needs"]}],\n  "app_ideas": [{"title": "Solution Name", "description": "Detailed solution", "market_validation": "high", "difficulty": "medium"}],\n  "competitors": [{"name": "Competitor", "strengths": ["advantage"], "weaknesses": ["gap"]}],\n  "revenue_models": [{"model_type": "Subscription", "pros": ["benefit"], "cons": ["challenge"]}]\n}\n\nFor subreddits, suggest 3-5 most relevant Reddit communities where the target audience would actually discuss this problem, not generic startup subreddits.`;
+      
       try {
-        const samplePosts = fetchedPosts.slice(0, 12).map(p => `- ${p.title} (${p.score} upvotes, ${p.num_comments} comments)`).join('\n');
-        const system = 'You are a startup market validation analyst. Return ONLY valid JSON with enhanced insights.';
-        const user = `Startup Idea: "${input.idea}"\nIndustry: ${input.industry || 'Technology'}\n\nAnalyze this startup idea and provide realistic market insights in JSON format with:\n{\n  "keywords": ["relevant", "market", "terms"],\n  "pain_points": [{"title": "Clear Problem Name", "frequency": 75, "urgency": "high", "examples": ["Real user complaints or needs"]}],\n  "app_ideas": [{"title": "Solution Name", "description": "Detailed solution", "market_validation": "high", "difficulty": "medium"}],\n  "competitors": [{"name": "Competitor", "strengths": ["advantage"], "weaknesses": ["gap"]}],\n  "revenue_models": [{"model_type": "Subscription", "pros": ["benefit"], "cons": ["challenge"]}]\n}`;
         
         console.log('🤖 Starting OpenAI enrichment...');
         const openaiPromise = openaiClient.chat.completions.create({
           model: 'gpt-4o-mini',
-          messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
+          messages: [{ role: 'system', content: system }, { role: 'user', content: userPrompt }],
           temperature: 0.5,
           response_format: { type: 'json_object' }
         });
@@ -652,12 +712,26 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
         
         const completion = await Promise.race([openaiPromise, openaiTimeout]) as any;
         const raw = completion.choices[0]?.message?.content || '{}';
+        console.log('🔍 OpenAI raw response length:', raw.length, 'first 200 chars:', raw.slice(0, 200));
+        
         enriched = JSON.parse(raw);
-        console.log('✅ OpenAI enrichment successful - AI data is now being used!');
-        console.log('🔍 OpenAI returned pain_points:', enriched?.pain_points ? `${enriched.pain_points.length} items` : 'none');
-        console.log('🔍 First pain point:', enriched?.pain_points?.[0]);
+        
+        // Validate that we got meaningful data
+        if (enriched && (enriched.pain_points || enriched.keywords || enriched.subreddits)) {
+          console.log('✅ OpenAI enrichment successful - AI data is now being used!');
+          console.log('🔍 OpenAI returned pain_points:', enriched?.pain_points ? `${enriched.pain_points.length} items` : 'none');
+          console.log('🔍 First pain point:', enriched?.pain_points?.[0]);
+        } else {
+          console.warn('⚠️ OpenAI returned empty/invalid data, falling back to heuristics');
+          enriched = null;
+        }
       } catch (enrichErr) {
-        console.warn('⚠️ OpenAI enrichment failed, continuing with heuristic analysis:', (enrichErr as Error).message);
+        console.error('❌ OpenAI enrichment failed with detailed error:', {
+          message: (enrichErr as Error).message,
+          stack: (enrichErr as Error).stack?.slice(0, 500),
+          prompt_length: userPrompt.length,
+          api_key_length: process.env.OPENAI_API_KEY?.length || 0
+        });
         enriched = null;
       }
     }
@@ -675,7 +749,7 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
     targetAudience: input.targetAudience,
     isAI, isFitness, tokens,
     keywords: enriched?.keywords || frequentTerms.slice(0,7),
-    subreddits,
+    subreddits: enriched?.subreddits || subreddits,
     pain_points: (enriched?.pain_points as any) || (pain_points_heuristic.length ? pain_points_heuristic : [
       { title: 'Validation Gap', frequency: 55, urgency: 'medium', examples: ['Need better evidence for idea viability'] }
     ]),
@@ -717,9 +791,11 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
     sampleTitles: finalPostsUsed.slice(0,5).map((p: any) => p.title || String(p)),
     enriched: !!enriched, 
     openai_available: hasOpenAIKey,
+    reddit_oauth_used: usedOAuth,
+    reddit_creds_available: hasRedditCreds,
     mode: enriched && aiGeneratedPosts.length > 0 ? 'ai_enhanced_with_posts' : enriched ? 'ai_enhanced' : 'heuristic_only',
     ms: durationMs,
-    api_version: '2025-09-25-evidence-v1'
+    api_version: '2025-09-30-reddit-oauth-v1'
   };
   // Add high-level evidence summary for user transparency
   (response as any).evidence = {
@@ -753,6 +829,19 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
     (response as any).analysis_confidence = 'high';
     (response as any).data_source = 'real_reddit_data';
     (response as any).notes = `High confidence analysis based on ${realPostsOnly.length} real Reddit discussions.`;
+  }
+
+  // Final safeguard: ensure consistency between analysis_confidence and data_source
+  if ((response as any).analysis_confidence === 'ai_enhanced' && (response as any).data_source !== 'ai_synthetic') {
+    const originalSource = (response as any).data_source;
+    (response as any).data_source = 'ai_synthetic';
+    (response as any).debug = {
+      ...((response as any).debug || {}),
+      normalized_data_source: true,
+      original_data_source: originalSource,
+      normalization_reason: 'analysis_confidence=ai_enhanced requires data_source=ai_synthetic'
+    };
+    (response as any).notes = ((response as any).notes || '') + ' \n(Backend normalization applied to ensure AI transparency.)';
   }
   return response;
   

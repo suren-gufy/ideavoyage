@@ -41,9 +41,9 @@ export default defineConfig({
     },
     proxy: {
       '/api': {
-        target: 'https://ideavoyage.vercel.app',
+        target: 'http://localhost:5000',
         changeOrigin: true,
-        secure: true,
+        secure: false,
       },
     },
   },

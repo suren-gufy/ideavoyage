@@ -969,6 +969,11 @@ RULES:
           validation_report: parsedContent
         };
         
+        // Normalize case-sensitive enum values before validation
+        if (legacyStructuredResponse.market_interest_level) {
+          legacyStructuredResponse.market_interest_level = legacyStructuredResponse.market_interest_level.toLowerCase();
+        }
+        
         const validationResult = analysisResponseSchema.safeParse(legacyStructuredResponse);
         
         if (!validationResult.success) {
