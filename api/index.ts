@@ -33,6 +33,62 @@ interface RawRedditPost {
   source?: 'reddit' | 'synthetic';
 }
 
+// Inline Reddit OAuth functionality to avoid import issues
+async function getRedditOAuthToken(clientId: string, clientSecret: string): Promise<string | null> {
+  try {
+    const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+    const response = await fetch('https://www.reddit.com/api/v1/access_token', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${auth}`,
+        'User-Agent': 'IdeaVoyage/1.0 (by /u/ideavoyage)',
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: 'grant_type=client_credentials'
+    });
+    
+    if (response.ok) {
+      const tokenData = await response.json() as any;
+      console.log('✅ Reddit OAuth token obtained');
+      return tokenData.access_token;
+    } else {
+      console.warn('❌ Reddit OAuth failed:', response.status, await response.text());
+      return null;
+    }
+  } catch (error) {
+    console.warn('❌ Reddit OAuth error:', (error as Error).message);
+    return null;
+  }
+}
+
+async function fetchRedditPosts(subreddit: string, token: string, limit: number = 8): Promise<any[]> {
+  try {
+    const response = await fetch(`https://oauth.reddit.com/r/${subreddit}/top?limit=${limit}&t=week`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'User-Agent': 'IdeaVoyage/1.0 (by /u/ideavoyage)'
+      }
+    });
+    
+    if (!response.ok) {
+      console.warn(`❌ Reddit API error for r/${subreddit}:`, response.status);
+      return [];
+    }
+    
+    const data = await response.json() as any;
+    const posts = (data?.data?.children || [])
+      .map((c: any) => c.data)
+      .filter((p: any) => p.title)
+      .slice(0, limit);
+    
+    console.log(`✅ OAuth: Got ${posts.length} posts from r/${subreddit}`);
+    return posts;
+  } catch (error) {
+    console.error(`❌ OAuth failed for r/${subreddit}:`, (error as Error).message);
+    return [];
+  }
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -443,21 +499,17 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
     if (hasRedditCreds) {
       try {
         console.log('🔑 Attempting Reddit OAuth authentication...');
-        const { RedditOAuthClient } = await import('./reddit-oauth');
-        const redditClient = new RedditOAuthClient({
-          clientId: process.env.REDDIT_CLIENT_ID!,
-          clientSecret: process.env.REDDIT_CLIENT_SECRET!,
-          redirectUri: process.env.REDDIT_REDIRECT_URI || 'https://ideavoyage.vercel.app/api/reddit/callback',
-          userAgent: 'IdeaVoyage/1.0 (by /u/ideavoyage)'
-        });
+        const token = await getRedditOAuthToken(
+          process.env.REDDIT_CLIENT_ID!,
+          process.env.REDDIT_CLIENT_SECRET!
+        );
         
-        const token = await redditClient.getAppOnlyToken();
         if (token) {
           console.log('✅ Reddit OAuth token obtained, fetching posts...');
           for (const sub of subreddits) {
             if (fetchedPosts.length >= 12) break;
             console.log(`🔍 OAuth: Trying r/${sub}`);
-            const posts = await redditClient.getSubredditPosts(sub, token, 8, 'week');
+            const posts = await fetchRedditPosts(sub, token, 8);
             posts.forEach((p: any) => {
               if (fetchedPosts.length < 12) fetchedPosts.push({
                 title: String(p.title).trim(),
