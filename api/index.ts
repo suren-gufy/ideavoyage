@@ -443,7 +443,7 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
     if (hasRedditCreds) {
       try {
         console.log('🔑 Attempting Reddit OAuth authentication...');
-        const { RedditOAuthClient } = await import('./reddit-oauth.js');
+        const { RedditOAuthClient } = await import('./reddit-oauth');
         const redditClient = new RedditOAuthClient({
           clientId: process.env.REDDIT_CLIENT_ID!,
           clientSecret: process.env.REDDIT_CLIENT_SECRET!,
@@ -476,6 +476,7 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
         }
       } catch (oauthErr) {
         console.warn('❌ Reddit OAuth failed:', (oauthErr as Error).message);
+        console.warn('❌ OAuth Error Stack:', (oauthErr as Error).stack);
       }
     } else {
       console.log('⚠️ Reddit OAuth credentials not found, will use public endpoint');
