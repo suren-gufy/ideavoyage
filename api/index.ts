@@ -159,6 +159,47 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
       }
 
+      // Reddit OAuth test endpoint
+      if (url.includes('/test-reddit-oauth') || url.includes('test-oauth')) {
+        console.log('🧪 Reddit OAuth test endpoint accessed');
+        const clientId = process.env.REDDIT_CLIENT_ID;
+        const clientSecret = process.env.REDDIT_CLIENT_SECRET;
+        
+        if (!clientId || !clientSecret) {
+          return res.json({
+            success: false,
+            error: 'Reddit credentials not found',
+            clientId: clientId ? 'Present' : 'Missing',
+            clientSecret: clientSecret ? 'Present' : 'Missing'
+          });
+        }
+        
+        try {
+          const token = await getRedditOAuthToken(clientId, clientSecret);
+          if (token) {
+            const posts = await fetchRedditPosts('startups', token, 2);
+            return res.json({
+              success: true,
+              message: 'Reddit OAuth working!',
+              tokenLength: token.length,
+              postsFound: posts.length,
+              samplePost: posts[0] ? posts[0].title.substring(0, 50) + '...' : 'No posts'
+            });
+          } else {
+            return res.json({
+              success: false,
+              error: 'Failed to get OAuth token'
+            });
+          }
+        } catch (error) {
+          return res.json({
+            success: false,
+            error: (error as Error).message,
+            stack: (error as Error).stack
+          });
+        }
+      }
+
       // Health check (default GET)
       const hasOpenAIKey = process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.trim().length > 0;
       
