@@ -126,15 +126,34 @@ export default function Results() {
       {/* Results content */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8" data-testid="analysis-results">
         {/* Data Source Indicator */}
-        {/* Determine AI enhanced status even if data_source fallback mismatches */}
+        {/* Premium experience: Real Reddit + AI */}
+        {analysisResults.data_source === 'reddit_plus_ai' && (
+          <div className="mb-6 bg-gradient-to-r from-purple-50 to-emerald-50 border border-purple-200 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Crown className="h-5 w-5 text-purple-600" />
+              <Sparkles className="h-5 w-5 text-emerald-600" />
+              <span className="font-semibold text-purple-800">Premium Analysis - Reddit OAuth + AI</span>
+            </div>
+            <p className="text-sm text-purple-800">
+              {analysisResults.notes || 'Ultimate market validation combining real Reddit discussions with GPT-4o-mini intelligence.'}
+            </p>
+            <p className="text-xs mt-2 text-purple-700">
+              ⭐ <strong>Gold Standard:</strong> {analysisResults.upgrade_message || 'You\'re getting the most accurate market insights possible!'}
+            </p>
+          </div>
+        )}
+
+        {/* AI-Enhanced Analysis */}
         {(() => {
           const debugMode = (analysisResults as any).debug?.mode as string | undefined;
           const isAIEnhanced = (
             analysisResults.data_source === 'ai_synthetic' ||
             analysisResults.analysis_confidence === 'ai_enhanced' ||
+            analysisResults.analysis_confidence === 'premium_enhanced' ||
             (debugMode ? debugMode.startsWith('ai_enhanced') : false)
           );
-          if (!isAIEnhanced) return null;
+          // Don't show if already showing premium banner
+          if (analysisResults.data_source === 'reddit_plus_ai' || !isAIEnhanced) return null;
           return (
           <div className="mb-6 bg-emerald-50 border border-emerald-200 rounded-lg p-4 text-emerald-800">
             <div className="flex items-center gap-2 mb-2">
@@ -142,10 +161,10 @@ export default function Results() {
               <span className="font-semibold">AI-Enhanced Analysis</span>
             </div>
             <p className="text-sm">
-              {analysisResults.notes || 'Using GPT-4 for sophisticated market validation with realistic business insights.'}
+              {analysisResults.notes || 'Using GPT-4o-mini for sophisticated market validation with realistic business insights.'}
             </p>
             <p className="text-xs mt-2 text-emerald-700">
-              🚀 <strong>Powered by AI:</strong> {analysisResults.upgrade_message || 'Get real Reddit data for even deeper insights!'}
+              🚀 <strong>Powered by AI:</strong> {analysisResults.upgrade_message || 'Add Reddit OAuth for the ultimate analysis experience!'}
             </p>
             {analysisResults.data_source === 'synthetic_only' && analysisResults.analysis_confidence === 'ai_enhanced' && (
               <p className="text-[10px] mt-2 text-emerald-600 italic">
@@ -172,7 +191,7 @@ export default function Results() {
         )}
         
         {/* Debug display for unknown data_source values */}
-        {analysisResults.data_source && !['ai_synthetic', 'synthetic_only', 'mixed_real_synthetic', 'real_reddit_data', 'limited_real'].includes(analysisResults.data_source) && (
+        {analysisResults.data_source && !['ai_synthetic', 'synthetic_only', 'mixed_real_synthetic', 'real_reddit_data', 'limited_real', 'reddit_plus_ai'].includes(analysisResults.data_source) && (
           <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
             <div className="flex items-center gap-2 mb-2">
               <AlertTriangle className="h-5 w-5 text-red-600" />

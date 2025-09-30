@@ -806,9 +806,17 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
       console.warn('OpenAI package/init failed, skipping AI enrichment:', (initErr as Error).message);
     }
     if (openaiClient) {
-      const samplePosts = fetchedPosts.slice(0, 12).map(p => `- ${p.title} (${p.score} upvotes, ${p.num_comments} comments)`).join('\n');
-      const system = 'You are a startup market validation analyst. Return ONLY valid JSON with enhanced insights.';
-      const userPrompt = `Startup Idea: "${input.idea}"\nIndustry: ${input.industry || 'Technology'}\nCurrent Subreddits: ${subreddits.join(', ')}\n\nAnalyze this startup idea and provide realistic market insights in JSON format with:\n{\n  "keywords": ["relevant", "market", "terms"],\n  "subreddits": ["most_relevant_subreddit_1", "specific_community_2", "niche_audience_3"],\n  "pain_points": [{"title": "Clear Problem Name", "frequency": 75, "urgency": "high", "examples": ["Real user complaints or needs"]}],\n  "app_ideas": [{"title": "Solution Name", "description": "Detailed solution", "market_validation": "high", "difficulty": "medium"}],\n  "competitors": [{"name": "Competitor", "strengths": ["advantage"], "weaknesses": ["gap"]}],\n  "revenue_models": [{"model_type": "Subscription", "pros": ["benefit"], "cons": ["challenge"]}]\n}\n\nFor subreddits, suggest 3-5 most relevant Reddit communities where the target audience would actually discuss this problem, not generic startup subreddits.`;
+      const realPosts = fetchedPosts.filter(p => p.source === 'reddit');
+      const samplePosts = realPosts.length > 0 
+        ? realPosts.slice(0, 8).map(p => `- "${p.title}" (${p.score} upvotes, ${p.num_comments} comments on r/${p.subreddit})`).join('\n')
+        : 'No real Reddit data available - using market analysis approach';
+      
+      const dataContext = realPosts.length > 0 
+        ? `Based on ${realPosts.length} real Reddit discussions:\n${samplePosts}\n\n`
+        : 'No real Reddit data available. Provide market-validated insights based on industry knowledge:\n\n';
+      
+      const system = 'You are an expert startup market validation analyst with deep knowledge of Reddit communities and startup ecosystems. Analyze market opportunities with realistic, actionable insights. Return ONLY valid JSON.';
+      const userPrompt = `${dataContext}STARTUP IDEA: "${input.idea}"\nINDUSTRY: ${input.industry || 'Technology'}\nTARGET AUDIENCE: ${input.targetAudience || 'General users'}\nCURRENT SUBREDDITS ANALYZED: ${subreddits.join(', ')}\n\nProvide comprehensive market validation analysis in JSON format:\n\n{\n  "keywords": ["primary_market_term", "problem_keyword", "solution_term", "audience_keyword", "industry_term"],\n  "subreddits": ["most_relevant_community", "niche_audience_sub", "problem_focused_sub", "industry_specific_sub"],\n  "pain_points": [\n    {"title": "Major Pain Point", "frequency": 85, "urgency": "high", "examples": ["Real user frustration", "Specific complaint"]},\n    {"title": "Secondary Issue", "frequency": 65, "urgency": "medium", "examples": ["User need", "Market gap"]}\n  ],\n  "app_ideas": [\n    {"title": "Primary Solution", "description": "Detailed solution addressing main pain point", "market_validation": "high", "difficulty": "medium"},\n    {"title": "Alternative Approach", "description": "Different angle to same problem", "market_validation": "medium", "difficulty": "easy"}\n  ],\n  "competitors": [\n    {"name": "Direct Competitor", "description": "Main rival solution", "strengths": ["market_presence", "features"], "weaknesses": ["user_complaints", "limitations"], "market_share": "Dominant", "pricing_model": "Subscription"},\n    {"name": "Indirect Alternative", "description": "Different approach", "strengths": ["simplicity"], "weaknesses": ["limited_scope"], "market_share": "Niche", "pricing_model": "One-time"}\n  ],\n  "revenue_models": [\n    {"model_type": "Freemium", "description": "Free basic + paid premium features", "pros": ["user_acquisition", "upsell_potential"], "cons": ["conversion_challenge"], "implementation_difficulty": "medium", "potential_revenue": "High"},\n    {"model_type": "Subscription", "description": "Monthly recurring revenue", "pros": ["predictable_income", "customer_retention"], "cons": ["churn_risk"], "implementation_difficulty": "easy", "potential_revenue": "Medium"}\n  ]\n}\n\nFOCUS ON:\n- Real market problems (not generic startup advice)\n- Specific Reddit communities where target users actually hang out\n- Competitive landscape with actual product names when possible\n- Revenue models that fit the specific use case\n- Pain points that drive real purchasing decisions`;
       
       try {
         
@@ -833,9 +841,11 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
         
         // Validate that we got meaningful data
         if (enriched && (enriched.pain_points || enriched.keywords || enriched.subreddits)) {
-          console.log('✅ OpenAI enrichment successful - AI data is now being used!');
-          console.log('🔍 OpenAI returned pain_points:', enriched?.pain_points ? `${enriched.pain_points.length} items` : 'none');
-          console.log('🔍 First pain point:', enriched?.pain_points?.[0]);
+          console.log('✅ OpenAI enrichment successful - AI-powered analysis active!');
+          console.log('🔍 OpenAI enhanced pain_points:', enriched?.pain_points ? `${enriched.pain_points.length} items` : 'none');
+          console.log('🔍 OpenAI enhanced subreddits:', enriched?.subreddits ? enriched.subreddits.join(', ') : 'none');
+          console.log('🔍 OpenAI enhanced competitors:', enriched?.competitors ? `${enriched.competitors.length} found` : 'none');
+          console.log('🔍 Data source combination: Reddit OAuth + OpenAI Analysis = Premium insights');
         } else {
           console.warn('⚠️ OpenAI returned empty/invalid data, falling back to heuristics');
           enriched = null;
@@ -919,19 +929,25 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
     subreddits_used: Array.from(new Set(fetchedPosts.map(p => p.subreddit))).slice(0,10),
     sample_reddit_posts: realPostsOnly.slice(0,5).map(p => ({ title: p.title, score: p.score, comments: p.num_comments, subreddit: p.subreddit }))
   };
-  // Set transparency indicators
+  // Set transparency indicators based on data sources
   if (realPostsOnly.length === 0) {
     if (enriched && hasOpenAIKey) {
       (response as any).analysis_confidence = 'ai_enhanced';
       (response as any).data_source = 'ai_synthetic';  
-      (response as any).notes = '🤖 AI-ENHANCED ANALYSIS: Reddit blocked, but using GPT-4 for sophisticated market validation with realistic insights.';
-      (response as any).upgrade_message = '🔑 Upgrade to real Reddit data! Visit /api/reddit/auth for live discussions + AI analysis.';
+      (response as any).notes = '🤖 AI-ENHANCED ANALYSIS: Using GPT-4o-mini for sophisticated market validation. Real Reddit data would enhance accuracy further.';
+      (response as any).upgrade_message = '� Pro Tip: Reddit OAuth + OpenAI = Ultimate market insights! Set up Reddit API for even deeper analysis.';
     } else {
       (response as any).analysis_confidence = 'demo_mode';
       (response as any).data_source = 'synthetic_only';
-      (response as any).notes = '⚠️ DEMO MODE: Reddit API requires authentication. Using AI-powered market analysis with realistic business insights.';
-      (response as any).upgrade_message = '🔑 Get real Reddit data! Visit /api/reddit/auth to authenticate with Reddit OAuth and enable live market analysis.';
+      (response as any).notes = '⚠️ BASIC MODE: Using heuristic analysis. Enable OpenAI + Reddit OAuth for premium insights.';
+      (response as any).upgrade_message = '🔑 Unlock AI-powered analysis! Add OpenAI API key and Reddit OAuth for real market intelligence.';
     }
+  } else if (realPostsOnly.length > 0 && enriched && hasOpenAIKey) {
+    // This is the premium experience: Real Reddit data + AI analysis
+    (response as any).analysis_confidence = 'premium_enhanced';
+    (response as any).data_source = 'reddit_plus_ai';
+    (response as any).notes = `� PREMIUM ANALYSIS: Combining ${realPostsOnly.length} real Reddit discussions with GPT-4o-mini intelligence for maximum accuracy.`;
+    (response as any).upgrade_message = '✨ You\'re getting the best possible analysis! Real data + AI insights = Market validation gold standard.';
   } else if (realPostsOnly.length < 4) {
     (response as any).analysis_confidence = 'low';
     (response as any).data_source = 'limited_real';
