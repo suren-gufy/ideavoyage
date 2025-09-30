@@ -36,7 +36,14 @@ interface RawRedditPost {
 // Inline Reddit OAuth functionality to avoid import issues
 async function getRedditOAuthToken(clientId: string, clientSecret: string): Promise<string | null> {
   try {
-    const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+    // Use btoa instead of Buffer for better serverless compatibility
+    const credentials = `${clientId}:${clientSecret}`;
+    const auth = typeof btoa !== 'undefined' 
+      ? btoa(credentials)
+      : Buffer.from(credentials).toString('base64');
+    
+    console.log('🔑 Attempting Reddit OAuth with credentials length:', credentials.length);
+    
     const response = await fetch('https://www.reddit.com/api/v1/access_token', {
       method: 'POST',
       headers: {
@@ -47,16 +54,20 @@ async function getRedditOAuthToken(clientId: string, clientSecret: string): Prom
       body: 'grant_type=client_credentials'
     });
     
+    console.log('🔑 Reddit OAuth response status:', response.status);
+    
     if (response.ok) {
       const tokenData = await response.json() as any;
-      console.log('✅ Reddit OAuth token obtained');
+      console.log('✅ Reddit OAuth token obtained, type:', tokenData.token_type);
       return tokenData.access_token;
     } else {
-      console.warn('❌ Reddit OAuth failed:', response.status, await response.text());
+      const errorText = await response.text();
+      console.warn('❌ Reddit OAuth failed:', response.status, errorText);
       return null;
     }
   } catch (error) {
     console.warn('❌ Reddit OAuth error:', (error as Error).message);
+    console.warn('❌ Reddit OAuth stack:', (error as Error).stack);
     return null;
   }
 }
@@ -165,37 +176,47 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const clientId = process.env.REDDIT_CLIENT_ID;
         const clientSecret = process.env.REDDIT_CLIENT_SECRET;
         
-        if (!clientId || !clientSecret) {
-          return res.json({
-            success: false,
-            error: 'Reddit credentials not found',
-            clientId: clientId ? 'Present' : 'Missing',
-            clientSecret: clientSecret ? 'Present' : 'Missing'
-          });
-        }
-        
         try {
+          if (!clientId || !clientSecret) {
+            return res.json({
+              success: false,
+              error: 'Reddit credentials not found',
+              clientId: clientId ? `Present (${clientId.length} chars)` : 'Missing',
+              clientSecret: clientSecret ? `Present (${clientSecret.length} chars)` : 'Missing',
+              env_dump: {
+                has_buffer: typeof Buffer !== 'undefined',
+                has_btoa: typeof btoa !== 'undefined',
+                node_version: process.version
+              }
+            });
+          }
+          
+          console.log('🧪 Starting OAuth test with credentials...');
           const token = await getRedditOAuthToken(clientId, clientSecret);
           if (token) {
+            console.log('🧪 Token obtained, testing API...');
             const posts = await fetchRedditPosts('startups', token, 2);
             return res.json({
               success: true,
-              message: 'Reddit OAuth working!',
+              message: 'Reddit OAuth working perfectly!',
               tokenLength: token.length,
               postsFound: posts.length,
-              samplePost: posts[0] ? posts[0].title.substring(0, 50) + '...' : 'No posts'
+              samplePost: posts[0] ? posts[0].title.substring(0, 50) + '...' : 'No posts',
+              timestamp: new Date().toISOString()
             });
           } else {
             return res.json({
               success: false,
-              error: 'Failed to get OAuth token'
+              error: 'Failed to get OAuth token - check console logs'
             });
           }
         } catch (error) {
+          console.error('🧪 Test endpoint error:', error);
           return res.json({
             success: false,
             error: (error as Error).message,
-            stack: (error as Error).stack
+            name: (error as Error).name,
+            stack: (error as Error).stack?.substring(0, 500)
           });
         }
       }
