@@ -8,8 +8,38 @@ interface VercelRequest {
   query?: Record<string, string | string[]>;
 }
 
-// Import Supabase database service
-import { DatabaseService, type AnalysisRecord } from '../lib/supabase';
+// Safe database integration - won't fail if Supabase isn't available
+let DatabaseService: any = null;
+
+// Initialize database service if available
+async function initializeDatabase() {
+  if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY && !DatabaseService) {
+    try {
+      const supabaseModule = await import('../lib/supabase');
+      DatabaseService = supabaseModule.DatabaseService;
+      console.log('✅ Supabase database service initialized');
+    } catch (error) {
+      console.warn('⚠️ Supabase initialization failed, continuing without database:', (error as Error).message);
+      DatabaseService = null;
+    }
+  }
+}
+
+// Simple type for analysis records
+interface AnalysisRecord {
+  id?: string;
+  created_at?: string;
+  idea: string;
+  industry?: string;
+  target_audience?: string;
+  country?: string;
+  analysis_results: any;
+  data_source: string;
+  analysis_confidence: string;
+  overall_score: number;
+  viability_score: number;
+  user_session?: string;
+}
 
 
 
@@ -340,6 +370,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
       try {
+        // Initialize database service early (non-blocking)
+        initializeDatabase().catch(err => console.warn('Database initialization failed:', err));
+        
         console.log('🚀 Starting performRealAnalysis...');
         const startTime = Date.now();
         
@@ -356,31 +389,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const duration = Date.now() - startTime;
         console.log(`✅ Analysis completed successfully in ${duration}ms`);
 
-        // Save analysis to database
-        try {
-          const resultAny = result as any;
-          const analysisRecord: Omit<AnalysisRecord, 'id' | 'created_at'> = {
-            idea: trimmedIdea,
-            industry: industry || undefined,
-            target_audience: targetAudience || undefined,
-            country: country || 'global',
-            analysis_results: result,
-            data_source: resultAny.data_source || 'unknown',
-            analysis_confidence: resultAny.analysis_confidence || 'unknown',
-            overall_score: result.overall_score,
-            viability_score: result.viability_score,
-            user_session: req.headers?.['x-session-id'] || undefined
-          };
+        // Save analysis to database (if available)
+        if (DatabaseService) {
+          try {
+            await initializeDatabase();
+            if (DatabaseService) {
+              const resultAny = result as any;
+              const analysisRecord = {
+                idea: trimmedIdea,
+                industry: industry || undefined,
+                target_audience: targetAudience || undefined,
+                country: country || 'global',
+                analysis_results: result,
+                data_source: resultAny.data_source || 'unknown',
+                analysis_confidence: resultAny.analysis_confidence || 'unknown',
+                overall_score: result.overall_score,
+                viability_score: result.viability_score,
+                user_session: req.headers?.['x-session-id'] || undefined
+              };
 
-          const savedRecord = await DatabaseService.saveAnalysis(analysisRecord);
-          if (savedRecord) {
-            console.log(`💾 Analysis saved to database with ID: ${savedRecord.id}`);
-            // Add database ID to response for reference
-            (result as any).database_id = savedRecord.id;
+              const savedRecord = await DatabaseService.saveAnalysis(analysisRecord);
+              if (savedRecord) {
+                console.log(`💾 Analysis saved to database with ID: ${savedRecord.id}`);
+                (result as any).database_id = savedRecord.id;
+              }
+            }
+          } catch (dbError) {
+            console.error('⚠️ Database save failed, continuing with response:', dbError);
           }
-        } catch (dbError) {
-          console.error('⚠️ Database save failed, continuing with response:', dbError);
-          // Don't fail the request if database save fails
         }
 
         return res.json(result);
@@ -390,29 +426,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Generate emergency fallback result based on the idea
         const fallbackResult = generateEmergencyAnalysis(trimmedIdea, industry, targetAudience);
         
-        // Save fallback analysis to database
-        try {
-          const fallbackAny = fallbackResult as any;
-          const analysisRecord: Omit<AnalysisRecord, 'id' | 'created_at'> = {
-            idea: trimmedIdea,
-            industry: industry || undefined,
-            target_audience: targetAudience || undefined,
-            country: country || 'global',
-            analysis_results: fallbackResult,
-            data_source: fallbackAny.data_source || 'fallback',
-            analysis_confidence: fallbackAny.analysis_confidence || 'low',
-            overall_score: fallbackResult.overall_score,
-            viability_score: fallbackResult.viability_score,
-            user_session: req.headers?.['x-session-id'] || undefined
-          };
+        // Save fallback analysis to database (if available)
+        if (DatabaseService) {
+          try {
+            await initializeDatabase();
+            if (DatabaseService) {
+              const fallbackAny = fallbackResult as any;
+              const analysisRecord = {
+                idea: trimmedIdea,
+                industry: industry || undefined,
+                target_audience: targetAudience || undefined,
+                country: country || 'global',
+                analysis_results: fallbackResult,
+                data_source: fallbackAny.data_source || 'fallback',
+                analysis_confidence: fallbackAny.analysis_confidence || 'low',
+                overall_score: fallbackResult.overall_score,
+                viability_score: fallbackResult.viability_score,
+                user_session: req.headers?.['x-session-id'] || undefined
+              };
 
-          const savedRecord = await DatabaseService.saveAnalysis(analysisRecord);
-          if (savedRecord) {
-            console.log(`💾 Fallback analysis saved to database with ID: ${savedRecord.id}`);
-            (fallbackResult as any).database_id = savedRecord.id;
+              const savedRecord = await DatabaseService.saveAnalysis(analysisRecord);
+              if (savedRecord) {
+                console.log(`💾 Fallback analysis saved to database with ID: ${savedRecord.id}`);
+                (fallbackResult as any).database_id = savedRecord.id;
+              }
+            }
+          } catch (dbError) {
+            console.error('⚠️ Database save failed for fallback, continuing with response:', dbError);
           }
-        } catch (dbError) {
-          console.error('⚠️ Database save failed for fallback, continuing with response:', dbError);
         }
         
         return res.json(fallbackResult);
@@ -683,8 +724,12 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
     subreddits = ['startups', 'Entrepreneur', 'smallbusiness', 'SideProject', 'business', 'productivity'];
   }
   
-  // Limit to 6 subreddits for focused analysis
+  // Limit to 6 subreddits for focused analysis and ensure we have at least some subreddits
   subreddits = subreddits.slice(0, 6);
+  if (subreddits.length === 0) {
+    console.warn('⚠️ No subreddits selected, using default set');
+    subreddits = ['startups', 'Entrepreneur', 'business'];
+  }
 
     // 2. Fetch top posts using Reddit OAuth API first, then fallback to public JSON
     let fetchedPosts: RawRedditPost[] = [];
@@ -1290,7 +1335,7 @@ Focus on depth over breadth - better to have 2 deeply researched competitors tha
 
 function buildBaseResponse(params: { idea: string; industry?: string; targetAudience?: string; isAI: boolean; isFitness: boolean; tokens: string[]; keywords: string[]; subreddits: string[]; pain_points: any[]; app_ideas: any[]; competitors: any[]; revenue_models: any[]; fetchedPosts: RawRedditPost[]; }) {
   const { isAI, isFitness, keywords, subreddits, pain_points, app_ideas, competitors, revenue_models, fetchedPosts, tokens } = params;
-  const realPosts = fetchedPosts.filter(p => p.source !== 'synthetic');
+  const realPosts = fetchedPosts.filter(p => p.source === 'reddit');
   console.log(`📊 Calculating scores from ${realPosts.length} REAL posts (total including synthetic: ${fetchedPosts.length})...`);
   
   // Advanced sentiment analysis based on real Reddit engagement
