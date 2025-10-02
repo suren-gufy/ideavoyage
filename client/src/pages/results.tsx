@@ -14,17 +14,13 @@ import { FinancialRisks } from "@/components/financial-risks"
 import { CompetitorsAnalysis } from "@/components/competitors-analysis"
 import { RevenueModels } from "@/components/revenue-models"
 import { MethodologyModal } from "@/components/methodology-modal"
-import { PremiumBadge } from "@/components/premium-badge"
-import { UpgradeCTA } from "@/components/upgrade-cta"
 import { Card, CardHeader, CardContent } from "@/components/ui/card"
-import { Crown, Sparkles, TrendingUp, Lock, AlertTriangle, Info, CheckCircle } from "lucide-react"
-import { usePremium } from "@/contexts/premium-context"
+import { TrendingUp, AlertTriangle, Info, CheckCircle } from "lucide-react"
 import type { AnalysisResponse } from "@shared/schema"
 
 export default function Results() {
   const [location, setLocation] = useLocation()
   const [analysisResults, setAnalysisResults] = useState<AnalysisResponse | null>(null)
-  const { isPremium } = usePremium()
 
   useEffect(() => {
     console.log('📄 Results page loading...')
@@ -95,7 +91,6 @@ export default function Results() {
               <div className="hidden sm:block h-6 border-l border-border"></div>
               <h1 className="text-xl font-semibold" data-testid="results-page-title">
                 Startup Validation Report
-                <PremiumBadge />
               </h1>
             </div>
             
@@ -117,22 +112,7 @@ export default function Results() {
       </div>
 
       {/* Free Report Banner */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <Card className="bg-gradient-to-r from-primary/5 to-[hsl(var(--hot-pink))/5] border-primary/20">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div className="flex items-center gap-3">
-                <Crown className="h-5 w-5 text-primary" />
-                <div>
-                  <h3 className="font-semibold">Free Analysis Report</h3>
-                  <p className="text-sm text-muted-foreground">Upgrade to Premium for deeper insights & unlimited reports</p>
-                </div>
-              </div>
-              <UpgradeCTA size="sm" text="Upgrade to Premium - $39" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+
 
       {/* Results content */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8" data-testid="analysis-results">
@@ -349,26 +329,8 @@ export default function Results() {
 
           {/* Google Trends */}
           <div className="space-y-6">
-            <div className="flex items-center gap-2">
-              <h2 className="text-2xl font-bold">Google Trends Analysis</h2>
-              <PremiumBadge />
-            </div>
-            {isPremium ? (
-              <GoogleTrends trends={analysisResults.google_trends} />
-            ) : (
-              <Card className="relative">
-                <CardContent className="p-8 text-center space-y-4">
-                  <div className="mx-auto w-12 h-12 bg-gradient-to-r from-[hsl(var(--hot-pink))]/10 to-[hsl(var(--bright-orange))]/10 rounded-full flex items-center justify-center">
-                    <Lock className="h-6 w-6 text-[hsl(var(--hot-pink))]" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-lg">Google Trends & Search Volume</h3>
-                    <p className="text-muted-foreground">Access real search volumes, trend data, and seasonal patterns for your market</p>
-                  </div>
-                  <UpgradeCTA text="Unlock for $39" size="sm" />
-                </CardContent>
-              </Card>
-            )}
+            <h2 className="text-2xl font-bold">Google Trends Analysis</h2>
+            <GoogleTrends trends={analysisResults.google_trends} />
           </div>
 
           {/* Ideal Customer Profile */}
@@ -385,98 +347,39 @@ export default function Results() {
 
           {/* Financial Risks */}
           <div className="space-y-6">
-            <div className="flex items-center gap-2">
-              <h2 className="text-2xl font-bold">Financial Risk Assessment</h2>
-              <PremiumBadge />
-            </div>
-            {isPremium ? (
-              <FinancialRisks risks={analysisResults.financial_risks} />
-            ) : (
-              <Card className="relative">
-                <CardContent className="p-8 text-center space-y-4">
-                  <div className="mx-auto w-12 h-12 bg-gradient-to-r from-[hsl(var(--hot-pink))]/10 to-[hsl(var(--bright-orange))]/10 rounded-full flex items-center justify-center">
-                    <Lock className="h-6 w-6 text-[hsl(var(--hot-pink))]" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-lg">Financial Risk Analysis</h3>
-                    <p className="text-muted-foreground">Get detailed financial projections, ROI calculations, and risk mitigation strategies</p>
-                  </div>
-                  <UpgradeCTA text="Unlock for $39" size="sm" />
-                </CardContent>
-              </Card>
-            )}
+            <h2 className="text-2xl font-bold">Financial Risk Assessment</h2>
+            <FinancialRisks risks={analysisResults.financial_risks} />
           </div>
 
           {/* Competitors Analysis */}
           <div className="space-y-6">
-            <div className="flex items-center gap-2">
-              <h2 className="text-2xl font-bold">Competitive Landscape</h2>
-              <PremiumBadge />
-            </div>
-            {isPremium ? (
-              <CompetitorsAnalysis competitors={analysisResults.competitors} />
-            ) : (
-              <Card className="relative">
-                <CardContent className="p-8 text-center space-y-4">
-                  <div className="mx-auto w-12 h-12 bg-gradient-to-r from-[hsl(var(--hot-pink))]/10 to-[hsl(var(--bright-orange))]/10 rounded-full flex items-center justify-center">
-                    <Lock className="h-6 w-6 text-[hsl(var(--hot-pink))]" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-lg">Complete Competitor Analysis</h3>
-                    <p className="text-muted-foreground">Full competitive matrix, pricing analysis, and market positioning insights</p>
-                  </div>
-                  <UpgradeCTA text="Unlock for $39" size="sm" />
-                </CardContent>
-              </Card>
-            )}
+            <h2 className="text-2xl font-bold">Competitive Landscape</h2>
+            <CompetitorsAnalysis competitors={analysisResults.competitors} />
           </div>
 
           {/* Revenue Models */}
           <div className="space-y-6">
-            <div className="flex items-center gap-2">
-              <h2 className="text-2xl font-bold">Revenue Strategy & Models</h2>
-              <PremiumBadge />
-            </div>
-            {isPremium ? (
-              <RevenueModels revenueModels={analysisResults.revenue_models} />
-            ) : (
-              <Card className="relative">
-                <CardContent className="p-8 text-center space-y-4">
-                  <div className="mx-auto w-12 h-12 bg-gradient-to-r from-[hsl(var(--hot-pink))]/10 to-[hsl(var(--bright-orange))]/10 rounded-full flex items-center justify-center">
-                    <Lock className="h-6 w-6 text-[hsl(var(--hot-pink))]" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-lg">Revenue Models & Monetization</h3>
-                    <p className="text-muted-foreground">Comprehensive revenue strategies, pricing models, and monetization frameworks</p>
-                  </div>
-                  <UpgradeCTA text="Unlock for $39" size="sm" />
-                </CardContent>
-              </Card>
-            )}
+            <h2 className="text-2xl font-bold">Revenue Strategy & Models</h2>
+            <RevenueModels revenueModels={analysisResults.revenue_models} />
           </div>
 
-          {/* Final Premium CTA */}
+          {/* Analysis Complete */}
           <div className="mt-12 mb-8">
             <Card className="bg-gradient-to-r from-primary/10 to-[hsl(var(--neon-green))/10] border-primary/30">
               <CardContent className="p-8">
                 <div className="text-center space-y-6">
                   <div className="flex items-center justify-center gap-2">
                     <TrendingUp className="h-8 w-8 text-primary" />
-                    <h3 className="text-2xl font-bold">Ready to Validate Your Next Big Idea?</h3>
+                    <h3 className="text-2xl font-bold">Analysis Complete!</h3>
                   </div>
                   <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-                    Get unlimited validation reports, advanced market analysis, competitor deep-dives, 
-                    and financial projections. Join thousands of successful entrepreneurs.
+                    Your comprehensive startup validation report is ready. Use these insights to refine your business strategy and validate your market opportunity.
                   </p>
                   <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                    <UpgradeCTA size="lg" text="Start Premium - $39/month" />
-                    <Button variant="outline" onClick={handleNewAnalysis} data-testid="button-new-analysis">
-                      Try Another Free Analysis
+                    <Button onClick={handleNewAnalysis} data-testid="button-new-analysis" size="lg">
+                      Analyze Another Idea
                     </Button>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    30-day money-back guarantee • Cancel anytime • Unlimited reports
-                  </p>
                 </div>
               </CardContent>
             </Card>

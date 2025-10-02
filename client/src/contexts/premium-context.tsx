@@ -15,9 +15,9 @@ interface PremiumContextType {
 const PremiumContext = createContext<PremiumContextType | undefined>(undefined);
 
 export function PremiumProvider({ children }: { children: React.ReactNode }) {
-  // Environment-based premium access - true for development, false for production
-  const isDevelopment = import.meta.env.MODE === 'development';
-  const [isPremium, setIsPremium] = useState(false);
+  // Make everything free - no premium barriers
+  const isDevelopment = import.meta.env.DEV
+  const [isPremium, setIsPremium] = useState(true); // Always premium/free access
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const { toast } = useToast();
 
