@@ -16,7 +16,6 @@ import { RevenueModels } from "@/components/revenue-models"
 import { MethodologyModal } from "@/components/methodology-modal"
 import { PremiumBadge } from "@/components/premium-badge"
 import { UpgradeCTA } from "@/components/upgrade-cta"
-import { IdeaProcessingInsights } from "@/components/idea-processing-insights"
 import { Card, CardHeader, CardContent } from "@/components/ui/card"
 import { Crown, Sparkles, TrendingUp, Lock, AlertTriangle, Info, CheckCircle } from "lucide-react"
 import { usePremium } from "@/contexts/premium-context"
@@ -41,7 +40,12 @@ export default function Results() {
         console.log('🔍 Data source:', parsedResults.data_source)
         console.log('🔍 Analysis confidence:', parsedResults.analysis_confidence)
         console.log('🔍 Subreddits (first 3):', parsedResults.subreddits?.slice(0, 3))
-        console.log('🔍 Pain points (first 2):', parsedResults.pain_points?.slice(0, 2)?.map((p: any) => p.title))
+        console.log('🔍 Pain points raw:', parsedResults.pain_points)
+        console.log('🔍 Pain points type:', typeof parsedResults.pain_points)
+        console.log('🔍 Pain points array length:', Array.isArray(parsedResults.pain_points) ? parsedResults.pain_points.length : 'not array')
+        if (parsedResults.pain_points && Array.isArray(parsedResults.pain_points) && parsedResults.pain_points.length > 0) {
+          console.log('🔍 First pain point structure:', parsedResults.pain_points[0])
+        }
         console.log('🔍 Timestamp check - Debug info:', parsedResults.debug)
         setAnalysisResults(parsedResults)
       } catch (error) {
@@ -264,11 +268,6 @@ export default function Results() {
               </div>
             </div>
           </div>
-
-          {/* Idea Processing Insights */}
-          {(analysisResults as any).idea_processing && (
-            <IdeaProcessingInsights processing={(analysisResults as any).idea_processing} />
-          )}
 
           {/* Scoring Cards */}
           <div className="space-y-6">

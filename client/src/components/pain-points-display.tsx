@@ -39,21 +39,30 @@ export function PainPointsDisplay({ painPoints: propPainPoints, subreddits, data
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
 
   // Convert API pain points to local format or use mock data
-  const painPoints: PainPoint[] = propPainPoints ? propPainPoints.map((pp, index) => ({
-    id: index.toString(),
-    title: pp.title,
-    description: pp.examples[0] || "No description available",
-    frequency: pp.frequency,
-    severity: pp.urgency,
-    category: "General", 
-    relatedSubreddits: subreddits || ["unknown"],
-    examplePosts: pp.examples.slice(0, 3).map((example, i) => ({
-      title: example,
-      subreddit: (subreddits && subreddits[i % subreddits.length]) || "unknown",
-      upvotes: Math.floor(Math.random() * 300) + 50,
-      url: "#"
-    }))
-  })) : [
+  const painPoints: PainPoint[] = propPainPoints && propPainPoints.length > 0 ? propPainPoints
+    .filter((pp) => pp && pp.title) // Filter out invalid pain points
+    .map((pp, index) => ({
+      id: index.toString(),
+      title: pp.title || "Unknown issue",
+      description: (pp.examples && pp.examples[0]) ? pp.examples[0] : "No description available",
+      frequency: pp.frequency || 50,
+      severity: pp.urgency || "medium",
+      category: "General", 
+      relatedSubreddits: subreddits || ["unknown"],
+      examplePosts: (pp.examples && Array.isArray(pp.examples)) 
+        ? pp.examples.slice(0, 3).map((example, i) => ({
+            title: example || "Example discussion",
+            subreddit: (subreddits && subreddits[i % subreddits.length]) || "unknown",
+            upvotes: Math.floor(Math.random() * 300) + 50,
+            url: "#"
+          }))
+        : [{
+            title: "Example discussion",
+            subreddit: (subreddits && subreddits[0]) || "unknown", 
+            upvotes: Math.floor(Math.random() * 300) + 50,
+            url: "#"
+          }]
+    })) : [
     {
       id: "1",
       title: "Budgeting apps are too complex",
