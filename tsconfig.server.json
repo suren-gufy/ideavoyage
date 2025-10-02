@@ -1,11 +1,13 @@
 {
   "extends": "./tsconfig.base.json",
-  "include": ["server/**/*", "shared/**/*", "api/**/*"],
+  "include": ["server/**/*", "shared/**/*", "api/**/*", "lib/**/*"],
   "exclude": ["node_modules", "client/**/*"],
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/typescript/.tsbuildinfo.server",
-    "lib": ["esnext"],
+    "lib": ["esnext", "dom"],
     "types": ["node"],
-    "typeRoots": ["./node_modules/@types", "./client/src/types"]
+    "typeRoots": ["./node_modules/@types"],
+    "moduleResolution": "node",
+    "skipLibCheck": true
   }
 }

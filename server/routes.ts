@@ -23,9 +23,16 @@ import {
 } from "../shared/schema";
 import OpenAI from 'openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Lazy-load OpenAI client to avoid initialization errors
+let openai: OpenAI | null = null;
+function getOpenAIClient(): OpenAI {
+  if (!openai) {
+    openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+  }
+  return openai;
+}
 
 // Using OpenAI for all analysis - no additional API keys needed
 console.log("OpenAI API initialized for comprehensive startup analysis");
@@ -408,7 +415,7 @@ REQUIREMENTS
       console.log(`[${requestId}] Generating sophisticated research plan...`);
       
       // Using gpt-4o for superior analysis quality
-      const researchPlanCompletion = await openai.chat.completions.create({
+      const researchPlanCompletion = await getOpenAIClient().chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
@@ -495,7 +502,7 @@ Based on your knowledge of market trends, competitor landscapes, and common user
 
 Focus on realistic market dynamics, common user frustrations, and proven solution patterns in this space.`;
 
-        const aiResponse = await openai.chat.completions.create({
+        const aiResponse = await getOpenAIClient().chat.completions.create({
           model: 'gpt-4o',
           messages: [
             {
@@ -859,7 +866,7 @@ RULES:
 - DO NOT use placeholder or demo data - generate authentic analysis for each section based on the real data provided`;
 
       // Using gpt-4o for superior analysis quality
-      const completion = await openai.chat.completions.create({
+      const completion = await getOpenAIClient().chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
@@ -1267,7 +1274,7 @@ Provide detailed keyword analysis in JSON format:
 
 Generate realistic but valuable keyword data with 24-month trend analysis showing seasonal patterns and growth.`;
 
-      const completion = await openai.chat.completions.create({
+      const completion = await getOpenAIClient().chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
@@ -1426,7 +1433,7 @@ Provide comprehensive Reddit analysis in JSON format:
   "generatedAt": "${new Date().toISOString()}"
 }`;
 
-      const completion = await openai.chat.completions.create({
+      const completion = await getOpenAIClient().chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
@@ -1601,7 +1608,7 @@ Provide detailed customer intelligence in JSON format:
   "generatedAt": "${new Date().toISOString()}"
 }`;
 
-      const completion = await openai.chat.completions.create({
+      const completion = await getOpenAIClient().chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
@@ -1734,7 +1741,7 @@ Provide detailed financial projections in JSON format:
   "generatedAt": "${new Date().toISOString()}"
 }`;
 
-      const completion = await openai.chat.completions.create({
+      const completion = await getOpenAIClient().chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
@@ -1874,7 +1881,7 @@ Provide detailed technology operations plan in JSON format:
   "generatedAt": "${new Date().toISOString()}"
 }`;
 
-      const completion = await openai.chat.completions.create({
+      const completion = await getOpenAIClient().chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
@@ -2039,7 +2046,7 @@ Provide detailed legal regulatory analysis in JSON format:
   "generatedAt": "${new Date().toISOString()}"
 }`;
 
-      const completion = await openai.chat.completions.create({
+      const completion = await getOpenAIClient().chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
@@ -2190,7 +2197,7 @@ Provide detailed launch roadmap in JSON format:
   "generatedAt": "${new Date().toISOString()}"
 }`;
 
-      const completion = await openai.chat.completions.create({
+      const completion = await getOpenAIClient().chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
@@ -2303,7 +2310,7 @@ Provide detailed competitor analysis in JSON format:
 
 Include 8-12 real competitors with detailed pricing, sentiment analysis, and market positioning data.`;
 
-      const completion = await openai.chat.completions.create({
+      const completion = await getOpenAIClient().chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
@@ -2427,7 +2434,7 @@ Provide detailed GTM plan in JSON format:
 
 Create a detailed 3-phase plan with specific tactics, timelines, budgets, and success metrics.`;
 
-      const completion = await openai.chat.completions.create({
+      const completion = await getOpenAIClient().chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
@@ -2573,7 +2580,7 @@ Provide detailed market sizing analysis in JSON format:
 
 Include realistic market sizing with multiple methodologies and clear assumptions.`;
 
-      const completion = await openai.chat.completions.create({
+      const completion = await getOpenAIClient().chat.completions.create({
         model: "gpt-4o",
         messages: [
           {

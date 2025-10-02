@@ -55,13 +55,26 @@ export function SearchInterface({}: SearchInterfaceProps) {
 
   const analyzeIdeaMutation = useMutation({
     mutationFn: async (data: AnalyzeIdeaRequest): Promise<AnalysisResponse> => {
+      console.log('🚀 Starting fresh API request for:', data.idea)
       const response = await apiRequest("/api", "POST", data)
+      console.log('🚀 Fresh API response received:', response)
       return response as AnalysisResponse
     },
+    // Disable all caching for analysis requests
+    retry: false,
     onSuccess: (results) => {
-      console.log('Analysis completed successfully:', results)
-      // Save results to sessionStorage and navigate to results page
+      console.log('🔄 NEW Analysis completed successfully:', results)
+      console.log('🔄 NEW Analysis idea:', results.idea)
+      console.log('🔄 NEW Analysis subreddits:', results.subreddits)
+      console.log('🔄 NEW Analysis data_source:', results.data_source)
+      console.log('🔄 NEW Analysis confidence:', results.analysis_confidence)
+      
+      // Clear any existing cached results first
+      sessionStorage.removeItem('analysis-results')
+      
+      // Save fresh results to sessionStorage and navigate to results page
       sessionStorage.setItem('analysis-results', JSON.stringify(results))
+      console.log('🔄 Fresh results saved to sessionStorage')
       setLocation('/results')
       toast({
         title: "Analysis Complete!",

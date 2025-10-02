@@ -16,6 +16,7 @@ import { RevenueModels } from "@/components/revenue-models"
 import { MethodologyModal } from "@/components/methodology-modal"
 import { PremiumBadge } from "@/components/premium-badge"
 import { UpgradeCTA } from "@/components/upgrade-cta"
+import { IdeaProcessingInsights } from "@/components/idea-processing-insights"
 import { Card, CardHeader, CardContent } from "@/components/ui/card"
 import { Crown, Sparkles, TrendingUp, Lock, AlertTriangle, Info, CheckCircle } from "lucide-react"
 import { usePremium } from "@/contexts/premium-context"
@@ -27,23 +28,29 @@ export default function Results() {
   const { isPremium } = usePremium()
 
   useEffect(() => {
+    console.log('📄 Results page loading...')
+    
     // Get results from sessionStorage (set by dashboard after analysis)
     const savedResults = sessionStorage.getItem('analysis-results')
+    console.log('📄 Raw sessionStorage data:', savedResults?.substring(0, 200) + '...')
+    
     if (savedResults) {
       try {
         const parsedResults = JSON.parse(savedResults)
-        console.log('🔍 Analysis results loaded:', parsedResults)
-        console.log('🔍 Startup idea analyzed:', parsedResults.idea || 'No idea field found')
-        console.log('🔍 Subreddits analyzed:', parsedResults.subreddits || 'No subreddits field found')
-        console.log('🔍 Pain points:', parsedResults.pain_points)
-        console.log('🔍 Full results keys:', Object.keys(parsedResults))
+        console.log('🔍 Analysis results loaded for idea:', parsedResults.idea)
+        console.log('🔍 Data source:', parsedResults.data_source)
+        console.log('🔍 Analysis confidence:', parsedResults.analysis_confidence)
+        console.log('🔍 Subreddits (first 3):', parsedResults.subreddits?.slice(0, 3))
+        console.log('🔍 Pain points (first 2):', parsedResults.pain_points?.slice(0, 2)?.map((p: any) => p.title))
+        console.log('🔍 Timestamp check - Debug info:', parsedResults.debug)
         setAnalysisResults(parsedResults)
       } catch (error) {
-        console.error('Failed to parse analysis results:', error)
+        console.error('❌ Failed to parse analysis results:', error)
         // Redirect back to dashboard if no valid results
         setLocation('/')
       }
     } else {
+      console.log('❌ No results found in sessionStorage, redirecting to dashboard')
       // Redirect to dashboard if no results found
       setLocation('/')
     }
@@ -257,6 +264,11 @@ export default function Results() {
               </div>
             </div>
           </div>
+
+          {/* Idea Processing Insights */}
+          {(analysisResults as any).idea_processing && (
+            <IdeaProcessingInsights processing={(analysisResults as any).idea_processing} />
+          )}
 
           {/* Scoring Cards */}
           <div className="space-y-6">

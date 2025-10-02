@@ -8,6 +8,9 @@ interface VercelRequest {
   query?: Record<string, string | string[]>;
 }
 
+// Import Supabase database service
+import { DatabaseService, type AnalysisRecord } from '../lib/supabase';
+
 
 
 interface VercelResponse {
@@ -36,13 +39,14 @@ interface RawRedditPost {
 // Inline Reddit OAuth functionality to avoid import issues
 async function getRedditOAuthToken(clientId: string, clientSecret: string): Promise<string | null> {
   try {
-    // Use btoa instead of Buffer for better serverless compatibility
+    // Always use Buffer.from for Node.js serverless compatibility
     const credentials = `${clientId}:${clientSecret}`;
-    const auth = typeof btoa !== 'undefined' 
-      ? btoa(credentials)
-      : Buffer.from(credentials).toString('base64');
+    const auth = Buffer.from(credentials, 'utf-8').toString('base64');
     
-    console.log('🔑 Attempting Reddit OAuth with credentials length:', credentials.length);
+    console.log('🔑 Attempting Reddit OAuth...');
+    console.log('🔑 Client ID length:', clientId.length);
+    console.log('🔑 Client Secret length:', clientSecret.length);
+    console.log('🔑 Auth header length:', auth.length);
     
     const response = await fetch('https://www.reddit.com/api/v1/access_token', {
       method: 'POST',
@@ -55,19 +59,27 @@ async function getRedditOAuthToken(clientId: string, clientSecret: string): Prom
     });
     
     console.log('🔑 Reddit OAuth response status:', response.status);
+    const headerObj: Record<string, string> = {};
+    response.headers.forEach((value, key) => {
+      headerObj[key] = value;
+    });
+    console.log('🔑 Response headers:', JSON.stringify(headerObj));
     
     if (response.ok) {
       const tokenData = await response.json() as any;
-      console.log('✅ Reddit OAuth token obtained, type:', tokenData.token_type);
+      console.log('✅ Reddit OAuth SUCCESS! Token type:', tokenData.token_type);
+      console.log('✅ Token scope:', tokenData.scope);
+      console.log('✅ Token expires in:', tokenData.expires_in, 'seconds');
       return tokenData.access_token;
     } else {
       const errorText = await response.text();
-      console.warn('❌ Reddit OAuth failed:', response.status, errorText);
+      console.error('❌ Reddit OAuth FAILED:', response.status, response.statusText);
+      console.error('❌ Error response:', errorText);
       return null;
     }
   } catch (error) {
-    console.warn('❌ Reddit OAuth error:', (error as Error).message);
-    console.warn('❌ Reddit OAuth stack:', (error as Error).stack);
+    console.error('❌ Reddit OAuth EXCEPTION:', (error as Error).message);
+    console.error('❌ OAuth Error Stack:', (error as Error).stack);
     return null;
   }
 }
@@ -172,44 +184,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       // Reddit OAuth test endpoint
       if (url.includes('/test-reddit-oauth') || url.includes('test-oauth')) {
-        console.log('🧪 Reddit OAuth test endpoint accessed');
-        const clientId = process.env.REDDIT_CLIENT_ID;
-        const clientSecret = process.env.REDDIT_CLIENT_SECRET;
-        
         try {
+          console.log('🧪 Reddit OAuth test endpoint accessed');
+          const clientId = process.env.REDDIT_CLIENT_ID;
+          const clientSecret = process.env.REDDIT_CLIENT_SECRET;
+          
           if (!clientId || !clientSecret) {
             return res.json({
               success: false,
               error: 'Reddit credentials not found',
               clientId: clientId ? `Present (${clientId.length} chars)` : 'Missing',
-              clientSecret: clientSecret ? `Present (${clientSecret.length} chars)` : 'Missing',
-              env_dump: {
-                has_buffer: typeof Buffer !== 'undefined',
-                has_btoa: typeof btoa !== 'undefined',
-                node_version: process.version
-              }
+              clientSecret: clientSecret ? `Present (${clientSecret.length} chars)` : 'Missing'
             });
           }
           
-          console.log('🧪 Starting OAuth test with credentials...');
+          console.log('🧪 Testing simple token request...');
           const token = await getRedditOAuthToken(clientId, clientSecret);
-          if (token) {
-            console.log('🧪 Token obtained, testing API...');
-            const posts = await fetchRedditPosts('startups', token, 2);
-            return res.json({
-              success: true,
-              message: 'Reddit OAuth working perfectly!',
-              tokenLength: token.length,
-              postsFound: posts.length,
-              samplePost: posts[0] ? posts[0].title.substring(0, 50) + '...' : 'No posts',
-              timestamp: new Date().toISOString()
-            });
-          } else {
-            return res.json({
-              success: false,
-              error: 'Failed to get OAuth token - check console logs'
-            });
-          }
+          
+          return res.json({
+            success: !!token,
+            message: token ? 'Reddit OAuth working!' : 'Failed to get token',
+            tokenLength: token?.length || 0,
+            timestamp: new Date().toISOString()
+          });
+          
         } catch (error) {
           console.error('🧪 Test endpoint error:', error);
           return res.json({
@@ -276,10 +274,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         mode: hasOpenAIKey ? 'enhanced' : 'heuristic',
         openai_available: hasOpenAIKey,
         reddit_test: redditTest,
+        reddit_oauth_available: !!(process.env.REDDIT_CLIENT_ID && process.env.REDDIT_CLIENT_SECRET),
+        reddit_client_id_length: process.env.REDDIT_CLIENT_ID?.length || 0,
+        reddit_client_secret_length: process.env.REDDIT_CLIENT_SECRET?.length || 0,
+        reddit_client_id_preview: process.env.REDDIT_CLIENT_ID?.substring(0, 8) + '...' || 'missing',
+        reddit_client_secret_preview: process.env.REDDIT_CLIENT_SECRET?.substring(0, 15) + '...' || 'missing',
         env_key_length: process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.length : 0,
         env_key_start: process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.substring(0, 20) + '...' : 'missing',
         timestamp: new Date().toISOString(),
-        version: "2025-09-26-updated",
+        version: "2025-30-01-reddit-debug",
         url
       });
     }
@@ -352,12 +355,66 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         
         const duration = Date.now() - startTime;
         console.log(`✅ Analysis completed successfully in ${duration}ms`);
+
+        // Save analysis to database
+        try {
+          const resultAny = result as any;
+          const analysisRecord: Omit<AnalysisRecord, 'id' | 'created_at'> = {
+            idea: trimmedIdea,
+            industry: industry || undefined,
+            target_audience: targetAudience || undefined,
+            country: country || 'global',
+            analysis_results: result,
+            data_source: resultAny.data_source || 'unknown',
+            analysis_confidence: resultAny.analysis_confidence || 'unknown',
+            overall_score: result.overall_score,
+            viability_score: result.viability_score,
+            user_session: req.headers?.['x-session-id'] || undefined
+          };
+
+          const savedRecord = await DatabaseService.saveAnalysis(analysisRecord);
+          if (savedRecord) {
+            console.log(`💾 Analysis saved to database with ID: ${savedRecord.id}`);
+            // Add database ID to response for reference
+            (result as any).database_id = savedRecord.id;
+          }
+        } catch (dbError) {
+          console.error('⚠️ Database save failed, continuing with response:', dbError);
+          // Don't fail the request if database save fails
+        }
+
         return res.json(result);
       } catch (analysisError) {
         console.error('❌ Analysis error:', analysisError);
         console.error('❌ Error stack:', (analysisError as Error).stack);
         // Generate emergency fallback result based on the idea
         const fallbackResult = generateEmergencyAnalysis(trimmedIdea, industry, targetAudience);
+        
+        // Save fallback analysis to database
+        try {
+          const fallbackAny = fallbackResult as any;
+          const analysisRecord: Omit<AnalysisRecord, 'id' | 'created_at'> = {
+            idea: trimmedIdea,
+            industry: industry || undefined,
+            target_audience: targetAudience || undefined,
+            country: country || 'global',
+            analysis_results: fallbackResult,
+            data_source: fallbackAny.data_source || 'fallback',
+            analysis_confidence: fallbackAny.analysis_confidence || 'low',
+            overall_score: fallbackResult.overall_score,
+            viability_score: fallbackResult.viability_score,
+            user_session: req.headers?.['x-session-id'] || undefined
+          };
+
+          const savedRecord = await DatabaseService.saveAnalysis(analysisRecord);
+          if (savedRecord) {
+            console.log(`💾 Fallback analysis saved to database with ID: ${savedRecord.id}`);
+            (fallbackResult as any).database_id = savedRecord.id;
+          }
+        } catch (dbError) {
+          console.error('⚠️ Database save failed for fallback, continuing with response:', dbError);
+        }
+        
         return res.json(fallbackResult);
       }
 
@@ -528,24 +585,101 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
     console.log('🔤 Processing seed keywords...');
     const seed = input.idea.toLowerCase();
   const tokens = Array.from(new Set(seed.split(/[^a-z0-9+]+/).filter(Boolean)));
-  const isAI = tokens.some(t => ['ai','artificial','intelligence','machine','ml','gpt'].includes(t));
-  const isFitness = tokens.some(t => ['fitness','health','workout','exercise','gym','wellness'].includes(t));
-  const isEdu = tokens.some(t => ['edu','education','learning','course','tutor'].includes(t));
-  const isFin = tokens.some(t => ['fintech','finance','trading','invest','stock','crypto'].includes(t));
-
-  // Smart subreddit selection based on idea content
+  
+  // Enhanced context-aware subreddit selection with market intelligence
   let subreddits: string[] = [];
   
-  if (isFitness) {
+  // Advanced industry and market pattern detection
+  const isRestaurant = tokens.some(t => ['restaurant','restaurants','food','dining','chef','menu','cafe','bar','kitchen','hospitality'].includes(t));
+  const isPhoto = tokens.some(t => ['photo','photos','image','images','photography','picture','pictures','editing','visual','editor','camera','lens'].includes(t));
+  const isFitness = tokens.some(t => ['fitness','health','workout','exercise','gym','wellness','yoga','nutrition','training','muscle'].includes(t));
+  const isEdu = tokens.some(t => ['edu','education','learning','course','tutor','school','teach','student','university','study'].includes(t));
+  const isFin = tokens.some(t => ['fintech','finance','trading','invest','stock','crypto','money','accounting','bookkeeping','tax','invoice','payroll','banking','payment'].includes(t));
+  const isDropshipping = tokens.some(t => ['dropshipping','dropship','ecommerce','shopify','amazon','fba','online','store','selling'].includes(t));
+  const isIndia = tokens.some(t => ['india','indian','mumbai','delhi','bangalore','chennai','gst','rupee','desi'].includes(t));
+  const isScheduling = tokens.some(t => ['schedule','meeting','calendar','time','booking','appointment','event','planning'].includes(t));
+  const isAI = tokens.some(t => ['ai','artificial','intelligence','machine','ml','gpt','neural','algorithm','automation','chatbot'].includes(t));
+  const isSaaS = tokens.some(t => ['saas','software','platform','dashboard','api','integration','subscription','cloud'].includes(t));
+  const isProductivity = tokens.some(t => ['productivity','efficient','organize','manage','task','workflow','remote','collaboration'].includes(t));
+  const isDesign = tokens.some(t => ['design','ui','ux','interface','prototype','figma','creative','brand'].includes(t));
+  const isMarketing = tokens.some(t => ['marketing','social','media','brand','advertising','seo','content','influencer'].includes(t));
+  const isRealEstate = tokens.some(t => ['real','estate','property','rent','lease','apartment','house','landlord'].includes(t));
+  const isMobile = tokens.some(t => ['mobile','app','ios','android','smartphone','device'].includes(t));
+  
+  const categories = { isRestaurant, isPhoto, isFitness, isEdu, isFin, isDropshipping, isIndia, isScheduling, isAI, isSaaS, isProductivity, isDesign, isMarketing, isRealEstate, isMobile };
+  console.log('🎯 Detected categories:', categories);
+  console.log('🎯 Tokens for detection:', tokens);
+  
+  // Enhanced multi-category logic for better community targeting
+  if (isFin && isDropshipping && isIndia) {
+    console.log('✅ Matched: Finance + Dropshipping + India combo');
+    subreddits = ['personalfinance', 'IndiaInvestments', 'dropshipping', 'Entrepreneur', 'business', 'india'];
+  } else if (isAI && isSaaS && isDesign) {
+    console.log('✅ Matched: AI + SaaS + Design combo');
+    subreddits = ['MachineLearning', 'SaaS', 'userexperience', 'webdev', 'Entrepreneur', 'ArtificialIntelligence'];
+  } else if (isRealEstate && isMobile) {
+    console.log('✅ Matched: Real Estate + Mobile combo');
+    subreddits = ['RealEstate', 'realestateinvesting', 'mobiledev', 'Entrepreneur', 'business', 'androiddev'];
+  } else if (isMarketing && isSaaS) {
+    console.log('✅ Matched: Marketing + SaaS combo');
+    subreddits = ['marketing', 'SaaS', 'digitalmarketing', 'Entrepreneur', 'startups', 'business'];
+  } else if (isFin && isDropshipping) {
+    console.log('✅ Matched: Finance + Dropshipping combo');
+    subreddits = ['personalfinance', 'dropshipping', 'ecommerce', 'Entrepreneur', 'business', 'financialindependence'];
+  } else if (isRestaurant && isPhoto) {
+    console.log('✅ Matched: Restaurant + Photo combo');
+    subreddits = ['restaurateur', 'KitchenConfidential', 'photography', 'smallbusiness', 'Entrepreneur', 'business'];
+  } else if (isFitness && isMobile) {
+    console.log('✅ Matched: Fitness + Mobile combo');
+    subreddits = ['fitness', 'loseit', 'mobiledev', 'androiddev', 'Entrepreneur', 'bodyweightfitness'];
+  } else if (isProductivity && isSaaS) {
+    console.log('✅ Matched: Productivity + SaaS combo');
+    subreddits = ['productivity', 'SaaS', 'getmotivated', 'Entrepreneur', 'startups', 'remotework'];
+  } else if (isAI && isDesign) {
+    console.log('✅ Matched: AI + Design combo');
+    subreddits = ['MachineLearning', 'userexperience', 'Design', 'ArtificialIntelligence', 'webdev', 'Entrepreneur'];
+  } else if (isRestaurant) {
+    console.log('✅ Matched: Restaurant industry');
+    subreddits = ['restaurateur', 'KitchenConfidential', 'Restaurant', 'smallbusiness', 'Entrepreneur', 'business'];
+  } else if (isPhoto && !isAI) {
+    console.log('✅ Matched: Photography');
+    subreddits = ['photography', 'photocritique', 'PhotoshopRequest', 'smallbusiness', 'Entrepreneur', 'business'];
+  } else if (isPhoto && isAI) {
+    console.log('✅ Matched: AI Photography');
+    subreddits = ['photography', 'photocritique', 'MachineLearning', 'smallbusiness', 'Entrepreneur', 'ArtificialIntelligence'];
+  } else if (isScheduling || isProductivity) {
+    console.log('✅ Matched: Productivity/Scheduling');
+    subreddits = ['productivity', 'GetStudying', 'remotework', 'Entrepreneur', 'SideProject', 'business'];
+  } else if (isFitness) {
+    console.log('✅ Matched: Fitness');
     subreddits = ['fitness', 'bodyweightfitness', 'homeworkouts', 'PersonalTrainerTips', 'loseit', 'getmotivated'];
-  } else if (isAI) {
-    subreddits = ['MachineLearning', 'ArtificialIntelligence', 'ChatGPT', 'startups', 'Entrepreneur', 'technology'];
   } else if (isEdu) {
+    console.log('✅ Matched: Education');
     subreddits = ['education', 'teachers', 'studytips', 'learnprogramming', 'OnlineEducation', 'edtech'];
   } else if (isFin) {
+    console.log('✅ Matched: Finance');
     subreddits = ['personalfinance', 'investing', 'financialindependence', 'fintech', 'startups', 'Entrepreneur'];
+  } else if (isAI) {
+    console.log('✅ Matched: AI/ML');
+    subreddits = ['MachineLearning', 'ArtificialIntelligence', 'ChatGPT', 'startups', 'Entrepreneur', 'technology'];
+  } else if (isSaaS) {
+    console.log('✅ Matched: SaaS');
+    subreddits = ['SaaS', 'Entrepreneur', 'startups', 'webdev', 'business', 'technology'];
+  } else if (isDesign) {
+    console.log('✅ Matched: Design');
+    subreddits = ['userexperience', 'Design', 'web_design', 'Entrepreneur', 'startups', 'business'];
+  } else if (isMarketing) {
+    console.log('✅ Matched: Marketing');
+    subreddits = ['marketing', 'digitalmarketing', 'socialmedia', 'Entrepreneur', 'business', 'startups'];
+  } else if (isRealEstate) {
+    console.log('✅ Matched: Real Estate');
+    subreddits = ['RealEstate', 'realestateinvesting', 'landlord', 'Entrepreneur', 'business', 'investing'];
+  } else if (isMobile) {
+    console.log('✅ Matched: Mobile Development');
+    subreddits = ['mobiledev', 'androiddev', 'iOSProgramming', 'Entrepreneur', 'startups', 'technology'];
   } else {
-    // General business/startup subreddits
+    // General business/startup subreddits with broader appeal
+    console.log('✅ Matched: General business');
     subreddits = ['startups', 'Entrepreneur', 'smallbusiness', 'SideProject', 'business', 'productivity'];
   }
   
@@ -558,6 +692,8 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
     
     // Try Reddit OAuth first if credentials are available
     const hasRedditCreds = process.env.REDDIT_CLIENT_ID && process.env.REDDIT_CLIENT_SECRET;
+    console.log('🔥 Reddit OAuth check - has creds:', hasRedditCreds, 'client_id length:', process.env.REDDIT_CLIENT_ID?.length || 0, 'secret length:', process.env.REDDIT_CLIENT_SECRET?.length || 0);
+    
     if (hasRedditCreds) {
       try {
         console.log('🔑 Attempting Reddit OAuth authentication...');
@@ -565,6 +701,7 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
           process.env.REDDIT_CLIENT_ID!,
           process.env.REDDIT_CLIENT_SECRET!
         );
+        console.log('🔑 Reddit OAuth token result:', token ? 'SUCCESS' : 'FAILED');
         
         if (token) {
           console.log('✅ Reddit OAuth token obtained, fetching posts...');
@@ -615,16 +752,38 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
             const data = await response.json() as any;
             const posts = (data?.data?.children || []).map((c: any) => c.data).filter((p: any) => p.title).slice(0, 8);
             posts.forEach((p: any) => {
-              if (fetchedPosts.length < 12) fetchedPosts.push({
-                title: String(p.title).trim(),
-                selftext: String(p.selftext || '').trim(),
-                score: Math.max(1, parseInt(p.score) || 1),
-                num_comments: Math.max(0, parseInt(p.num_comments) || 0),
-                created_utc: p.created_utc || Math.floor(Date.now()/1000),
-                permalink: p.permalink || '',
-                subreddit: p.subreddit || sub,
-                source: 'reddit'
-              });
+              if (fetchedPosts.length < 12) {
+                const title = String(p.title).trim();
+                const selftext = String(p.selftext || '').trim();
+                const score = Math.max(1, parseInt(p.score) || 1);
+                const num_comments = Math.max(0, parseInt(p.num_comments) || 0);
+                
+                // Enhanced data extraction for better analysis
+                const post: RawRedditPost = {
+                  title,
+                  selftext,
+                  score,
+                  num_comments,
+                  created_utc: p.created_utc || Math.floor(Date.now()/1000),
+                  permalink: p.permalink || '',
+                  subreddit: p.subreddit || sub,
+                  source: 'reddit'
+                };
+
+                // Add metadata for enhanced analysis
+                (post as any).engagement_ratio = score > 0 ? num_comments / score : 0;
+                (post as any).content_length = selftext.length;
+                (post as any).post_age_days = Math.floor((Date.now() / 1000 - (p.created_utc || 0)) / 86400);
+                (post as any).signals = {
+                  is_problem_focused: /\b(problem|issue|frustrat|difficult|annoying|hate|struggle)\b/i.test(title + ' ' + selftext),
+                  is_solution_seeking: /\b(recommend|suggest|help|solution|alternative|tool|app|software)\b/i.test(title + ' ' + selftext),
+                  is_pain_point: /\b(pain|headache|nightmare|terrible|awful|worst)\b/i.test(title + ' ' + selftext),
+                  mentions_cost: /\b(price|cost|expensive|cheap|budget|money|pay|fee)\b/i.test(title + ' ' + selftext),
+                  mentions_competitors: /\b(vs|versus|alternative|instead|better than)\b/i.test(title + ' ' + selftext)
+                };
+
+                fetchedPosts.push(post);
+              }
             });
             console.log(`✅ Public: Total real posts so far: ${fetchedPosts.length}`);
           } else {
@@ -791,19 +950,26 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
   // 4. Optional OpenAI enrichment (key and package both required)
   let enriched: Partial<ReturnType<typeof buildBaseResponse>> | null = null;
   const hasOpenAIKey = !!process.env.OPENAI_API_KEY?.trim();
+  console.log('🤖 OpenAI check - has key:', hasOpenAIKey, 'key length:', process.env.OPENAI_API_KEY?.length || 0);
+  
   if (hasOpenAIKey) {
     // Try dynamic import and init of OpenAI client
     let openaiClient: any = null;
     try {
+      console.log('🤖 Attempting to import OpenAI package...');
       const OpenAIDep = await import('openai');
+      console.log('🤖 OpenAI package imported successfully');
       const OpenAI = OpenAIDep.default;
+      console.log('🤖 Creating OpenAI client...');
       openaiClient = new OpenAI({
         apiKey: process.env.OPENAI_API_KEY!,
-        timeout: 12000,
-        maxRetries: 0
+        timeout: 15000,
+        maxRetries: 1
       });
+      console.log('🤖 OpenAI client created successfully');
     } catch (initErr) {
-      console.warn('OpenAI package/init failed, skipping AI enrichment:', (initErr as Error).message);
+      console.error('❌ OpenAI package/init FAILED:', (initErr as Error).message);
+      console.error('❌ OpenAI init stack:', (initErr as Error).stack);
     }
     if (openaiClient) {
       const realPosts = fetchedPosts.filter(p => p.source === 'reddit');
@@ -815,8 +981,132 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
         ? `Based on ${realPosts.length} real Reddit discussions:\n${samplePosts}\n\n`
         : 'No real Reddit data available. Provide market-validated insights based on industry knowledge:\n\n';
       
-      const system = 'You are an expert startup market validation analyst with deep knowledge of Reddit communities and startup ecosystems. Analyze market opportunities with realistic, actionable insights. Return ONLY valid JSON.';
-      const userPrompt = `${dataContext}STARTUP IDEA: "${input.idea}"\nINDUSTRY: ${input.industry || 'Technology'}\nTARGET AUDIENCE: ${input.targetAudience || 'General users'}\nCURRENT SUBREDDITS ANALYZED: ${subreddits.join(', ')}\n\nProvide comprehensive market validation analysis in JSON format:\n\n{\n  "keywords": ["primary_market_term", "problem_keyword", "solution_term", "audience_keyword", "industry_term"],\n  "subreddits": ["most_relevant_community", "niche_audience_sub", "problem_focused_sub", "industry_specific_sub"],\n  "pain_points": [\n    {"title": "Major Pain Point", "frequency": 85, "urgency": "high", "examples": ["Real user frustration", "Specific complaint"]},\n    {"title": "Secondary Issue", "frequency": 65, "urgency": "medium", "examples": ["User need", "Market gap"]}\n  ],\n  "app_ideas": [\n    {"title": "Primary Solution", "description": "Detailed solution addressing main pain point", "market_validation": "high", "difficulty": "medium"},\n    {"title": "Alternative Approach", "description": "Different angle to same problem", "market_validation": "medium", "difficulty": "easy"}\n  ],\n  "competitors": [\n    {"name": "Direct Competitor", "description": "Main rival solution", "strengths": ["market_presence", "features"], "weaknesses": ["user_complaints", "limitations"], "market_share": "Dominant", "pricing_model": "Subscription"},\n    {"name": "Indirect Alternative", "description": "Different approach", "strengths": ["simplicity"], "weaknesses": ["limited_scope"], "market_share": "Niche", "pricing_model": "One-time"}\n  ],\n  "revenue_models": [\n    {"model_type": "Freemium", "description": "Free basic + paid premium features", "pros": ["user_acquisition", "upsell_potential"], "cons": ["conversion_challenge"], "implementation_difficulty": "medium", "potential_revenue": "High"},\n    {"model_type": "Subscription", "description": "Monthly recurring revenue", "pros": ["predictable_income", "customer_retention"], "cons": ["churn_risk"], "implementation_difficulty": "easy", "potential_revenue": "Medium"}\n  ]\n}\n\nFOCUS ON:\n- Real market problems (not generic startup advice)\n- Specific Reddit communities where target users actually hang out\n- Competitive landscape with actual product names when possible\n- Revenue models that fit the specific use case\n- Pain points that drive real purchasing decisions`;
+      const system = `You are a senior market research analyst specializing in startup validation with 10+ years of experience analyzing Reddit communities, competitive landscapes, and user behavior patterns. You have deep expertise in identifying market opportunities, user pain points, and competitive positioning. Your analysis should be forensic-level detailed and actionable for founders making strategic decisions.
+
+ANALYSIS FRAMEWORK:
+1. DEEP USER PSYCHOLOGY: Understand WHY users have problems and HOW they currently solve them
+2. COMPETITIVE INTELLIGENCE: Research actual products, pricing, user reviews, and market positioning  
+3. COMMUNITY DYNAMICS: Analyze specific Reddit community cultures, posting patterns, and user demographics
+4. MARKET TIMING: Assess current trends, seasonality, and market readiness
+5. REVENUE VALIDATION: Evaluate willingness to pay based on similar products and user behavior
+
+Return ONLY valid JSON with detailed, research-backed insights.`;
+
+      const postAnalysis = realPosts.length > 0 
+        ? realPosts.map(p => ({
+            title: p.title,
+            content: p.selftext?.substring(0, 200) || '',
+            engagement: `${p.score} upvotes, ${p.num_comments} comments`,
+            community: p.subreddit,
+            signals: p.title.toLowerCase().includes('problem') || p.title.toLowerCase().includes('issue') ? 'pain_point' :
+                    p.title.toLowerCase().includes('solution') || p.title.toLowerCase().includes('app') ? 'solution_seeking' :
+                    p.title.toLowerCase().includes('recommendation') || p.title.toLowerCase().includes('help') ? 'advice_seeking' : 'general_discussion'
+          }))
+        : [];
+
+      const userPrompt = `${dataContext}
+
+STARTUP IDEA ANALYSIS REQUEST:
+💡 IDEA: "${input.idea}"
+🏭 INDUSTRY: ${input.industry || 'Technology'}  
+👥 TARGET AUDIENCE: ${input.targetAudience || 'General users'}
+📊 REDDIT COMMUNITIES ANALYZED: ${subreddits.join(', ')}
+📈 REDDIT DATA POINTS: ${realPosts.length} real discussions, ${fetchedPosts.length - realPosts.length} synthetic
+
+DETAILED POST ANALYSIS:
+${postAnalysis.length > 0 ? postAnalysis.map((p, i) => 
+  `POST ${i+1} [${p.community}]: "${p.title}" | ${p.engagement} | Signal: ${p.signals}${p.content ? ` | Content: "${p.content}..."` : ''}`
+).join('\n') : 'No real Reddit data - analyze based on market knowledge'}
+
+REQUIRED COMPREHENSIVE ANALYSIS (JSON format):
+
+{
+  "keywords": [
+    "primary_problem_keyword_users_actually_search",
+    "specific_solution_term_target_market_uses", 
+    "industry_jargon_insiders_use",
+    "user_pain_point_exact_phrase",
+    "competitor_alternative_they_mention"
+  ],
+  "subreddits": [
+    "highly_specific_niche_community_where_target_users_congregate",
+    "adjacent_community_with_crossover_audience", 
+    "problem_focused_community_discussing_exact_pain_points",
+    "solution_seeking_community_evaluating_alternatives"
+  ],
+  "pain_points": [
+    {
+      "title": "Specific User Frustration (use their exact words)",
+      "frequency": 90,
+      "urgency": "critical",
+      "examples": ["Direct quote from user", "Specific complaint pattern"],
+      "current_solutions": ["How they solve it now", "Workarounds they use"],
+      "willingness_to_pay": "high",
+      "market_size_indicator": "thousands mention this daily"
+    }
+  ],
+  "app_ideas": [
+    {
+      "title": "Precise Solution Name",
+      "description": "Detailed description addressing exact pain point mechanism",
+      "market_validation": "high",
+      "difficulty": "medium",
+      "unique_value_proposition": "What makes this different from alternatives",
+      "user_acquisition_strategy": "Where to find users who need this",
+      "mvp_features": ["Essential feature 1", "Core feature 2"]
+    }
+  ],
+  "competitors": [
+    {
+      "name": "Actual Company Name (if known)",
+      "description": "Real product description and positioning",
+      "strengths": ["Specific advantage", "Market position"],
+      "weaknesses": ["User complaints found", "Specific limitations"],
+      "market_share": "Estimated market position",
+      "pricing_model": "Actual pricing structure",
+      "user_reviews_sentiment": "What users actually say",
+      "differentiation_opportunity": "How to beat them"
+    }
+  ],
+  "revenue_models": [
+    {
+      "model_type": "Most Viable Revenue Model",
+      "description": "Detailed implementation for this specific market",
+      "pros": ["Market-specific advantage", "User behavior alignment"],
+      "cons": ["Realistic challenge", "Market-specific risk"],
+      "implementation_difficulty": "realistic_assessment",
+      "potential_revenue": "Data-backed estimate",
+      "pricing_research": "What similar products charge",
+      "user_willingness_to_pay": "Evidence from market research"
+    }
+  ],
+  "market_insights": {
+    "market_maturity": "early/growing/mature/declining",
+    "seasonal_trends": "When demand peaks",
+    "user_demographics": "Specific target user profile",
+    "adoption_barriers": ["Real obstacles to adoption"],
+    "market_catalysts": ["Trends driving demand"],
+    "geographic_opportunities": ["Where demand is highest"]
+  },
+  "competitive_analysis": {
+    "market_gaps": ["Unserved user needs"],
+    "pricing_opportunities": ["Under/over-priced segments"],
+    "feature_gaps": ["Missing functionality users want"],
+    "user_experience_problems": ["UI/UX complaints about competitors"]
+  }
+}
+
+CRITICAL REQUIREMENTS:
+- Use SPECIFIC data from Reddit posts when available
+- Research ACTUAL competitor names and products when possible  
+- Identify EXACT pain point language users employ
+- Provide REALISTIC market size indicators
+- Include ACTIONABLE go-to-market insights
+- Base pricing on SIMILAR successful products
+- Identify SPECIFIC user acquisition channels
+- Address REAL adoption barriers and solutions
+
+Focus on depth over breadth - better to have 2 deeply researched competitors than 5 generic ones.`;
       
       try {
         
@@ -839,15 +1129,24 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
         
         enriched = JSON.parse(raw);
         
+        // Debug: Log the actual OpenAI response structure
+        console.log('🔍 OpenAI response structure:', Object.keys(enriched || {}));
+        console.log('🔍 OpenAI keywords:', enriched?.keywords ? `${enriched.keywords.length} items` : 'missing');
+        console.log('🔍 OpenAI pain_points:', enriched?.pain_points ? `${enriched.pain_points.length} items` : 'missing');
+        console.log('🔍 OpenAI subreddits:', enriched?.subreddits ? `${enriched.subreddits.length} items` : 'missing');
+        console.log('🔍 OpenAI competitors:', enriched?.competitors ? `${enriched.competitors.length} items` : 'missing');
+        
         // Validate that we got meaningful data
         if (enriched && (enriched.pain_points || enriched.keywords || enriched.subreddits)) {
           console.log('✅ OpenAI enrichment successful - AI-powered analysis active!');
-          console.log('🔍 OpenAI enhanced pain_points:', enriched?.pain_points ? `${enriched.pain_points.length} items` : 'none');
-          console.log('🔍 OpenAI enhanced subreddits:', enriched?.subreddits ? enriched.subreddits.join(', ') : 'none');
-          console.log('🔍 OpenAI enhanced competitors:', enriched?.competitors ? `${enriched.competitors.length} found` : 'none');
+          console.log('🔍 Final enriched data preview:');
+          console.log('🔍 Enriched pain_points sample:', enriched.pain_points?.[0]?.title || 'none');
+          console.log('🔍 Enriched keywords sample:', enriched.keywords?.slice(0,3) || 'none');
+          console.log('🔍 Enriched subreddits sample:', enriched.subreddits?.slice(0,3) || 'none');
           console.log('🔍 Data source combination: Reddit OAuth + OpenAI Analysis = Premium insights');
         } else {
           console.warn('⚠️ OpenAI returned empty/invalid data, falling back to heuristics');
+          console.warn('⚠️ Raw OpenAI response (first 500 chars):', raw.slice(0, 500));
           enriched = null;
         }
       } catch (enrichErr) {
@@ -867,6 +1166,13 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
   // 5. Build response
   // Separate real vs synthetic posts for transparency & scoring
   const realPostsOnly = fetchedPosts.filter(p => p.source !== 'synthetic');
+
+  // Debug what's being passed to buildBaseResponse
+  console.log('🏗️ Building response with:');
+  console.log('🏗️ Using enriched keywords:', enriched?.keywords ? 'YES' : 'NO (fallback to heuristic)');
+  console.log('🏗️ Using enriched subreddits:', enriched?.subreddits ? 'YES' : 'NO (fallback to detected)');
+  console.log('🏗️ Using enriched pain_points:', enriched?.pain_points ? 'YES' : 'NO (fallback to heuristic)');
+  console.log('🏗️ Detected subreddits fallback:', subreddits?.slice(0,3));
 
   const response = buildBaseResponse({
     idea: input.idea,
@@ -1015,14 +1321,29 @@ function buildBaseResponse(params: { idea: string; industry?: string; targetAudi
     { name: 'Frustrated', value: frustration, color: 'hsl(var(--destructive))', description: 'Pain points and unmet needs identified' }
   ];
 
-  // Multi-factor realistic scoring system
+  // Advanced multi-factor scoring system with market intelligence
   const avgScoreNormalized = Math.log10(Math.max(1, avgScore)) / Math.log10(100); // Log scale for Reddit scores
   const avgCommentsNormalized = Math.log10(Math.max(1, avgComments)) / Math.log10(50);
   const postVolumeScore = Math.min(1.0, postsForScoring.length / 15); // More REAL posts = better signal
   
-  // Content quality indicators
+  // Enhanced content quality and market signal indicators
   const hasDetailedDiscussions = postsForScoring.length ? postsForScoring.filter(p => (p.selftext?.length || 0) > 100).length / postsForScoring.length : 0;
   const hasHighEngagement = postsForScoring.length ? postsForScoring.filter(p => p.score > avgScore * 1.5 || p.num_comments > avgComments * 2).length / postsForScoring.length : 0;
+  
+  // Market validation signals from enhanced post metadata
+  const problemSignalStrength = postsForScoring.length ? postsForScoring.filter(p => (p as any).signals?.is_problem_focused).length / postsForScoring.length : 0;
+  const solutionSeekingSignal = postsForScoring.length ? postsForScoring.filter(p => (p as any).signals?.is_solution_seeking).length / postsForScoring.length : 0;
+  const costMentionSignal = postsForScoring.length ? postsForScoring.filter(p => (p as any).signals?.mentions_cost).length / postsForScoring.length : 0;
+  const competitorMentionSignal = postsForScoring.length ? postsForScoring.filter(p => (p as any).signals?.mentions_competitors).length / postsForScoring.length : 0;
+  
+  // Engagement quality metrics
+  const avgEngagementRatio = postsForScoring.length ? postsForScoring.reduce((sum, p) => sum + ((p as any).engagement_ratio || 0), 0) / postsForScoring.length : 0;
+  const recentPostsRatio = postsForScoring.length ? postsForScoring.filter(p => ((p as any).post_age_days || 365) < 30).length / postsForScoring.length : 0;
+  
+  // Market opportunity indicators
+  const marketOpportunityScore = (problemSignalStrength * 0.3 + solutionSeekingSignal * 0.25 + costMentionSignal * 0.2 + competitorMentionSignal * 0.15 + avgEngagementRatio * 0.1);
+  
+  console.log(`🔍 Market Signals: Problems=${(problemSignalStrength*100).toFixed(0)}% Solutions=${(solutionSeekingSignal*100).toFixed(0)}% Cost=${(costMentionSignal*100).toFixed(0)}% Competitors=${(competitorMentionSignal*100).toFixed(0)}% Recent=${(recentPostsRatio*100).toFixed(0)}%`);
   
   // Market trend multipliers
   const trendMultipliers = {
@@ -1038,41 +1359,106 @@ function buildBaseResponse(params: { idea: string; industry?: string; targetAudi
   // Pain point opportunities
   const painPointOpportunity = Math.min(1.0, pain_points.length / 3);
   
-  // Combine all factors (weighted for realistic distribution)
-  const engagementComponent = (avgScoreNormalized * 0.4 + avgCommentsNormalized * 0.3 + hasHighEngagement * 0.3);
-  const volumeComponent = (postVolumeScore * 0.6 + hasDetailedDiscussions * 0.4);
-  const marketComponent = (keywordRelevanceScore * 0.5 + painPointOpportunity * 0.5) * trendBonus;
+  // Combine all factors with enhanced market intelligence weighting
+  const engagementComponent = (avgScoreNormalized * 0.3 + avgCommentsNormalized * 0.25 + hasHighEngagement * 0.25 + avgEngagementRatio * 0.2);
+  const volumeComponent = (postVolumeScore * 0.5 + hasDetailedDiscussions * 0.3 + recentPostsRatio * 0.2);
+  const marketComponent = (keywordRelevanceScore * 0.3 + painPointOpportunity * 0.3 + marketOpportunityScore * 0.4) * trendBonus;
   
-  // Final scoring with realistic ranges
-  const baseScore = (engagementComponent * 0.4 + volumeComponent * 0.3 + marketComponent * 0.3) * 10;
+  // Final scoring with sophisticated market validation weighting
+  const baseScore = (marketComponent * 0.45 + engagementComponent * 0.35 + volumeComponent * 0.2) * 10;
   
-  // Create realistic score distribution with natural variation
+  // Realistic market-based scoring system
   const ideaHash = params.idea.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
-  const baseVariation = (ideaHash % 100) / 100; // 0-1 based on idea content for consistency
-  const timeVariation = (Date.now() % 10000) / 10000; // Time-based for each request uniqueness
+  const consistentVariation = (ideaHash % 100) / 100; // 0-1 based on idea content for consistency
   
-  // Combine multiple factors for realistic scoring
-  const ideaTypeBoost = 1.5 + baseVariation * 2.5; // 1.5-4.0 range per idea type
-  const marketConditions = 1.0 + timeVariation * 1.5; // 1.0-2.5 market variation
-  const randomFactor = 0.8 + Math.random() * 2.4; // 0.8-3.2 random component
-  const trendImpact = trendBonus * 1.8; // Amplify trend effects
+  // Detect additional market categories for scoring
+  const isSaaS = tokens.some(t => ['saas','software','platform','dashboard','api','integration','subscription','cloud'].includes(t));
+  const isProductivity = tokens.some(t => ['productivity','efficient','organize','manage','task','workflow','remote','collaboration'].includes(t));
+  const isDesign = tokens.some(t => ['design','ui','ux','interface','prototype','figma','creative','brand'].includes(t));
+  const isMarketing = tokens.some(t => ['marketing','social','media','brand','advertising','seo','content','influencer'].includes(t));
+  const isRealEstate = tokens.some(t => ['real','estate','property','rent','lease','apartment','house','landlord'].includes(t));
+  const isEdu = tokens.some(t => ['edu','education','learning','course','tutor','school','teach','student','university','study'].includes(t));
+
+  // Market maturity penalties/bonuses based on competition and saturation
+  const marketMaturityMultiplier = 
+    isAI ? 0.8 : // AI market is saturated, harder to break through
+    isFitness ? 0.75 : // Fitness market is crowded
+    isSaaS ? 0.85 : // SaaS market is competitive
+    isMarketing ? 0.7 : // Marketing tools are oversaturated
+    isProductivity ? 0.8 : // Productivity market is crowded
+    isRealEstate ? 1.1 : // Real estate tech has opportunities
+    isEdu ? 1.0 : // Education market is stable
+    isDesign ? 0.9 : // Design tools market is competitive
+    1.0; // Other markets
   
-  const finalMultiplier = (ideaTypeBoost + marketConditions + randomFactor) / 3 * trendImpact;
-  const overall_score = clamp(baseScore * finalMultiplier + (Math.random() - 0.5) * 1.5, 1.9, 8.7);
-  const viability_score = clamp(overall_score + (Math.random() - 0.2) * 1.2 + (trendBonus - 1.0), 1.9, 8.7);
+  // Data quality scoring - penalize lack of real data heavily
+  const realDataQuality = realPosts.length > 0 ? 
+    Math.min(1.0, realPosts.length / 8) : // Full points for 8+ real posts
+    0.3; // Major penalty for no real data
   
-  console.log(`📈 Scoring: RealPosts=${postsForScoring.length} (Total=${fetchedPosts.length}) AvgScore=${avgScore.toFixed(1)} AvgComments=${avgComments.toFixed(1)} EngagementRatio=${(engagementRatio*100).toFixed(0)}% FinalScore=${overall_score.toFixed(1)}`)
+  // Market signal strength calculation with pain point validation
+  const painPointQuality = pain_points.length > 0 ? 
+    (pain_points.reduce((sum: number, p: any) => sum + (p.frequency || 50), 0) / pain_points.length) / 100 :
+    0.2; // Low default if no pain points detected
+  
+  const marketSignalScore = (
+    problemSignalStrength * 0.35 + // Problems are most important
+    solutionSeekingSignal * 0.25 + // Active seeking is valuable
+    costMentionSignal * 0.2 + // Willingness to pay
+    competitorMentionSignal * 0.1 + // Market awareness
+    painPointQuality * 0.1 // Pain point strength
+  );
+  
+  // Content depth and engagement quality
+  const contentQualityScore = (
+    hasDetailedDiscussions * 0.4 + 
+    hasHighEngagement * 0.3 +
+    avgEngagementRatio * 0.3
+  );
+  
+  // Calculate base market opportunity score (0-10 scale)
+  const marketOpportunityBase = (
+    marketSignalScore * 0.4 + // Market need signals
+    contentQualityScore * 0.25 + // Discussion quality
+    realDataQuality * 0.2 + // Data reliability
+    (keywordRelevanceScore * painPointOpportunity) * 0.15 // Keyword relevance × pain points
+  ) * 10;
+  
+  // Apply market maturity and trend adjustments
+  const trendAdjustedScore = marketOpportunityBase * marketMaturityMultiplier * trendBonus;
+  
+  // Add idea-specific variation (consistent per idea)
+  const ideaSpecificAdjustment = (consistentVariation - 0.5) * 2; // -1 to +1 range
+  
+  // Final scores with realistic distribution (2-8 typical range, exceptional cases can go higher)
+  const overall_score = clamp(trendAdjustedScore + ideaSpecificAdjustment, 2.0, 8.5);
+  const viability_score = clamp(overall_score + (consistentVariation - 0.5) * 1.0, 2.0, 8.5);
+  
+  console.log(`📈 Detailed Scoring Breakdown:`);
+  console.log(`   Real Posts: ${realPosts.length}/${fetchedPosts.length} (${(realDataQuality*100).toFixed(0)}% data quality)`);
+  console.log(`   Market Signals: ${(marketSignalScore*100).toFixed(0)}% Content Quality: ${(contentQualityScore*100).toFixed(0)}%`);
+  console.log(`   Base Market Score: ${marketOpportunityBase.toFixed(1)} Trend Bonus: ${trendBonus.toFixed(2)}x`);
+  console.log(`   Market Maturity: ${marketMaturityMultiplier.toFixed(2)}x Final Score: ${overall_score.toFixed(1)}/10`)
+
+  // Realistic market interest calculation based on actual signals
+  const marketInterestLevel = Math.round(
+    (marketSignalScore * 40) + // Market signals contribute 0-40 points
+    (contentQualityScore * 30) + // Content quality contributes 0-30 points  
+    (realDataQuality * 20) + // Real data contributes 0-20 points
+    (overall_score * 1.2) // Overall score contributes some points
+  );
 
   const google_trends = [
     {
       keyword: keywords[0] || tokens[0] || 'startup',
-      trend_direction: isAI ? 'rising' : 'stable',
-      interest_level: clamp(Math.round(overall_score*9),0,100),
+      trend_direction: overall_score > 6.5 ? 'rising' : overall_score > 4.5 ? 'stable' : 'declining',
+      interest_level: clamp(marketInterestLevel, 10, 95),
       related_queries: keywords.slice(1,4)
     }
   ];
 
   return {
+    idea: params.idea,
     keywords,
     subreddits,
     sentiment_data,
@@ -1080,8 +1466,8 @@ function buildBaseResponse(params: { idea: string; industry?: string; targetAudi
     app_ideas: app_ideas.map(a => ({
       title: a.title,
       description: a.description,
-      market_validation: a.market_validation || (overall_score>7 ? 'high': overall_score>5 ? 'medium':'low'),
-      difficulty: a.difficulty || (isAI ? 'hard':'medium')
+      market_validation: a.market_validation || (overall_score > 6.5 ? 'high' : overall_score > 4.5 ? 'medium' : 'low'),
+      difficulty: a.difficulty || (isAI ? 'hard' : isFitness ? 'medium' : 'easy')
     })),
     google_trends,
     icp: {
@@ -1114,7 +1500,7 @@ function buildBaseResponse(params: { idea: string; industry?: string; targetAudi
       implementation_difficulty: r.implementation_difficulty || (isAI ? 'hard':'medium'),
       potential_revenue: r.potential_revenue || (overall_score>7 ? 'High': overall_score>5 ? 'Medium':'Moderate')
     })),
-    market_interest_level: overall_score>7.5 ? 'high' : overall_score>5.5 ? 'medium':'low',
+    market_interest_level: overall_score > 6.5 ? 'high' : overall_score > 4.5 ? 'medium' : 'low',
     total_posts_analyzed: fetchedPosts.length,
     overall_score,
     viability_score

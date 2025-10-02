@@ -108,6 +108,7 @@ export const revenueModelSchema = z.object({
 });
 
 export const analysisResponseSchema = z.object({
+  idea: z.string().optional(),
   keywords: z.array(z.string()),
   subreddits: z.array(z.string()),
   sentiment_data: z.array(sentimentDataSchema),

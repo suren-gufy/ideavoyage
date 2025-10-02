@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>IdeaVoyage API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .result { background: #f5f5f5; padding: 15px; margin-top: 10px; border-radius: 4px; white-space: pre-wrap; }
+        button { background: #007cba; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #005a87; }
+        .loading { color: #666; font-style: italic; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 IdeaVoyage API Test</h1>
+        <p>Test the intelligent idea processing functionality</p>
+        
+        <div class="test-section">
+            <h3>Test 1: Spelling Correction</h3>
+            <p><strong>Idea:</strong> "an app for managment of small buisness inventery with ai recomendations"</p>
+            <button onclick="testIdea1()">Test This Idea</button>
+            <div id="result1" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Test 2: Vague Idea Enhancement</h3>
+            <p><strong>Idea:</strong> "social media app"</p>
+            <button onclick="testIdea2()">Test This Idea</button>
+            <div id="result2" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Test 3: Detailed FinTech Idea</h3>
+            <p><strong>Idea:</strong> "blockchin based payment system for criptocurrency transactions with smart contrats"</p>
+            <button onclick="testIdea3()">Test This Idea</button>
+            <div id="result3" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        async function testIdea(ideaText, resultElementId) {
+            const resultEl = document.getElementById(resultElementId);
+            resultEl.style.display = 'block';
+            resultEl.textContent = 'Testing... Please wait (this may take 30-60 seconds)';
+            
+            try {
+                const response = await fetch('/api', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        idea: ideaText,
+                        industry: 'Technology',
+                        targetAudience: 'General consumers',
+                        country: 'US'
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                let output = `✅ ANALYSIS COMPLETE\n\n`;
+                output += `📊 Overall Score: ${data.overall_score}/100\n`;
+                output += `🎯 Data Source: ${data.data_source}\n`;
+                output += `🔍 Analysis Confidence: ${data.analysis_confidence}\n\n`;
+                
+                if (data.idea_processing) {
+                    const proc = data.idea_processing;
+                    output += `🧠 IDEA PROCESSING INSIGHTS:\n`;
+                    output += `Original: "${proc.original_idea}"\n`;
+                    output += `Enhanced: "${proc.enhanced_idea}"\n\n`;
+                    
+                    if (proc.spelling_corrections.length > 0) {
+                        output += `🔧 Spelling Corrections: ${proc.spelling_corrections.join(', ')}\n`;
+                    }
+                    
+                    output += `📊 Clarity Score: ${proc.clarity_score}/10\n`;
+                    output += `🏷️ Business Category: ${proc.business_category}\n`;
+                    output += `🎯 Target Market: ${proc.intent_analysis.target_market}\n`;
+                    output += `💡 Problem Focus: ${proc.intent_analysis.problem_focus}\n`;
+                    output += `🛠️ Solution Type: ${proc.intent_analysis.solution_type}\n`;
+                    
+                    if (proc.extracted_concepts.length > 0) {
+                        output += `🧠 Key Concepts: ${proc.extracted_concepts.join(', ')}\n`;
+                    }
+                    
+                    if (proc.intent_analysis.monetization_hints.length > 0) {
+                        output += `💰 Monetization Ideas: ${proc.intent_analysis.monetization_hints.join(', ')}\n`;
+                    }
+                    
+                    if (proc.suggestions.length > 0) {
+                        output += `💡 Suggestions:\n`;
+                        proc.suggestions.forEach(suggestion => {
+                            output += `  • ${suggestion}\n`;
+                        });
+                    }
+                } else {
+                    output += `⚠️ No idea processing data found in response\n`;
+                }
+                
+                output += `\n📈 MARKET ANALYSIS:\n`;
+                output += `Reddit Posts Analyzed: ${data.total_posts_analyzed || 0}\n`;
+                output += `Market Interest: ${data.market_interest_level || 'Unknown'}\n`;
+                
+                if (data.database_id) {
+                    output += `\n💾 Saved to Database ID: ${data.database_id}\n`;
+                }
+                
+                resultEl.textContent = output;
+                
+            } catch (error) {
+                resultEl.textContent = `❌ ERROR: ${error.message}`;
+            }
+        }
+        
+        function testIdea1() {
+            testIdea("an app for managment of small buisness inventery with ai recomendations", "result1");
+        }
+        
+        function testIdea2() {
+            testIdea("social media app", "result2");
+        }
+        
+        function testIdea3() {
+            testIdea("blockchin based payment system for criptocurrency transactions with smart contrats", "result3");
+        }
+    </script>
+</body>
+</html>
