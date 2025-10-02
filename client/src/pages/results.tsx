@@ -15,7 +15,7 @@ import { CompetitorsAnalysis } from "@/components/competitors-analysis"
 import { RevenueModels } from "@/components/revenue-models"
 import { MethodologyModal } from "@/components/methodology-modal"
 import { Card, CardHeader, CardContent } from "@/components/ui/card"
-import { TrendingUp, AlertTriangle, Info, CheckCircle } from "lucide-react"
+import { TrendingUp, AlertTriangle, Info, CheckCircle, Crown, Sparkles } from "lucide-react"
 import type { AnalysisResponse } from "@shared/schema"
 
 export default function Results() {
@@ -266,26 +266,8 @@ export default function Results() {
 
           {/* Sentiment Analysis */}
           <div className="space-y-6">
-            <div className="flex items-center gap-2">
-              <h2 className="text-2xl font-bold">Market Sentiment Analysis</h2>
-              <PremiumBadge />
-            </div>
-            {isPremium ? (
-              <SentimentChart sentimentData={analysisResults.sentiment_data} />
-            ) : (
-              <Card className="relative">
-                <CardContent className="p-8 text-center space-y-4">
-                  <div className="mx-auto w-12 h-12 bg-gradient-to-r from-[hsl(var(--hot-pink))]/10 to-[hsl(var(--bright-orange))]/10 rounded-full flex items-center justify-center">
-                    <Lock className="h-6 w-6 text-[hsl(var(--hot-pink))]" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-lg">Detailed Sentiment Analysis</h3>
-                    <p className="text-muted-foreground">Unlock comprehensive sentiment breakdown, emotional triggers, and user satisfaction metrics</p>
-                  </div>
-                  <UpgradeCTA text="Unlock for $39" size="sm" />
-                </CardContent>
-              </Card>
-            )}
+            <h2 className="text-2xl font-bold">Market Sentiment Analysis</h2>
+            <SentimentChart sentimentData={analysisResults.sentiment_data} />
           </div>
 
           {/* Pain Points */}
@@ -299,31 +281,11 @@ export default function Results() {
             />
           </div>
 
-          {/* Premium Upgrade CTA */}
-          <div className="my-8">
-            <Card className="bg-gradient-to-r from-[hsl(var(--hot-pink))/5] to-primary/5 border-primary/20">
-              <CardContent className="p-6">
-                <div className="text-center space-y-4">
-                  <div className="flex items-center justify-center gap-2">
-                    <Sparkles className="h-6 w-6 text-primary" />
-                    <h3 className="text-xl font-semibold">Want Deeper Market Insights?</h3>
-                  </div>
-                  <p className="text-muted-foreground max-w-2xl mx-auto">
-                    Upgrade to Premium for advanced competitor analysis, detailed financial projections, 
-                    market sizing data, and unlimited validation reports.
-                  </p>
-                  <UpgradeCTA text="Upgrade to Premium - $39/month" />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+
 
           {/* App Ideas */}
           <div className="space-y-6">
-            <div className="flex items-center gap-2">
-              <h2 className="text-2xl font-bold">Generated App Ideas</h2>
-              <PremiumBadge />
-            </div>
+            <h2 className="text-2xl font-bold">Generated App Ideas</h2>
             <AppIdeasGenerator appIdeas={analysisResults.app_ideas} />
           </div>
 
