@@ -15,7 +15,7 @@ let DatabaseService: any = null;
 async function initializeDatabase() {
   if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY && !DatabaseService) {
     try {
-      const supabaseModule = await import('../lib/supabase');
+      const supabaseModule = await import('../lib/supabase.js');
       DatabaseService = supabaseModule.DatabaseService;
       console.log('✅ Supabase database service initialized');
     } catch (error) {

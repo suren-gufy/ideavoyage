@@ -8,6 +8,7 @@
     "types": ["node"],
     "typeRoots": ["./node_modules/@types"],
     "moduleResolution": "node",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": false
   }
 }
