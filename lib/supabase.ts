@@ -23,6 +23,18 @@ export interface AnalysisRecord {
   user_session?: string // Optional user tracking
 }
 
+// Partial analysis record for summary queries
+export interface AnalysisSummary {
+  id: string
+  created_at: string
+  idea: string
+  industry?: string
+  data_source: string
+  analysis_confidence: string
+  overall_score: number
+  viability_score: number
+}
+
 // Database service functions
 export class DatabaseService {
   // Save analysis results to database
@@ -69,7 +81,7 @@ export class DatabaseService {
   }
 
   // Get recent analyses (for dashboard/history)
-  static async getRecentAnalyses(limit = 10): Promise<AnalysisRecord[]> {
+  static async getRecentAnalyses(limit = 10): Promise<AnalysisSummary[]> {
     try {
       const { data, error } = await supabase
         .from('analysis_results')
@@ -82,7 +94,8 @@ export class DatabaseService {
         return []
       }
 
-      return data || []
+      // Explicit type assertion to ensure correct typing
+      return (data || []) as AnalysisSummary[]
     } catch (err) {
       console.error('❌ Database query failed:', err)
       return []
