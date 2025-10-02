@@ -1,14 +1,12 @@
 import { useState } from "react"
 import { useLocation } from "wouter"
-import { Lightbulb, Sparkles, Target, Building2, ChevronDown, ChevronUp, BarChart3 } from "lucide-react"
+import { Lightbulb, Sparkles, Building2, BarChart3 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { useMutation } from "@tanstack/react-query"
 import { apiRequest } from "@/lib/queryClient"
 import { useToast } from "@/hooks/use-toast"
@@ -30,7 +28,6 @@ export function SearchInterface({}: SearchInterfaceProps) {
   const [goal, setGoal] = useState("")
   const [role, setRole] = useState("")
   const [timeline, setTimeline] = useState("")
-  const [showOptionalFields, setShowOptionalFields] = useState(false)
   const [showEmailCapture, setShowEmailCapture] = useState(false)
   const { toast } = useToast()
   const [location, setLocation] = useLocation()
@@ -136,141 +133,113 @@ export function SearchInterface({}: SearchInterfaceProps) {
             />
           </div>
 
-          {/* Improve accuracy section - Progressive disclosure */}
-          <Collapsible open={showOptionalFields} onOpenChange={setShowOptionalFields}>
-            <CollapsibleTrigger asChild>
-              <Button
-                variant="ghost"
-                className="w-full justify-between p-3 h-auto bg-gradient-to-r from-[hsl(var(--neon-green))/5] to-[hsl(var(--hot-pink))/5] hover:from-[hsl(var(--neon-green))/10] hover:to-[hsl(var(--hot-pink))/10] border border-[hsl(var(--neon-green))/20] rounded-lg"
-                data-testid="toggle-optional-fields"
-              >
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                  <div className="flex items-center gap-2">
-                    <Target className="h-4 w-4 text-[hsl(var(--neon-green))]" />
-                    <span className="text-sm font-semibold text-[hsl(var(--neon-green))]">
-                      Improve accuracy (optional)
-                    </span>
-                  </div>
-                  <Badge variant="secondary" className="bg-[hsl(var(--neon-green))] text-white text-xs w-fit">
-                    +43.25% accuracy
-                  </Badge>
-                </div>
-                {showOptionalFields ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="pt-4">
-              <div className="bg-gradient-to-r from-[hsl(var(--neon-green))/10] to-[hsl(var(--hot-pink))/10] rounded-lg p-4 border border-[hsl(var(--neon-green))/20]">
-
-              <div className="space-y-4">
-              {/* Target Audience - Free text with suggestions */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Target audience</label>
-                <Input
-                  placeholder="e.g., Busy parents with young children"
-                  value={targetAudience}
-                  onChange={(e) => setTargetAudience(e.target.value)}
-                  data-testid="input-custom-audience"
-                  className="text-sm"
-                />
-                <div className="flex gap-2 flex-wrap">
-                  {["Gen-Z freelancers", "New parents", "SMBs", "College students", "Remote workers"].map((suggestion) => (
-                    <Button
-                      key={suggestion}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setTargetAudience(suggestion)}
-                      className="text-xs"
-                    >
-                      {suggestion}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Industry */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Industry</label>
-                  <Select value={industry} onValueChange={setIndustry}>
-                    <SelectTrigger data-testid="select-industry">
-                      <SelectValue placeholder="Select your industry" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {industries.map((ind) => (
-                        <SelectItem key={ind} value={ind}>
-                          {ind}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Geography */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Target geography</label>
-                  <Select value={country} onValueChange={setCountry}>
-                    <SelectTrigger data-testid="select-country">
-                      <SelectValue placeholder="Select target country" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {countries.map((country) => (
-                        <SelectItem key={country} value={country.toLowerCase().replace(/ /g, '-')}>
-                          {country}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-4">
-                {/* Platform */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Platform</label>
-                  <Select value={platform} onValueChange={(value: "web-app" | "mobile-app" | "both") => setPlatform(value)}>
-                    <SelectTrigger data-testid="select-platform">
-                      <SelectValue placeholder="Select platform" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="web-app">Web App</SelectItem>
-                      <SelectItem value="mobile-app">Mobile App</SelectItem>
-                      <SelectItem value="both">Both</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-              </div>
-
-              <div className="grid grid-cols-1 gap-4">
-                {/* Time Range - Fixed to 12 months for optimal insights */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Analysis time range</label>
-                  <div className="px-3 py-2 bg-muted/50 border border-border rounded-md text-sm text-muted-foreground flex items-center gap-2" data-testid="text-time-range">
-                    <BarChart3 className="h-4 w-4" />
-                    Past 12 months (optimal for trend analysis)
-                  </div>
-                </div>
-
-                {/* Main Goal */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Main goal</label>
-                  <Select value={goal} onValueChange={setGoal}>
-                    <SelectTrigger data-testid="select-goal">
-                      <SelectValue placeholder="Select main goal" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="validate-demand">Validate demand</SelectItem>
-                      <SelectItem value="find-competitors">Find competitors</SelectItem>
-                      <SelectItem value="understand-pain-points">Understand pain points</SelectItem>
-                      <SelectItem value="identify-features">Identify key features</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+          {/* Optional fields - always visible, no accordion */}
+          <div className="space-y-4 bg-muted/30 rounded-lg p-4 border border-border/50">
+            {/* Target Audience - Free text with suggestions */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Target audience (optional)</label>
+              <Input
+                placeholder="e.g., Busy parents with young children"
+                value={targetAudience}
+                onChange={(e) => setTargetAudience(e.target.value)}
+                data-testid="input-custom-audience"
+                className="text-sm"
+              />
+              <div className="flex gap-2 flex-wrap">
+                {["Gen-Z freelancers", "New parents", "SMBs", "College students", "Remote workers"].map((suggestion) => (
+                  <Button
+                    key={suggestion}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setTargetAudience(suggestion)}
+                    className="text-xs"
+                  >
+                    {suggestion}
+                  </Button>
+                ))}
               </div>
             </div>
-            </CollapsibleContent>
-            </Collapsible>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Industry */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Industry</label>
+                <Select value={industry} onValueChange={setIndustry}>
+                  <SelectTrigger data-testid="select-industry">
+                    <SelectValue placeholder="Select your industry" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {industries.map((ind) => (
+                      <SelectItem key={ind} value={ind}>
+                        {ind}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Geography */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Target geography</label>
+                <Select value={country} onValueChange={setCountry}>
+                  <SelectTrigger data-testid="select-country">
+                    <SelectValue placeholder="Select target country" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {countries.map((country) => (
+                      <SelectItem key={country} value={country.toLowerCase().replace(/ /g, '-')}>
+                        {country}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4">
+              {/* Platform */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Platform</label>
+                <Select value={platform} onValueChange={(value: "web-app" | "mobile-app" | "both") => setPlatform(value)}>
+                  <SelectTrigger data-testid="select-platform">
+                    <SelectValue placeholder="Select platform" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="web-app">Web App</SelectItem>
+                    <SelectItem value="mobile-app">Mobile App</SelectItem>
+                    <SelectItem value="both">Both</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4">
+              {/* Time Range - Fixed to 12 months for optimal insights */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Analysis time range</label>
+                <div className="px-3 py-2 bg-muted/50 border border-border rounded-md text-sm text-muted-foreground flex items-center gap-2" data-testid="text-time-range">
+                  <BarChart3 className="h-4 w-4" />
+                  Past 12 months (optimal for trend analysis)
+                </div>
+              </div>
+
+              {/* Main Goal */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Main goal</label>
+                <Select value={goal} onValueChange={setGoal}>
+                  <SelectTrigger data-testid="select-goal">
+                    <SelectValue placeholder="Select main goal" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="validate-demand">Validate demand</SelectItem>
+                    <SelectItem value="find-competitors">Find competitors</SelectItem>
+                    <SelectItem value="understand-pain-points">Understand pain points</SelectItem>
+                    <SelectItem value="identify-features">Identify key features</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
 
           {!showEmailCapture && !analyzeIdeaMutation.isPending && (
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
