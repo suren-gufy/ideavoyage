@@ -251,6 +251,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       // Health check (default GET)
       const hasOpenAIKey = process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.trim().length > 0;
+      const hasPerplexityKey = process.env.PERPLEXITY_API_KEY && process.env.PERPLEXITY_API_KEY.trim().length > 0;
+      const hasAIKey = hasOpenAIKey || hasPerplexityKey;
       
       // Test Reddit API connectivity
       let redditTest = 'unknown';
@@ -301,7 +303,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       
       return res.json({
         message: 'IdeaVoyage API live',
-        mode: hasOpenAIKey ? 'enhanced' : 'heuristic',
+        mode: hasAIKey ? 'enhanced' : 'heuristic',
+        ai_available: hasAIKey,
+        perplexity_available: hasPerplexityKey,
         openai_available: hasOpenAIKey,
         reddit_test: redditTest,
         reddit_oauth_available: !!(process.env.REDDIT_CLIENT_ID && process.env.REDDIT_CLIENT_SECRET),
@@ -995,9 +999,11 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
   // 4. Optional OpenAI enrichment (key and package both required)
   let enriched: Partial<ReturnType<typeof buildBaseResponse>> | null = null;
   const hasOpenAIKey = !!process.env.OPENAI_API_KEY?.trim();
-  console.log('🤖 OpenAI check - has key:', hasOpenAIKey, 'key length:', process.env.OPENAI_API_KEY?.length || 0);
+  const hasPerplexityKey = !!process.env.PERPLEXITY_API_KEY?.trim();
+  const hasAIKey = hasOpenAIKey || hasPerplexityKey;
+  console.log('🤖 AI check - OpenAI:', hasOpenAIKey, 'Perplexity:', hasPerplexityKey, 'Any AI:', hasAIKey);
   
-  if (hasOpenAIKey) {
+  if (hasAIKey) {
     // Try dynamic import and init of OpenAI client
     let openaiClient: any = null;
     try {
@@ -1266,6 +1272,8 @@ Focus on depth over breadth - better to have 2 deeply researched competitors tha
     aiGeneratedPosts: aiGeneratedPosts.length,
     sampleTitles: finalPostsUsed.slice(0,5).map((p: any) => p.title || String(p)),
     enriched: !!enriched, 
+    ai_available: hasAIKey,
+    perplexity_available: hasPerplexityKey,
     openai_available: hasOpenAIKey,
     reddit_oauth_used: usedOAuth,
     reddit_creds_available: hasRedditCreds,
@@ -1282,22 +1290,24 @@ Focus on depth over breadth - better to have 2 deeply researched competitors tha
   };
   // Set transparency indicators based on data sources
   if (realPostsOnly.length === 0) {
-    if (enriched && hasOpenAIKey) {
+    if (enriched && hasAIKey) {
       (response as any).analysis_confidence = 'ai_enhanced';
       (response as any).data_source = 'ai_synthetic';  
-      (response as any).notes = '🤖 AI-ENHANCED ANALYSIS: Using GPT-4o-mini for sophisticated market validation. Real Reddit data would enhance accuracy further.';
-      (response as any).upgrade_message = '� Pro Tip: Reddit OAuth + OpenAI = Ultimate market insights! Set up Reddit API for even deeper analysis.';
+      const aiProvider = hasPerplexityKey ? 'Perplexity AI' : 'GPT-4o-mini';
+      (response as any).notes = `🤖 AI-ENHANCED ANALYSIS: Using ${aiProvider} for sophisticated market validation. Real Reddit data would enhance accuracy further.`;
+      (response as any).upgrade_message = '🔥 Pro Tip: Reddit OAuth + AI = Ultimate market insights! Set up Reddit API for even deeper analysis.';
     } else {
       (response as any).analysis_confidence = 'demo_mode';
       (response as any).data_source = 'synthetic_only';
-      (response as any).notes = '⚠️ BASIC MODE: Using heuristic analysis. Enable OpenAI + Reddit OAuth for premium insights.';
-      (response as any).upgrade_message = '🔑 Unlock AI-powered analysis! Add OpenAI API key and Reddit OAuth for real market intelligence.';
+      (response as any).notes = '⚠️ BASIC MODE: Using heuristic analysis. Enable Perplexity/OpenAI + Reddit OAuth for premium insights.';
+      (response as any).upgrade_message = '🔑 Unlock AI-powered analysis! Add Perplexity or OpenAI API key and Reddit OAuth for real market intelligence.';
     }
-  } else if (realPostsOnly.length > 0 && enriched && hasOpenAIKey) {
+  } else if (realPostsOnly.length > 0 && enriched && hasAIKey) {
     // This is the premium experience: Real Reddit data + AI analysis
     (response as any).analysis_confidence = 'premium_enhanced';
     (response as any).data_source = 'reddit_plus_ai';
-    (response as any).notes = `� PREMIUM ANALYSIS: Combining ${realPostsOnly.length} real Reddit discussions with GPT-4o-mini intelligence for maximum accuracy.`;
+    const aiProvider = hasPerplexityKey ? 'Perplexity AI' : 'GPT-4o-mini';
+    (response as any).notes = `🔥 PREMIUM ANALYSIS: Combining ${realPostsOnly.length} real Reddit discussions with ${aiProvider} intelligence for maximum accuracy.`;
     (response as any).upgrade_message = '✨ You\'re getting the best possible analysis! Real data + AI insights = Market validation gold standard.';
   } else if (realPostsOnly.length < 4) {
     (response as any).analysis_confidence = 'low';
