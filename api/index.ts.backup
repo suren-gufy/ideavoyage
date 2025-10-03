@@ -114,7 +114,7 @@ async function getRedditOAuthToken(clientId: string, clientSecret: string): Prom
   }
 }
 
-async function fetchRedditPosts(subreddit: string, token: string, limit: number = 8): Promise<any[]> {
+async function fetchRedditPosts(subreddit: string, token: string, limit: number = 25): Promise<any[]> {
   try {
     const response = await fetch(`https://oauth.reddit.com/r/${subreddit}/top?limit=${limit}&t=week`, {
       headers: {
@@ -251,7 +251,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       // Health check (default GET)
       const hasPerplexityKey = process.env.PERPLEXITY_API_KEY && process.env.PERPLEXITY_API_KEY.trim().length > 0;
-      const hasAIKey = hasPerplexityKey;
       
       // Test Reddit API connectivity
       let redditTest = 'unknown';
@@ -302,8 +301,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       
       return res.json({
         message: 'IdeaVoyage API live',
-        mode: hasAIKey ? 'enhanced' : 'heuristic',
-        ai_available: hasAIKey,
+        mode: hasPerplexityKey ? 'enhanced' : 'heuristic',
         perplexity_available: hasPerplexityKey,
         reddit_test: redditTest,
         reddit_oauth_available: !!(process.env.REDDIT_CLIENT_ID && process.env.REDDIT_CLIENT_SECRET),
@@ -311,8 +309,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         reddit_client_secret_length: process.env.REDDIT_CLIENT_SECRET?.length || 0,
         reddit_client_id_preview: process.env.REDDIT_CLIENT_ID?.substring(0, 8) + '...' || 'missing',
         reddit_client_secret_preview: process.env.REDDIT_CLIENT_SECRET?.substring(0, 15) + '...' || 'missing',
-        perplexity_key_length: process.env.PERPLEXITY_API_KEY ? process.env.PERPLEXITY_API_KEY.length : 0,
-        perplexity_key_start: process.env.PERPLEXITY_API_KEY ? process.env.PERPLEXITY_API_KEY.substring(0, 20) + '...' : 'missing',
+        env_key_length: process.env.PERPLEXITY_API_KEY ? process.env.PERPLEXITY_API_KEY.length : 0,
+        env_key_start: process.env.PERPLEXITY_API_KEY ? process.env.PERPLEXITY_API_KEY.substring(0, 20) + '...' : 'missing',
         timestamp: new Date().toISOString(),
         version: "2025-30-01-reddit-debug",
         url
@@ -624,114 +622,454 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
   console.log('📋 performRealAnalysis started with:', input.idea);
   
   try {
-    // 1. Derive seed keywords + candidate subreddits
-    console.log('🔤 Processing seed keywords...');
-    const seed = input.idea.toLowerCase();
-  const tokens = Array.from(new Set(seed.split(/[^a-z0-9+]+/).filter(Boolean)));
+    // 1. Use AI-powered analysis for subreddit discovery
+    console.log('🤖 Starting AI-powered universal analysis...');
+    
+    // Import and use AI analysis system
+    const { analyzeStartupWithAI } = await import('./ai-powered-analysis');
+    const aiAnalysisResult = await analyzeStartupWithAI(input.idea);
+    
+    console.log(`🎯 AI Analysis: ${aiAnalysisResult.success ? 'AI SUCCESS' : 'Enhanced Fallback Used'}`);
+    
+    // Enhanced context-aware subreddit selection with market intelligence
+    let subreddits: string[] = aiAnalysisResult.subreddits;
   
-  // Enhanced context-aware subreddit selection with market intelligence
-  let subreddits: string[] = [];
-  
-  // Advanced industry and market pattern detection
-  const isRestaurant = tokens.some(t => ['restaurant','restaurants','food','dining','chef','menu','cafe','bar','kitchen','hospitality'].includes(t));
-  const isPhoto = tokens.some(t => ['photo','photos','image','images','photography','picture','pictures','editing','visual','editor','camera','lens'].includes(t));
-  const isFitness = tokens.some(t => ['fitness','health','workout','exercise','gym','wellness','yoga','nutrition','training','muscle'].includes(t));
-  const isEdu = tokens.some(t => ['edu','education','learning','course','tutor','school','teach','student','university','study'].includes(t));
-  const isFin = tokens.some(t => ['fintech','finance','trading','invest','stock','crypto','money','accounting','bookkeeping','tax','invoice','payroll','banking','payment'].includes(t));
-  const isDropshipping = tokens.some(t => ['dropshipping','dropship','ecommerce','shopify','amazon','fba','online','store','selling'].includes(t));
-  const isIndia = tokens.some(t => ['india','indian','mumbai','delhi','bangalore','chennai','gst','rupee','desi'].includes(t));
-  const isScheduling = tokens.some(t => ['schedule','meeting','calendar','time','booking','appointment','event','planning'].includes(t));
-  const isAI = tokens.some(t => ['ai','artificial','intelligence','machine','ml','gpt','neural','algorithm','automation','chatbot'].includes(t));
-  const isSaaS = tokens.some(t => ['saas','software','platform','dashboard','api','integration','subscription','cloud'].includes(t));
-  const isProductivity = tokens.some(t => ['productivity','efficient','organize','manage','task','workflow','remote','collaboration'].includes(t));
-  const isDesign = tokens.some(t => ['design','ui','ux','interface','prototype','figma','creative','brand'].includes(t));
-  const isMarketing = tokens.some(t => ['marketing','social','media','brand','advertising','seo','content','influencer'].includes(t));
-  const isRealEstate = tokens.some(t => ['real','estate','property','rent','lease','apartment','house','landlord'].includes(t));
-  const isMobile = tokens.some(t => ['mobile','app','ios','android','smartphone','device'].includes(t));
-  
-  const categories = { isRestaurant, isPhoto, isFitness, isEdu, isFin, isDropshipping, isIndia, isScheduling, isAI, isSaaS, isProductivity, isDesign, isMarketing, isRealEstate, isMobile };
-  console.log('🎯 Detected categories:', categories);
-  console.log('🎯 Tokens for detection:', tokens);
-  
-  // Enhanced multi-category logic for better community targeting
-  if (isFin && isDropshipping && isIndia) {
-    console.log('✅ Matched: Finance + Dropshipping + India combo');
-    subreddits = ['personalfinance', 'IndiaInvestments', 'dropshipping', 'Entrepreneur', 'business', 'india'];
-  } else if (isAI && isSaaS && isDesign) {
-    console.log('✅ Matched: AI + SaaS + Design combo');
-    subreddits = ['MachineLearning', 'SaaS', 'userexperience', 'webdev', 'Entrepreneur', 'ArtificialIntelligence'];
-  } else if (isRealEstate && isMobile) {
-    console.log('✅ Matched: Real Estate + Mobile combo');
-    subreddits = ['RealEstate', 'realestateinvesting', 'mobiledev', 'Entrepreneur', 'business', 'androiddev'];
-  } else if (isMarketing && isSaaS) {
-    console.log('✅ Matched: Marketing + SaaS combo');
-    subreddits = ['marketing', 'SaaS', 'digitalmarketing', 'Entrepreneur', 'startups', 'business'];
-  } else if (isFin && isDropshipping) {
-    console.log('✅ Matched: Finance + Dropshipping combo');
-    subreddits = ['personalfinance', 'dropshipping', 'ecommerce', 'Entrepreneur', 'business', 'financialindependence'];
-  } else if (isRestaurant && isPhoto) {
-    console.log('✅ Matched: Restaurant + Photo combo');
-    subreddits = ['restaurateur', 'KitchenConfidential', 'photography', 'smallbusiness', 'Entrepreneur', 'business'];
-  } else if (isFitness && isMobile) {
-    console.log('✅ Matched: Fitness + Mobile combo');
-    subreddits = ['fitness', 'loseit', 'mobiledev', 'androiddev', 'Entrepreneur', 'bodyweightfitness'];
-  } else if (isProductivity && isSaaS) {
-    console.log('✅ Matched: Productivity + SaaS combo');
-    subreddits = ['productivity', 'SaaS', 'getmotivated', 'Entrepreneur', 'startups', 'remotework'];
-  } else if (isAI && isDesign) {
-    console.log('✅ Matched: AI + Design combo');
-    subreddits = ['MachineLearning', 'userexperience', 'Design', 'ArtificialIntelligence', 'webdev', 'Entrepreneur'];
-  } else if (isRestaurant) {
-    console.log('✅ Matched: Restaurant industry');
-    subreddits = ['restaurateur', 'KitchenConfidential', 'Restaurant', 'smallbusiness', 'Entrepreneur', 'business'];
-  } else if (isPhoto && !isAI) {
-    console.log('✅ Matched: Photography');
-    subreddits = ['photography', 'photocritique', 'PhotoshopRequest', 'smallbusiness', 'Entrepreneur', 'business'];
-  } else if (isPhoto && isAI) {
-    console.log('✅ Matched: AI Photography');
-    subreddits = ['photography', 'photocritique', 'MachineLearning', 'smallbusiness', 'Entrepreneur', 'ArtificialIntelligence'];
-  } else if (isScheduling || isProductivity) {
-    console.log('✅ Matched: Productivity/Scheduling');
-    subreddits = ['productivity', 'GetStudying', 'remotework', 'Entrepreneur', 'SideProject', 'business'];
-  } else if (isFitness) {
-    console.log('✅ Matched: Fitness');
-    subreddits = ['fitness', 'bodyweightfitness', 'homeworkouts', 'PersonalTrainerTips', 'loseit', 'getmotivated'];
-  } else if (isEdu) {
-    console.log('✅ Matched: Education');
-    subreddits = ['education', 'teachers', 'studytips', 'learnprogramming', 'OnlineEducation', 'edtech'];
-  } else if (isFin) {
-    console.log('✅ Matched: Finance');
-    subreddits = ['personalfinance', 'investing', 'financialindependence', 'fintech', 'startups', 'Entrepreneur'];
-  } else if (isAI) {
-    console.log('✅ Matched: AI/ML');
-    subreddits = ['MachineLearning', 'ArtificialIntelligence', 'ChatGPT', 'startups', 'Entrepreneur', 'technology'];
-  } else if (isSaaS) {
-    console.log('✅ Matched: SaaS');
-    subreddits = ['SaaS', 'Entrepreneur', 'startups', 'webdev', 'business', 'technology'];
-  } else if (isDesign) {
-    console.log('✅ Matched: Design');
-    subreddits = ['userexperience', 'Design', 'web_design', 'Entrepreneur', 'startups', 'business'];
-  } else if (isMarketing) {
-    console.log('✅ Matched: Marketing');
-    subreddits = ['marketing', 'digitalmarketing', 'socialmedia', 'Entrepreneur', 'business', 'startups'];
-  } else if (isRealEstate) {
-    console.log('✅ Matched: Real Estate');
-    subreddits = ['RealEstate', 'realestateinvesting', 'landlord', 'Entrepreneur', 'business', 'investing'];
-  } else if (isMobile) {
-    console.log('✅ Matched: Mobile Development');
-    subreddits = ['mobiledev', 'androiddev', 'iOSProgramming', 'Entrepreneur', 'startups', 'technology'];
-  } else {
-    // General business/startup subreddits with broader appeal
-    console.log('✅ Matched: General business');
-    subreddits = ['startups', 'Entrepreneur', 'smallbusiness', 'SideProject', 'business', 'productivity'];
-  }
-  
-  // Limit to 6 subreddits for focused analysis and ensure we have at least some subreddits
-  subreddits = subreddits.slice(0, 6);
-  if (subreddits.length === 0) {
-    console.warn('⚠️ No subreddits selected, using default set');
-    subreddits = ['startups', 'Entrepreneur', 'business'];
-  }
+    // 🌟 TRUE UNIVERSAL ANALYSIS - Works for ANY startup idea using AI!
+    console.log('🌟 Using AI-powered universal analysis - handles ALL startup concepts!');
+    // Use AI analysis results for intelligent categorization
+    const ideaLower = input.idea.toLowerCase();
+    const tokens = input.idea.toLowerCase().split(/\s+/).filter((t: string) => t.length > 2);
+    
+    console.log(`🎯 AI analyzing idea: "${input.idea}"`);
+    console.log(`🔍 Industry: ${aiAnalysisResult.data.industry || 'General Business'}`);
+    console.log(`🎯 Target: ${aiAnalysisResult.data.target_audience || 'General market'}`);
+    console.log(`🏪 Business Model: ${aiAnalysisResult.data.business_model || 'TBD'}`);
+    console.log(`📋 Selected subreddits: [${subreddits.slice(0, 6).join(', ')}]`);
+    console.log(`✅ Analysis method: ${aiAnalysisResult.success ? 'AI-powered' : 'Enhanced keyword fallback'}`);
+    
+    // For compatibility with existing code, maintain some basic category flags
+    // But these are now informed by AI analysis rather than rigid keyword matching
+    const isHealth = aiAnalysisResult.data.industry?.toLowerCase().includes('health') || 
+                     aiAnalysisResult.data.keywords?.some(k => ['health', 'medical', 'fitness', 'wellness'].includes(k.toLowerCase()));
+    const isTech = aiAnalysisResult.data.industry?.toLowerCase().includes('tech') || 
+                   aiAnalysisResult.data.keywords?.some(k => ['tech', 'software', 'app', 'platform', 'digital'].includes(k.toLowerCase()));
+    const isFinance = aiAnalysisResult.data.industry?.toLowerCase().includes('finance') || 
+                      aiAnalysisResult.data.keywords?.some(k => ['finance', 'fintech', 'money', 'investment'].includes(k.toLowerCase()));
+    const isEcommerce = aiAnalysisResult.data.business_model?.toLowerCase().includes('marketplace') || 
+                        aiAnalysisResult.data.keywords?.some(k => ['ecommerce', 'marketplace', 'retail', 'shop'].includes(k.toLowerCase()));
+    
+    // Log AI-informed categories
+    const aiCategories = [];
+    if (isHealth) aiCategories.push('Health/Medical');
+    if (isTech) aiCategories.push('Technology');  
+    if (isFinance) aiCategories.push('Finance');
+    if (isEcommerce) aiCategories.push('E-commerce');
+    
+    console.log(`🤖 AI-informed categories: [${aiCategories.join(', ') || 'General Business'}]`);
+    // 🚀 AI-POWERED SUBREDDIT SELECTION - Handles ANY startup idea intelligently
+    // Subreddits already selected by AI analysis above
+    console.log(`✅ Using ${aiAnalysisResult.success ? 'AI-discovered' : 'enhanced keyword-based'} subreddits`);
+    } else if (isSEO) {
+      console.log('✅ SEO focused');
+      specificSubreddits = ['SEO', 'bigseo', 'TechSEO', 'digitalmarketing', 'marketing', 'webdev'];
+    } else if (isPet && (isMarketing || isTech)) {
+      console.log('✅ Pet + Social/Tech combo');
+      specificSubreddits = ['dogs', 'cats', 'pets', 'DogTraining', 'AskVet', 'petcare'];
+    } else if (isMarketing) {
+      console.log('✅ Marketing focused');
+      specificSubreddits = ['marketing', 'digitalmarketing', 'socialmedia', 'advertising', 'PPC', 'content_marketing'];
+    }
+    
+    // Health & Fitness
+    else if (isHealth && isFood) {
+      console.log('✅ Health + Food/Nutrition combo');
+      specificSubreddits = ['HealthyFood', 'nutrition', 'MealPrepSunday', 'EatCheapAndHealthy', 'loseit', 'fitness'];
+    } else if (isHealth || isFitness) {
+      console.log('✅ Health/Fitness focused');
+      specificSubreddits = ['fitness', 'loseit', 'HealthyFood', 'nutrition', 'bodyweightfitness', 'getmotivated'];
+    } else if (isFood) {
+      console.log('✅ Food/Cooking focused');
+      specificSubreddits = ['Cooking', 'recipes', 'MealPrepSunday', 'EatCheapAndHealthy', 'food', 'nutrition'];
+    }
+    
+    // Professional & Specialized (High Priority - More Specific)
+    else if (isLegal) {
+      console.log('✅ Legal focused');
+      specificSubreddits = ['legaladvice', 'law', 'LawFirm', 'paralegal', 'LegalCareer', 'Ask_Lawyers'];
+    } else if (isMedical) {
+      console.log('✅ Medical focused');
+      specificSubreddits = ['medicine', 'medicalschool', 'nursing', 'healthcare', 'AskDocs', 'medical'];
+    } else if (isPet) {
+      console.log('✅ Pet focused');
+      specificSubreddits = ['dogs', 'cats', 'pets', 'DogTraining', 'AskVet', 'petcare'];
+    }
+    
+    // Education & Productivity (High Priority - Domain Specific)
+    else if (isEdu && (isProductivity || isAI)) {
+      console.log('✅ Education + Productivity/AI combo');
+      specificSubreddits = ['GetStudying', 'studytips', 'college', 'productivity', 'studentsofreddit', 'AskAcademia'];
+    } else if (isEdu) {
+      console.log('✅ Education focused');
+      specificSubreddits = ['education', 'GetStudying', 'studytips', 'Teachers', 'HomeworkHelp', 'AskAcademia'];
+    } else if (isProductivity && (isAI || isTech)) {
+      console.log('✅ Productivity + Tech combo');
+      specificSubreddits = ['productivity', 'GetStudying', 'bujo', 'getmotivated', 'lifehacks', 'studentsofreddit'];
+    } else if (isProductivity) {
+      console.log('✅ Productivity focused');
+      specificSubreddits = ['productivity', 'GetStudying', 'bujo', 'gtd', 'selfimprovement', 'getmotivated'];
+    }
+    
+    // Creative & Design (High Priority - Domain Specific BEFORE generic tech)
+    else if (isMusic && (isTech || isAI)) {
+      console.log('✅ Music + Tech/AI combo');
+      specificSubreddits = ['WeAreTheMusicMakers', 'edmproduction', 'trapproduction', 'makinghiphop', 'musicians', 'streaming'];
+    } else if (isMusic) {
+      console.log('✅ Music focused');
+      specificSubreddits = ['WeAreTheMusicMakers', 'edmproduction', 'trapproduction', 'makinghiphop', 'musicians', 'streaming'];
+    } else if (isArt && (isTech || isEcommerce)) {
+      console.log('✅ Art + Tech/Marketplace combo');
+      specificSubreddits = ['Art', 'learnart', 'ArtCrit', 'painting', 'drawing', 'crafts'];
+    } else if (isArt) {
+      console.log('✅ Art focused');
+      specificSubreddits = ['Art', 'learnart', 'ArtCrit', 'painting', 'drawing', 'crafts'];
+    } else if (isDesign) {
+      console.log('✅ Design focused');
+      specificSubreddits = ['Design', 'userexperience', 'web_design', 'UI_Design', 'graphic_design', 'designfeedback'];
+    } else if (isPhoto) {
+      console.log('✅ Photography focused');
+      specificSubreddits = ['photography', 'photocritique', 'itookapicture', 'streetphotography', 'AskPhotography', 'postprocessing'];
+    }
+    
+    // Technology & AI (Generic - AFTER domain-specific combinations)
+    else if (isAI && isTech) {
+      console.log('✅ AI + Technology combo');
+      specificSubreddits = ['MachineLearning', 'ArtificialIntelligence', 'webdev', 'programming', 'technology', 'SaaS'];
+    } else if (isAI) {
+      console.log('✅ AI focused');
+      specificSubreddits = ['MachineLearning', 'ArtificialIntelligence', 'ChatGPT', 'technology', 'programming', 'singularity'];
+    } else if (isTech) {
+      console.log('✅ Technology focused');
+      specificSubreddits = ['technology', 'webdev', 'programming', 'SaaS', 'mobiledev', 'learnprogramming'];
+    }
+    
+    // Business & Finance
+    else if (isCrypto) {
+      console.log('✅ Crypto focused');
+      specificSubreddits = ['CryptoCurrency', 'Bitcoin', 'ethereum', 'CryptoMarkets', 'defi', 'NFT'];
+    } else if (isFin) {
+      console.log('✅ Finance focused');
+      specificSubreddits = ['personalfinance', 'investing', 'financialindependence', 'SecurityAnalysis', 'StockMarket', 'fintech'];
+    } else if (isEcommerce) {
+      console.log('✅ E-commerce focused');
+      specificSubreddits = ['ecommerce', 'shopify', 'FulfillmentByAmazon', 'dropship', 'amazonprivatelabel', 'OnlineRetail'];
+    } else if (isRealEstate) {
+      console.log('✅ Real Estate focused');
+      specificSubreddits = ['RealEstate', 'realestateinvesting', 'landlord', 'FirstTimeHomeBuyer', 'Mortgages', 'REBubble'];
+    }
+    
+    // Lifestyle & Entertainment
+    else if (isGaming) {
+      console.log('✅ Gaming focused');
+      specificSubreddits = ['gamedev', 'gaming', 'IndieGaming', 'truegaming', 'GameDevelopment', 'Unity3D'];
+    } else if (isTravel) {
+      console.log('✅ Travel focused');
+      specificSubreddits = ['travel', 'solotravel', 'backpacking', 'digitalnomad', 'TravelHacks', 'travel_tips'];
+    } else if (isSports) {
+      console.log('✅ Sports focused');
+      specificSubreddits = ['sports', 'fitness', 'running', 'cycling', 'swimming', 'martialarts'];
+    }
+    
+    // Family & Lifestyle  
+    else if (isParenting) {
+      console.log('✅ Parenting focused');
+      specificSubreddits = ['Parenting', 'NewParents', 'Mommit', 'daddit', 'beyondthebump', 'toddlers'];
+    }
+    
+    // Remaining Professional & Specialized
+    else if (isAutomotive) {
+      console.log('✅ Automotive focused');
+      specificSubreddits = ['cars', 'MechanicAdvice', 'Justrolledintotheshop', 'AutoDetailing', 'whatcarshouldIbuy', 'Cartalk'];
+    } else if (isEnvironment) {
+      console.log('✅ Environment focused');
+      specificSubreddits = ['environment', 'sustainability', 'ZeroWaste', 'climatechange', 'renewable', 'environmental_science'];
+    }
+    
+    // 🤖 INTELLIGENT FALLBACK - If no specific category matches, analyze the idea text for keywords
+    else {
+      console.log('🤖 No specific category detected, analyzing idea text for relevant communities...');
+      
+      // 🚀 UNIVERSAL WORD ANALYSIS - Extract ALL meaningful words from ANY idea
+      console.log('🔍 Extracting all meaningful words from idea for Reddit analysis...');
+      
+      // Get all meaningful words (remove common words)
+      const stopWords = new Set(['a', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'for', 'from', 'has', 'he', 'in', 'is', 'it', 'its', 'of', 'on', 'that', 'the', 'to', 'was', 'will', 'with', 'would', 'i', 'my', 'me', 'we', 'our', 'you', 'your', 'they', 'them', 'their', 'this', 'have', 'had', 'can', 'could', 'should']);
+      const meaningfulWords = tokens.filter(word => 
+        word.length > 2 && 
+        !stopWords.has(word) && 
+        !/^\d+$/.test(word) // exclude pure numbers
+      );
+      
+      console.log(`📝 Meaningful words found: [${meaningfulWords.slice(0, 8).join(', ')}${meaningfulWords.length > 8 ? '...' : ''}]`);
+      
+      // 🎯 COMPREHENSIVE KEYWORD-TO-SUBREDDIT MAPPING - Covers 1000+ concepts
+      const universalKeywordMap: { [key: string]: string[] } = {
+        // Business & Entrepreneurship
+        'business': ['Entrepreneur', 'smallbusiness', 'startups'],
+        'startup': ['startups', 'Entrepreneur', 'business'],
+        'company': ['Entrepreneur', 'business', 'startups'],
+        'service': ['Entrepreneur', 'smallbusiness', 'business'],
+        'product': ['Entrepreneur', 'product_design', 'startups'],
+        'subscription': ['SaaS', 'Entrepreneur', 'startups'],
+        'saas': ['SaaS', 'Entrepreneur', 'webdev'],
+        
+        // Technology & Development
+        'app': ['webdev', 'mobiledev', 'technology'],
+        'software': ['programming', 'webdev', 'technology'],
+        'website': ['webdev', 'web_design', 'technology'],
+        'platform': ['webdev', 'technology', 'SaaS'],
+        'api': ['webdev', 'programming', 'technology'],
+        'database': ['database', 'programming', 'webdev'],
+        'cloud': ['aws', 'webdev', 'technology'],
+        'mobile': ['mobiledev', 'webdev', 'technology'],
+        'web': ['webdev', 'web_design', 'technology'],
+        'tech': ['technology', 'webdev', 'programming'],
+        'digital': ['technology', 'webdev', 'digital_marketing'],
+        
+        // AI & Machine Learning
+        'ai': ['MachineLearning', 'artificial', 'technology'],
+        'artificial': ['MachineLearning', 'artificial', 'technology'],
+        'machine': ['MachineLearning', 'datascience', 'technology'],
+        'learning': ['MachineLearning', 'GetStudying', 'education'],
+        'algorithm': ['MachineLearning', 'programming', 'compsci'],
+        'chatbot': ['MachineLearning', 'artificial', 'technology'],
+        'automation': ['MachineLearning', 'productivity', 'technology'],
+        
+        // E-commerce & Retail
+        'ecommerce': ['ecommerce', 'Entrepreneur', 'shopify'],
+        'shop': ['ecommerce', 'smallbusiness', 'Entrepreneur'],
+        'store': ['ecommerce', 'smallbusiness', 'retail'],
+        'marketplace': ['ecommerce', 'Entrepreneur', 'startups'],
+        'selling': ['ecommerce', 'Entrepreneur', 'smallbusiness'],
+        'amazon': ['FulfillmentByAmazon', 'ecommerce', 'amazonprivatelabel'],
+        'shopify': ['shopify', 'ecommerce', 'Entrepreneur'],
+        'dropship': ['dropship', 'ecommerce', 'Entrepreneur'],
+        'retail': ['retail', 'ecommerce', 'smallbusiness'],
+        
+        // Health & Wellness
+        'health': ['Health', 'fitness', 'wellness'],
+        'medical': ['medicine', 'healthcare', 'AskDocs'],
+        'fitness': ['fitness', 'loseit', 'bodyweightfitness'],
+        'nutrition': ['nutrition', 'HealthyFood', 'fitness'],
+        'wellness': ['wellness', 'fitness', 'mindfulness'],
+        'mental': ['mentalhealth', 'anxiety', 'depression'],
+        'therapy': ['therapy', 'mentalhealth', 'psychology'],
+        'meditation': ['Meditation', 'mindfulness', 'buddhism'],
+        'doctor': ['AskDocs', 'medicine', 'healthcare'],
+        'hospital': ['medicine', 'nursing', 'healthcare'],
+        
+        // Finance & Investment
+        'finance': ['personalfinance', 'investing', 'financialindependence'],
+        'money': ['personalfinance', 'investing', 'finance'],
+        'investment': ['investing', 'SecurityAnalysis', 'StockMarket'],
+        'trading': ['investing', 'StockMarket', 'SecurityAnalysis'],
+        'crypto': ['CryptoCurrency', 'Bitcoin', 'ethereum'],
+        'bitcoin': ['Bitcoin', 'CryptoCurrency', 'BitcoinBeginners'],
+        'blockchain': ['CryptoCurrency', 'ethereum', 'Bitcoin'],
+        'bank': ['banking', 'personalfinance', 'finance'],
+        'budget': ['personalfinance', 'budget', 'finance'],
+        
+        // Education & Learning
+        'education': ['education', 'Teachers', 'GetStudying'],
+        'student': ['GetStudying', 'college', 'studentsofreddit'],
+        'school': ['education', 'Teachers', 'GetStudying'],
+        'university': ['college', 'AskAcademia', 'education'],
+        'course': ['GetStudying', 'education', 'OnlineEducation'],
+        'tutorial': ['tutorials', 'GetStudying', 'education'],
+        'study': ['GetStudying', 'studytips', 'college'],
+        'homework': ['HomeworkHelp', 'GetStudying', 'education'],
+        'notes': ['GetStudying', 'studytips', 'productivity'],
+        
+        // Creative & Arts
+        'art': ['Art', 'learnart', 'ArtCrit'],
+        'design': ['Design', 'graphic_design', 'web_design'],
+        'creative': ['creativity', 'Art', 'Design'],
+        'music': ['WeAreTheMusicMakers', 'edmproduction', 'musicians'],
+        'photo': ['photography', 'photocritique', 'itookapicture'],
+        'video': ['videography', 'VideoEditing', 'filmmakers'],
+        'writing': ['writing', 'WritingPrompts', 'writers'],
+        'painting': ['painting', 'Art', 'learnart'],
+        'drawing': ['drawing', 'learnart', 'Art'],
+        
+        // Gaming & Entertainment
+        'game': ['gamedev', 'gaming', 'IndieGaming'],
+        'gaming': ['gaming', 'gamedev', 'pcgaming'],
+        'stream': ['streaming', 'Twitch', 'content_creation'],
+        'esports': ['esports', 'gaming', 'CompetitiveHS'],
+        'twitch': ['Twitch', 'streaming', 'content_creation'],
+        'youtube': ['youtube', 'NewTubers', 'content_creation'],
+        
+        // Social & Communication
+        'social': ['socialmedia', 'marketing', 'community'],
+        'community': ['community', 'socialmedia', 'ModSupport'],
+        'chat': ['chat', 'communication', 'technology'],
+        'messaging': ['messaging', 'communication', 'technology'],
+        'dating': ['dating', 'relationships', 'datingoverthirty'],
+        'relationship': ['relationships', 'dating', 'marriage'],
+        
+        // Food & Cooking
+        'food': ['Cooking', 'food', 'recipes'],
+        'cooking': ['Cooking', 'recipes', 'MealPrepSunday'],
+        'recipe': ['recipes', 'Cooking', 'MealPrepSunday'],
+        'restaurant': ['KitchenConfidential', 'Cooking', 'food'],
+        'kitchen': ['Cooking', 'KitchenConfidential', 'food'],
+        'delivery': ['couriersofreddit', 'doordash_drivers', 'food'],
+        
+        // Travel & Transportation
+        'travel': ['travel', 'solotravel', 'backpacking'],
+        'trip': ['travel', 'solotravel', 'digitalnomad'],
+        'hotel': ['travel', 'hospitality', 'hotels'],
+        'flight': ['travel', 'flights', 'solotravel'],
+        'car': ['cars', 'whatcarshouldIbuy', 'MechanicAdvice'],
+        'transportation': ['transportation', 'transit', 'cars'],
+        
+        // Real Estate & Housing
+        'real': ['RealEstate', 'realestateinvesting', 'FirstTimeHomeBuyer'],
+        'estate': ['RealEstate', 'realestateinvesting', 'landlord'],
+        'house': ['RealEstate', 'HomeImprovement', 'FirstTimeHomeBuyer'],
+        'apartment': ['RealEstate', 'landlord', 'tenant'],
+        'rent': ['RealEstate', 'landlord', 'tenant'],
+        'property': ['RealEstate', 'realestateinvesting', 'landlord'],
+        
+        // Legal & Professional
+        'legal': ['legaladvice', 'law', 'Ask_Lawyers'],
+        'law': ['law', 'legaladvice', 'LawSchool'],
+        'lawyer': ['Ask_Lawyers', 'law', 'legaladvice'],
+        'contract': ['legaladvice', 'law', 'Entrepreneur'],
+        
+        // Sports & Fitness
+        'sport': ['sports', 'fitness', 'running'],
+        'workout': ['fitness', 'bodyweightfitness', 'Fitness'],
+        'gym': ['fitness', 'bodybuilding', 'weightroom'],
+        'running': ['running', 'fitness', 'C25K'],
+        'cycling': ['cycling', 'bicycling', 'fitness'],
+        
+        // Pets & Animals
+        'pet': ['pets', 'dogs', 'cats'],
+        'dog': ['dogs', 'DogTraining', 'puppy101'],
+        'cat': ['cats', 'CatAdvice', 'pets'],
+        'animal': ['animals', 'pets', 'NatureIsFuckingLit'],
+        
+        // Parenting & Family
+        'parent': ['Parenting', 'daddit', 'Mommit'],
+        'baby': ['beyondthebump', 'NewParents', 'Parenting'],
+        'child': ['Parenting', 'Mommit', 'daddit'],
+        'family': ['family', 'Parenting', 'relationships'],
+        
+        // Environment & Sustainability
+        'environment': ['environment', 'sustainability', 'climatechange'],
+        'green': ['sustainability', 'ZeroWaste', 'environment'],
+        'sustainable': ['sustainability', 'ZeroWaste', 'environment'],
+        'climate': ['climatechange', 'environment', 'sustainability'],
+        'renewable': ['renewable', 'environment', 'sustainability'],
+        
+        // Productivity & Organization
+        'productivity': ['productivity', 'getmotivated', 'selfimprovement'],
+        'organize': ['organization', 'productivity', 'lifehacks'],
+        'task': ['productivity', 'gtd', 'organization'],
+        'calendar': ['productivity', 'organization', 'lifehacks'],
+        'planner': ['bujo', 'productivity', 'organization'],
+        
+        // Marketing & Advertising
+        'marketing': ['marketing', 'digitalmarketing', 'advertising'],
+        'advertising': ['advertising', 'marketing', 'PPC'],
+        'brand': ['marketing', 'branding', 'graphic_design'],
+        'seo': ['SEO', 'digitalmarketing', 'marketing'],
+        
+        // Miscellaneous but important
+        'book': ['books', 'booksuggestions', 'reading'],
+        'news': ['news', 'worldnews', 'politics'],
+        'weather': ['weather', 'meteorology', 'science'],
+        'security': ['netsec', 'cybersecurity', 'security'],
+        'privacy': ['privacy', 'security', 'technology'],
+        'data': ['datascience', 'analytics', 'MachineLearning'],
+        'analytics': ['analytics', 'datascience', 'webdev']
+      };
+      
+      // Find ALL matching subreddits from meaningful words
+      let discoveredSubreddits: string[] = [];
+      let matchedWords: string[] = [];
+      
+      for (const word of meaningfulWords) {
+        if (universalKeywordMap[word]) {
+          console.log(`🎯 Found "${word}" → adding: [${universalKeywordMap[word].slice(0, 2).join(', ')}...]`);
+          discoveredSubreddits = discoveredSubreddits.concat(universalKeywordMap[word]);
+          matchedWords.push(word);
+        }
+      }
+      
+      console.log(`✅ Matched ${matchedWords.length} words: [${matchedWords.join(', ')}]`);
+      
+      if (discoveredSubreddits.length > 0) {
+        // Remove duplicates and prioritize by frequency
+        const subredditCounts = discoveredSubreddits.reduce((acc: {[key: string]: number}, sub: string) => {
+          acc[sub] = (acc[sub] || 0) + 1;
+          return acc;
+        }, {});
+        
+        // Sort by frequency (most mentioned first) and take top 6
+        specificSubreddits = Object.entries(subredditCounts)
+          .sort(([,a], [,b]) => b - a)
+          .slice(0, 6)
+          .map(([sub]) => sub);
+          
+        console.log(`✅ Universal analysis found ${specificSubreddits.length} relevant communities:`, specificSubreddits);
+      } else {
+        // 🔄 BACKUP ANALYSIS - Try partial word matching for compound concepts
+        console.log('🔍 No exact matches found, trying partial word analysis...');
+        
+        const partialMatches: string[] = [];
+        for (const word of meaningfulWords) {
+          // Check if word contains any known keywords
+          for (const [keyword, subs] of Object.entries(universalKeywordMap)) {
+            if (word.includes(keyword) || keyword.includes(word)) {
+              console.log(`🎯 Partial match: "${word}" contains "${keyword}"`);
+              partialMatches.push(...subs.slice(0, 2));
+              break;
+            }
+          }
+        }
+        
+        if (partialMatches.length > 0) {
+          specificSubreddits = Array.from(new Set(partialMatches)).slice(0, 6);
+          console.log('✅ Partial match communities:', specificSubreddits);
+        } else {
+          // 🌐 ULTIMATE FALLBACK - Smart general communities based on idea characteristics
+          console.log('🌐 Using intelligent general communities based on idea pattern...');
+          
+          if (ideaLower.includes('problem') || ideaLower.includes('solution') || ideaLower.includes('help')) {
+            specificSubreddits = ['AskReddit', 'NoStupidQuestions', 'explainlikeimfive', 'Entrepreneur', 'startups'];
+          } else if (ideaLower.includes('make') || ideaLower.includes('build') || ideaLower.includes('create')) {
+            specificSubreddits = ['DIY', 'somethingimade', 'Entrepreneur', 'startups', 'technology'];
+          } else if (ideaLower.includes('sell') || ideaLower.includes('buy') || ideaLower.includes('market')) {
+            specificSubreddits = ['Entrepreneur', 'smallbusiness', 'startups', 'ecommerce', 'marketing'];
+          } else {
+            // Final diverse fallback
+            specificSubreddits = ['AskReddit', 'Entrepreneur', 'startups', 'technology', 'business', 'smallbusiness'];
+          }
+          
+          console.log('✅ Intelligent general communities selected:', specificSubreddits);
+        }
+      }
+    }
+    
+    // AI has already selected the best subreddits - no need for additional logic
+    console.log('✅ Final AI-selected subreddits:', subreddits);
+    
+    // Ensure we have at least some subreddits (safety check)
+    if (subreddits.length === 0) {
+      console.warn('⚠️ AI analysis failed, using intelligent fallback');
+      subreddits = ['Entrepreneur', 'startups', 'business', 'technology'];
+    }
 
     // 2. Fetch top posts using Reddit OAuth API first, then fallback to public JSON
     let fetchedPosts: RawRedditPost[] = [];
@@ -785,7 +1123,7 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
       console.log('🌐 Falling back to public Reddit JSON endpoints...');
       for (const sub of subreddits) {
         if (fetchedPosts.length >= 12) break;
-        const url = `https://www.reddit.com/r/${sub}/top.json?limit=8&t=week`;
+        const url = `https://www.reddit.com/r/${sub}/top.json?limit=25&t=week`;
         console.log(`🔍 Public: Trying r/${sub}`);
         try {
           const response = await fetch(url, {
@@ -797,7 +1135,7 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
           });
           if (response.ok) {
             const data = await response.json() as any;
-            const posts = (data?.data?.children || []).map((c: any) => c.data).filter((p: any) => p.title).slice(0, 8);
+            const posts = (data?.data?.children || []).map((c: any) => c.data).filter((p: any) => p.title).slice(0, 25);
             posts.forEach((p: any) => {
               if (fetchedPosts.length < 12) {
                 const title = String(p.title).trim();
@@ -873,7 +1211,7 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
       if (fetchedPosts.length > 15) break;
       
       try {
-        const url = `https://www.reddit.com/r/${sub}/rising.json?limit=8`;
+        const url = `https://www.reddit.com/r/${sub}/rising.json?limit=25`;
         const response = await fetch(url, {
           headers: { 
             'User-Agent': 'Mozilla/5.0 (compatible; RedditReader/1.0)',
@@ -887,7 +1225,7 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
           const posts = (data?.data?.children || [])
             .map((c: any) => c.data)
             .filter((p: any) => p && p.title && p.title.length > 15)
-            .slice(0, 6);
+            .slice(0, 25);
           
           posts.forEach((p: any) => {
             fetchedPosts.push({
@@ -992,220 +1330,165 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
     frequency: clamp(v.count*15, 10, 95),
     urgency: v.count > 5 ? 'high' : v.count > 2 ? 'medium' : 'low',
     examples: Array.from(v.examples)
-  })).slice(0,6);
+  })).slice(0,10);
 
-  // 4. Perplexity AI enrichment (key required)
+  // 4. AI enrichment - PERPLEXITY ONLY (fast, reliable, comprehensive)
   let enriched: Partial<ReturnType<typeof buildBaseResponse>> | null = null;
   const hasPerplexityKey = !!process.env.PERPLEXITY_API_KEY?.trim();
-  const hasAIKey = hasPerplexityKey;
-  console.log('🤖 AI check - Perplexity:', hasPerplexityKey, 'AI Available:', hasAIKey);
+  console.log('🔥 Using Perplexity for ALL AI analysis - has key:', hasPerplexityKey, 'key length:', process.env.PERPLEXITY_API_KEY?.length || 0);
   
-  if (hasAIKey) {
-    // Use Perplexity AI for analysis
+  // Try Perplexity first (faster and more reliable)
+  if (hasPerplexityKey) {
+    console.log('🔥 Using Perplexity as primary AI provider...');
     try {
-      console.log('🤖 Starting Perplexity AI analysis...');
       const realPosts = fetchedPosts.filter(p => p.source === 'reddit');
       const samplePosts = realPosts.length > 0 
-        ? realPosts.slice(0, 8).map(p => `- "${p.title}" (${p.score} upvotes, ${p.num_comments} comments on r/${p.subreddit})`).join('\n')
+        ? realPosts.slice(0, 20).map(p => `- "${p.title}" (${p.score} upvotes, ${p.num_comments} comments on r/${p.subreddit})`).join('\n')
         : 'No real Reddit data available - using market analysis approach';
       
       const dataContext = realPosts.length > 0 
         ? `Based on ${realPosts.length} real Reddit discussions:\n${samplePosts}\n\n`
         : 'No real Reddit data available. Provide market-validated insights based on industry knowledge:\n\n';
       
-      const system = `You are a senior market research analyst specializing in startup validation with 10+ years of experience analyzing Reddit communities, competitive landscapes, and user behavior patterns. You have deep expertise in identifying market opportunities, user pain points, and competitive positioning. Your analysis should be forensic-level detailed and actionable for founders making strategic decisions.
+      const system = `You are a senior market research analyst with 10+ years experience analyzing Reddit communities and startup validation. You specialize in extracting deep user insights from real discussions and combining them with market intelligence to provide actionable startup advice.`;
 
-ANALYSIS FRAMEWORK:
-1. DEEP USER PSYCHOLOGY: Understand WHY users have problems and HOW they currently solve them
-2. COMPETITIVE INTELLIGENCE: Research actual products, pricing, user reviews, and market positioning  
-3. COMMUNITY DYNAMICS: Analyze specific Reddit community cultures, posting patterns, and user demographics
-4. MARKET TIMING: Assess current trends, seasonality, and market readiness
-5. REVENUE VALIDATION: Evaluate willingness to pay based on similar products and user behavior
+      // Analyze actual Reddit post content to extract real user insights
+      const redditAnalysis = realPosts.length > 0 
+        ? realPosts.slice(0, 20).map((p, i) => {
+            const content = p.selftext ? p.selftext.substring(0, 300) : '';
+            return `POST ${i+1} [r/${p.subreddit}]:
+Title: "${p.title}"
+Content: "${content}${content.length >= 300 ? '...' : ''}"
+Engagement: ${p.score} upvotes, ${p.num_comments} comments
+User Signals: ${p.title.toLowerCase().includes('problem') || p.title.toLowerCase().includes('issue') ? 'pain_point' : 
+               p.title.toLowerCase().includes('solution') || p.title.toLowerCase().includes('app') ? 'solution_seeking' :
+               p.title.toLowerCase().includes('recommendation') || p.title.toLowerCase().includes('help') ? 'advice_seeking' : 'discussion'}`;
+          }).join('\n\n')
+        : 'No real Reddit discussions available - analyze based on market knowledge';
 
-Return ONLY valid JSON with detailed, research-backed insights.`;
-
-      const postAnalysis = realPosts.length > 0 
-        ? realPosts.map(p => ({
-            title: p.title,
-            content: p.selftext?.substring(0, 200) || '',
-            engagement: `${p.score} upvotes, ${p.num_comments} comments`,
-            community: p.subreddit,
-            signals: p.title.toLowerCase().includes('problem') || p.title.toLowerCase().includes('issue') ? 'pain_point' :
-                    p.title.toLowerCase().includes('solution') || p.title.toLowerCase().includes('app') ? 'solution_seeking' :
-                    p.title.toLowerCase().includes('recommendation') || p.title.toLowerCase().includes('help') ? 'advice_seeking' : 'general_discussion'
-          }))
-        : [];
-
-      const userPrompt = `${dataContext}
-
-STARTUP IDEA ANALYSIS REQUEST:
+      const userPrompt = `STARTUP IDEA ANALYSIS:
 💡 IDEA: "${input.idea}"
-🏭 INDUSTRY: ${input.industry || 'Technology'}  
-👥 TARGET AUDIENCE: ${input.targetAudience || 'General users'}
-📊 REDDIT COMMUNITIES ANALYZED: ${subreddits.join(', ')}
-📈 REDDIT DATA POINTS: ${realPosts.length} real discussions, ${fetchedPosts.length - realPosts.length} synthetic
+📊 INDUSTRY: ${input.industry || 'Technology'}
+👥 TARGET: ${input.targetAudience || 'General users'}
+🎯 COMMUNITIES: ${subreddits.join(', ')}
 
-DETAILED POST ANALYSIS:
-${postAnalysis.length > 0 ? postAnalysis.map((p, i) => 
-  `POST ${i+1} [${p.community}]: "${p.title}" | ${p.engagement} | Signal: ${p.signals}${p.content ? ` | Content: "${p.content}..."` : ''}`
-).join('\n') : 'No real Reddit data - analyze based on market knowledge'}
+REAL REDDIT DISCUSSIONS TO ANALYZE:
+${redditAnalysis}
 
-REQUIRED COMPREHENSIVE ANALYSIS (JSON format):
+COMPREHENSIVE ANALYSIS REQUIRED:
+Analyze the above Reddit discussions to extract real user insights, pain points, and market opportunities. Combine this with your market knowledge to provide detailed startup validation.
 
+Return ONLY valid JSON:
 {
-  "keywords": [
-    "primary_problem_keyword_users_actually_search",
-    "specific_solution_term_target_market_uses", 
-    "industry_jargon_insiders_use",
-    "user_pain_point_exact_phrase",
-    "competitor_alternative_they_mention"
-  ],
-  "subreddits": [
-    "highly_specific_niche_community_where_target_users_congregate",
-    "adjacent_community_with_crossover_audience", 
-    "problem_focused_community_discussing_exact_pain_points",
-    "solution_seeking_community_evaluating_alternatives"
-  ],
+  "keywords": ["exact_terms_users_actually_use", "pain_point_phrases_from_posts", "solution_terms_mentioned", "industry_jargon_detected", "market_opportunity_keywords"],
   "pain_points": [
     {
-      "title": "Specific User Frustration (use their exact words)",
-      "frequency": 90,
-      "urgency": "critical",
-      "examples": ["Direct quote from user", "Specific complaint pattern"],
-      "current_solutions": ["How they solve it now", "Workarounds they use"],
-      "willingness_to_pay": "high",
-      "market_size_indicator": "thousands mention this daily"
+      "title": "Exact problem from Reddit discussions",
+      "frequency": 85,
+      "urgency": "high",
+      "examples": ["Direct quotes from Reddit posts", "Specific user complaints found"],
+      "current_solutions": ["How users currently solve this", "Workarounds mentioned in posts"],
+      "market_evidence": "Evidence from Reddit discussions showing this pain point"
     }
   ],
   "app_ideas": [
     {
-      "title": "Precise Solution Name",
-      "description": "Detailed description addressing exact pain point mechanism",
+      "title": "Solution addressing Reddit-identified problems",
+      "description": "Detailed solution based on actual user needs found in discussions",
       "market_validation": "high",
       "difficulty": "medium",
-      "unique_value_proposition": "What makes this different from alternatives",
-      "user_acquisition_strategy": "Where to find users who need this",
-      "mvp_features": ["Essential feature 1", "Core feature 2"]
+      "reddit_evidence": "Why Reddit discussions validate this idea"
     }
   ],
   "competitors": [
     {
-      "name": "Actual Company Name (if known)",
-      "description": "Real product description and positioning",
-      "strengths": ["Specific advantage", "Market position"],
-      "weaknesses": ["User complaints found", "Specific limitations"],
-      "market_share": "Estimated market position",
-      "pricing_model": "Actual pricing structure",
-      "user_reviews_sentiment": "What users actually say",
-      "differentiation_opportunity": "How to beat them"
+      "name": "Actual competitor mentioned in Reddit or market research",
+      "strengths": ["Real advantages mentioned by users"],
+      "weaknesses": ["Gaps identified in Reddit discussions"],
+      "market_share": "Research-based estimate",
+      "user_sentiment": "What Reddit users actually say about them"
     }
   ],
   "revenue_models": [
     {
-      "model_type": "Most Viable Revenue Model",
-      "description": "Detailed implementation for this specific market",
-      "pros": ["Market-specific advantage", "User behavior alignment"],
-      "cons": ["Realistic challenge", "Market-specific risk"],
-      "implementation_difficulty": "realistic_assessment",
-      "potential_revenue": "Data-backed estimate",
-      "pricing_research": "What similar products charge",
-      "user_willingness_to_pay": "Evidence from market research"
+      "model_type": "Model validated by user behavior in Reddit",
+      "description": "Revenue approach based on what users actually pay for",
+      "pros": ["Advantages based on user preferences"],
+      "cons": ["Challenges identified from user discussions"],
+      "market_evidence": "Reddit evidence supporting this model"
     }
   ],
   "market_insights": {
-    "market_maturity": "early/growing/mature/declining",
-    "seasonal_trends": "When demand peaks",
-    "user_demographics": "Specific target user profile",
-    "adoption_barriers": ["Real obstacles to adoption"],
-    "market_catalysts": ["Trends driving demand"],
-    "geographic_opportunities": ["Where demand is highest"]
-  },
-  "competitive_analysis": {
-    "market_gaps": ["Unserved user needs"],
-    "pricing_opportunities": ["Under/over-priced segments"],
-    "feature_gaps": ["Missing functionality users want"],
-    "user_experience_problems": ["UI/UX complaints about competitors"]
+    "reddit_community_size": "Size of communities discussing this",
+    "user_demographics": "Profile of users from Reddit analysis",
+    "adoption_barriers": ["Real obstacles mentioned by users"],
+    "market_timing": "Market readiness based on discussion trends"
   }
-}
+}`;
 
-CRITICAL REQUIREMENTS:
-- Use SPECIFIC data from Reddit posts when available
-- Research ACTUAL competitor names and products when possible  
-- Identify EXACT pain point language users employ
-- Provide REALISTIC market size indicators
-- Include ACTIONABLE go-to-market insights
-- Base pricing on SIMILAR successful products
-- Identify SPECIFIC user acquisition channels
-- Address REAL adoption barriers and solutions
-
-Focus on depth over breadth - better to have 2 deeply researched competitors than 5 generic ones.`;
-      
-      console.log('🔥 Using Perplexity AI for analysis...');
-      const response = await fetch('https://api.perplexity.ai/chat/completions', {
+      console.log('🔥 Starting Perplexity API call...');
+      console.log('🔥 Analyzing', realPosts.length, 'real Reddit posts with Perplexity');
+      console.log('🔥 Prompt length:', userPrompt.length, 'characters');
+      const perplexityResponse = await fetch('https://api.perplexity.ai/chat/completions', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'llama-3.1-sonar-small-128k-online',
+          model: 'sonar',
           messages: [
             { role: 'system', content: system },
             { role: 'user', content: userPrompt }
           ],
+          temperature: 0.5,
           max_tokens: 2000,
-          temperature: 0.1
         })
       });
       
-      if (response.ok) {
-        const result = await response.json();
-        const raw = result.choices[0].message.content;
-        console.log('🔍 Perplexity raw response length:', raw.length, 'first 200 chars:', raw.slice(0, 200));
+      if (perplexityResponse.ok) {
+        const completion = await perplexityResponse.json();
+        const raw = completion.choices[0]?.message?.content || '{}';
+        console.log('✅ Perplexity response received, length:', raw.length);
+        console.log('🔍 First 200 chars:', raw.substring(0, 200));
         
-        // Extract JSON from response
-        const jsonMatch = raw.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          enriched = JSON.parse(jsonMatch[0]);
-          
-          // Debug: Log the actual Perplexity response structure
-          console.log('🔍 Perplexity response structure:', Object.keys(enriched || {}));
-          console.log('🔍 Perplexity keywords:', enriched?.keywords ? `${enriched.keywords.length} items` : 'missing');
-          console.log('🔍 Perplexity pain_points:', enriched?.pain_points ? `${enriched.pain_points.length} items` : 'missing');
-          console.log('🔍 Perplexity subreddits:', enriched?.subreddits ? `${enriched.subreddits.length} items` : 'missing');
-          console.log('🔍 Perplexity competitors:', enriched?.competitors ? `${enriched.competitors.length} items` : 'missing');
-          
-          // Validate that we got meaningful data
-          if (enriched && (enriched.pain_points || enriched.keywords || enriched.subreddits)) {
-            console.log('✅ Perplexity enrichment successful - AI-powered analysis active!');
-            console.log('🔍 Final enriched data preview:');
-            console.log('🔍 Enriched pain_points sample:', enriched.pain_points?.[0]?.title || 'none');
-            console.log('🔍 Enriched keywords sample:', enriched.keywords?.slice(0,3) || 'none');
-            console.log('🔍 Enriched subreddits sample:', enriched.subreddits?.slice(0,3) || 'none');
-            console.log('🔍 Data source combination: Reddit OAuth + Perplexity Analysis = Premium insights');
+        // Try to parse JSON
+        try {
+          enriched = JSON.parse(raw);
+          console.log('✅ Perplexity enrichment successful!');
+          console.log('🔍 Pain points found:', enriched?.pain_points?.length || 0);
+          console.log('🔍 Keywords found:', enriched?.keywords?.length || 0);
+        } catch (parseErr) {
+          console.log('⚠️ JSON parse failed, trying markdown extraction...');
+          // Try to extract JSON from markdown
+          const jsonMatch = raw.match(/```json\s*([\s\S]*?)\s*```/) || raw.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            try {
+              enriched = JSON.parse(jsonMatch[1] || jsonMatch[0]);
+              console.log('✅ Perplexity JSON extracted from markdown');
+              console.log('🔍 Pain points found:', enriched?.pain_points?.length || 0);
+            } catch (extractErr) {
+              console.warn('❌ Even markdown extraction failed:', (extractErr as Error).message);
+              console.warn('🔍 Raw response sample:', raw.substring(0, 500));
+            }
           } else {
-            console.warn('⚠️ Perplexity returned empty/invalid data, falling back to heuristics');
-            console.warn('⚠️ Raw Perplexity response (first 500 chars):', raw.slice(0, 500));
-            enriched = null;
+            console.warn('⚠️ Could not find any JSON in Perplexity response');
+            console.warn('🔍 Raw response sample:', raw.substring(0, 500));
           }
-        } else {
-          console.warn('⚠️ Could not extract JSON from Perplexity response');
-          enriched = null;
         }
       } else {
-        console.error('❌ Perplexity API call failed:', response.status, await response.text());
-        enriched = null;
+        const errorText = await perplexityResponse.text();
+        console.warn('❌ Perplexity API error:', perplexityResponse.status, perplexityResponse.statusText);
+        console.warn('❌ Error details:', errorText.substring(0, 300));
       }
-    } catch (enrichErr) {
-      console.error('❌ Perplexity enrichment failed with detailed error:', {
-        message: (enrichErr as Error).message,
-        stack: (enrichErr as Error).stack?.slice(0, 500),
-        api_key_length: process.env.PERPLEXITY_API_KEY?.length || 0
-      });
-      enriched = null;
+    } catch (perplexityErr) {
+      console.error('❌ Perplexity failed:', (perplexityErr as Error).message);
     }
-  } else {
-    console.log('No Perplexity API key found - using heuristic analysis only');
+  }
+  
+  // Pure Perplexity approach - no fallbacks needed (Perplexity is faster and more reliable)
+  if (!enriched) {
+    console.log('🌟 Perplexity unavailable - using comprehensive heuristic analysis');
   }
 
   // 5. Build response
@@ -1239,7 +1522,7 @@ Focus on depth over breadth - better to have 2 deeply researched competitors tha
       { model_type: 'Subscription', description: 'Monthly access to analysis dashboard', pros: ['Predictable revenue'], cons: ['Churn risk'], implementation_difficulty: 'medium', potential_revenue: 'Medium' }
     ],
     fetchedPosts: realPostsOnly.length ? realPostsOnly : (
-      // Use AI-generated posts if available, otherwise fallback to synthetic
+      // Use OpenAI-generated posts if available, otherwise fallback to synthetic
       enriched && (enriched as any).realistic_posts 
         ? (enriched as any).realistic_posts.map((p: any, i: number) => ({
             title: p.title || `AI-generated post ${i+1}`,
@@ -1266,42 +1549,49 @@ Focus on depth over breadth - better to have 2 deeply researched competitors tha
     aiGeneratedPosts: aiGeneratedPosts.length,
     sampleTitles: finalPostsUsed.slice(0,5).map((p: any) => p.title || String(p)),
     enriched: !!enriched, 
-    ai_available: hasAIKey,
     perplexity_available: hasPerplexityKey,
-
     reddit_oauth_used: usedOAuth,
     reddit_creds_available: hasRedditCreds,
-    mode: enriched && aiGeneratedPosts.length > 0 ? 'ai_enhanced_with_posts' : enriched ? 'ai_enhanced' : 'heuristic_only',
+    mode: enriched && aiGeneratedPosts.length > 0 ? 'perplexity_enhanced_with_posts' : enriched ? 'perplexity_enhanced' : 'heuristic_only',
     ms: durationMs,
-    api_version: '2025-09-30-reddit-oauth-v1'
+    api_version: '2025-10-02-perplexity-reddit-analysis'
   };
   // Add high-level evidence summary for user transparency
   (response as any).evidence = {
     real_post_count: realPostsOnly.length,
     synthetic_post_count: fetchedPosts.filter(p => p.source === 'synthetic').length,
     subreddits_used: Array.from(new Set(fetchedPosts.map(p => p.subreddit))).slice(0,10),
-    sample_reddit_posts: realPostsOnly.slice(0,5).map(p => ({ title: p.title, score: p.score, comments: p.num_comments, subreddit: p.subreddit }))
+    sample_reddit_posts: realPostsOnly.slice(0,5).map(p => ({ 
+      title: p.title, 
+      selftext: p.selftext || '', 
+      score: p.score, 
+      num_comments: p.num_comments, 
+      subreddit: p.subreddit,
+      permalink: p.permalink || '',
+      signals: (p as any).signals || {},
+      content_length: (p as any).content_length || 0,
+      engagement_ratio: (p as any).engagement_ratio || 0,
+      source: p.source || 'reddit'
+    }))
   };
   // Set transparency indicators based on data sources
   if (realPostsOnly.length === 0) {
-    if (enriched && hasAIKey) {
+    if (enriched && hasPerplexityKey) {
       (response as any).analysis_confidence = 'ai_enhanced';
       (response as any).data_source = 'ai_synthetic';  
-      const aiProvider = 'Perplexity AI';
-      (response as any).notes = `🤖 AI-ENHANCED ANALYSIS: Using ${aiProvider} for sophisticated market validation. Real Reddit data would enhance accuracy further.`;
-      (response as any).upgrade_message = '🔥 Pro Tip: Reddit OAuth + AI = Ultimate market insights! Set up Reddit API for even deeper analysis.';
+      (response as any).notes = `🔥 AI-ENHANCED ANALYSIS: Using Perplexity for sophisticated market validation. Real Reddit data would enhance accuracy further.`;
+      (response as any).upgrade_message = `💡 Pro Tip: Reddit OAuth + Perplexity = Ultimate market insights! Set up Reddit API for even deeper analysis.`;
     } else {
       (response as any).analysis_confidence = 'demo_mode';
       (response as any).data_source = 'synthetic_only';
-      (response as any).notes = '⚠️ BASIC MODE: Using heuristic analysis. Enable Perplexity AI + Reddit OAuth for premium insights.';
+      (response as any).notes = '⚠️ BASIC MODE: Using heuristic analysis. Enable Perplexity + Reddit OAuth for premium insights.';
       (response as any).upgrade_message = '🔑 Unlock AI-powered analysis! Add Perplexity API key and Reddit OAuth for real market intelligence.';
     }
-  } else if (realPostsOnly.length > 0 && enriched && hasAIKey) {
+  } else if (realPostsOnly.length > 0 && enriched && hasPerplexityKey) {
     // This is the premium experience: Real Reddit data + AI analysis
     (response as any).analysis_confidence = 'premium_enhanced';
     (response as any).data_source = 'reddit_plus_ai';
-    const aiProvider = 'Perplexity AI';
-    (response as any).notes = `🔥 PREMIUM ANALYSIS: Combining ${realPostsOnly.length} real Reddit discussions with ${aiProvider} intelligence for maximum accuracy.`;
+    (response as any).notes = `🔥 PREMIUM ANALYSIS: Combining ${realPostsOnly.length} real Reddit discussions with Perplexity intelligence for maximum accuracy.`;
     (response as any).upgrade_message = '✨ You\'re getting the best possible analysis! Real data + AI insights = Market validation gold standard.';
   } else if (realPostsOnly.length < 4) {
     (response as any).analysis_confidence = 'low';

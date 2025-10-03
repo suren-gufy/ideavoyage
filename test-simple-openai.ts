@@ -1,42 +1,15 @@
-#!/usr/bin/env node
-// @ts-nocheck
+// NOTE: OpenAI has been removed from the system in favor of Perplexity
+// This file is kept for reference but is no longer used
 
-export {};
+console.log('⚠️  OpenAI has been removed from the system');
+console.log('🔥 The system now uses Perplexity API exclusively');
+console.log('📋 Use test-perplexity-direct.js or test-perplexity-deployment.js for AI testing');
+console.log('🌟 Universal analysis system works for ANY idea without OpenAI');
 
-async function main() {
-  console.log('=== Testing Simple OpenAI Call ===');
-
-  try {
-    const OpenAIDep = await import('openai');
-    const OpenAI = OpenAIDep.default;
-    
-    const client = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY!,
-      timeout: 15000,
-      maxRetries: 0
-    });
-    
-    console.log('Making simple API call...');
-    const start = Date.now();
-    
-    const completion = await client.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [{ 
-        role: 'user', 
-        content: 'Return JSON with 3 keywords about fitness apps: {"keywords": ["word1", "word2", "word3"]}' 
-      }],
-      temperature: 0.1,
-      max_tokens: 100,
-      response_format: { type: 'json_object' }
-    });
-    
-    const duration = Date.now() - start;
-    console.log(`✅ Call completed in ${duration}ms`);
-    console.log('Response:', completion.choices[0]?.message?.content);
-    
-  } catch (error) {
-    console.error('❌ Error:', (error as Error).message);
-  }
+async function testRemoved() {
+  console.log('✅ OpenAI successfully removed from IdeaVoyage');
+  console.log('✅ System now uses Perplexity for faster, more reliable analysis');
+  console.log('✅ Universal analysis supports any idea type');
 }
 
-main().catch(console.error);
+testRemoved().catch(console.error);

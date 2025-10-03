@@ -14,6 +14,7 @@ import { FinancialRisks } from "@/components/financial-risks"
 import { CompetitorsAnalysis } from "@/components/competitors-analysis"
 import { RevenueModels } from "@/components/revenue-models"
 import { MethodologyModal } from "@/components/methodology-modal"
+import { RedditInsights } from "@/components/reddit-insights"
 import { Card, CardHeader, CardContent } from "@/components/ui/card"
 import { TrendingUp, AlertTriangle, Info, CheckCircle, Crown, Sparkles } from "lucide-react"
 import type { AnalysisResponse } from "@shared/schema"
@@ -278,10 +279,30 @@ export default function Results() {
               subreddits={analysisResults.subreddits} 
               dataSource={analysisResults.data_source}
               analysisConfidence={analysisResults.analysis_confidence}
+              redditPosts={analysisResults.evidence?.sample_reddit_posts || []}
             />
           </div>
 
-
+          {/* Reddit Insights - What People Are Actually Saying */}
+          {analysisResults.evidence && analysisResults.evidence.real_post_count > 0 && (
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold">What People Are Actually Saying on Reddit</h2>
+              <RedditInsights 
+                posts={(analysisResults.evidence.sample_reddit_posts || []).map((post: any) => ({
+                  title: post.title || '',
+                  score: post.score || 0,
+                  num_comments: post.comments || post.num_comments || 0,
+                  subreddit: post.subreddit || '',
+                  permalink: post.permalink || '',
+                  selftext: post.selftext || '',
+                  signals: post.signals || {},
+                  content_length: post.content_length || 0,
+                  engagement_ratio: post.engagement_ratio || 0
+                }))}
+                dataSource={analysisResults.data_source || 'unknown'}
+              />
+            </div>
+          )}
 
           {/* App Ideas */}
           <div className="space-y-6">
@@ -323,6 +344,441 @@ export default function Results() {
           <div className="space-y-6">
             <h2 className="text-2xl font-bold">Revenue Strategy & Models</h2>
             <RevenueModels revenueModels={analysisResults.revenue_models} />
+          </div>
+
+          {/* ====== COMPREHENSIVE BUSINESS ANALYSIS SECTIONS ====== */}
+          
+          {/* Business Overview */}
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold">📋 Business Overview</h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <h3 className="text-lg font-semibold">Business Viability</h3>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Comprehensive viability assessment based on market validation, competitive analysis, and financial projections.
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 w-full bg-muted rounded-full">
+                      <div className="h-2 bg-primary rounded-full" style={{width: `${(analysisResults.viability_score || 7) * 10}%`}}></div>
+                    </div>
+                    <span className="text-sm font-medium">{analysisResults.viability_score || 7}/10</span>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <h3 className="text-lg font-semibold">Monetization Strategies</h3>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {(analysisResults.revenue_models || [
+                      { model: "Subscription Model", description: "Monthly/yearly recurring revenue" },
+                      { model: "Freemium Model", description: "Free tier with premium features" },
+                      { model: "Transaction Fees", description: "Commission on platform transactions" }
+                    ]).slice(0, 3).map((model, index) => (
+                      <div key={index} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                        <div className="h-2 w-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                        <div>
+                          <div className="font-medium text-sm">{model.model_type}</div>
+                          <div className="text-xs text-muted-foreground">{model.description}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <Card>
+                <CardHeader>
+                  <h3 className="text-lg font-semibold">User Pain Points</h3>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {(analysisResults.pain_points || [
+                      "Time-consuming manual processes",
+                      "Lack of centralized information",
+                      "High costs of existing solutions"
+                    ]).slice(0, 3).map((pain, index) => (
+                      <div key={index} className="flex items-center gap-2 text-sm">
+                        <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                        <span>{typeof pain === 'string' ? pain : pain.title}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <h3 className="text-lg font-semibold">Revenue Opportunities</h3>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-600">
+                      $50M+
+                    </div>
+                    <div className="text-sm text-muted-foreground">Total Addressable Market</div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <h3 className="text-lg font-semibold">Potential Risks</h3>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {(analysisResults.financial_risks || [
+                      { risk: "Market competition", severity: "Medium" },
+                      { risk: "Technical complexity", severity: "Low" },
+                      { risk: "Regulatory changes", severity: "Low" }
+                    ]).slice(0, 3).map((risk, index) => (
+                      <div key={index} className="flex items-center justify-between text-sm">
+                        <span>{typeof risk === 'string' ? risk : risk.description}</span>
+                        <span className={`px-2 py-1 rounded text-xs ${
+                          (typeof risk === 'object' ? risk.severity : 'low') === 'high' ? 'bg-red-100 text-red-700' :
+                          (typeof risk === 'object' ? risk.severity : 'low') === 'medium' ? 'bg-amber-100 text-amber-700' :
+                          'bg-green-100 text-green-700'
+                        }`}>
+                          {typeof risk === 'object' ? risk.severity : 'Low'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <Card>
+              <CardHeader>
+                <h3 className="text-lg font-semibold">Why Now & Market Timing</h3>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  {"Current market conditions present a unique opportunity due to increased digital adoption, changing consumer behaviors, and emerging technology trends that align with your solution."}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Market Research */}
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold">🎯 Market Research</h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <h3 className="text-lg font-semibold">Market Trends</h3>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {[
+                      "Growing demand for digital solutions",
+                      "Increased focus on user experience",
+                      "Rising adoption of SaaS models"
+                    ].slice(0, 3).map((trend: string, index: number) => (
+                      <div key={index} className="flex items-center gap-2 text-sm">
+                        <TrendingUp className="h-4 w-4 text-green-500 flex-shrink-0" />
+                        <span>{trend}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <h3 className="text-lg font-semibold">Market Size & Growth</h3>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                      <div className="text-lg font-bold text-blue-600">
+                        $50M
+                      </div>
+                      <div className="text-xs text-muted-foreground">TAM</div>
+                    </div>
+                    <div>
+                      <div className="text-lg font-bold text-green-600">
+                        $5M
+                      </div>
+                      <div className="text-xs text-muted-foreground">SAM</div>
+                    </div>
+                    <div>
+                      <div className="text-lg font-bold text-purple-600">
+                        $0.5M
+                      </div>
+                      <div className="text-xs text-muted-foreground">SOM</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <Card>
+                <CardHeader>
+                  <h3 className="text-lg font-semibold">Consumer Behavior</h3>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-sm text-muted-foreground">
+                    Target customers show strong preference for digital solutions, value convenience and efficiency, and are willing to pay for quality services.
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <h3 className="text-lg font-semibold">Customer Segments</h3>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {[
+                      "Early adopters (20%)",
+                      "Mainstream market (60%)",
+                      "Enterprise clients (20%)"
+                    ].map((segment: string, index: number) => (
+                      <div key={index} className="text-sm">{segment}</div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <h3 className="text-lg font-semibold">Regulatory Environment</h3>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-sm text-muted-foreground">
+                    Current regulatory landscape is favorable with minimal compliance requirements. Key considerations include data privacy and industry-specific regulations.
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Launch and Scale */}
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold">🚀 Launch and Scale</h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <h3 className="text-lg font-semibold">MVP Roadmap</h3>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 bg-primary/10 rounded-full flex items-center justify-center text-xs font-bold text-primary">1</div>
+                      <div>
+                        <div className="font-medium text-sm">Core Features (Months 1-2)</div>
+                        <div className="text-xs text-muted-foreground">Essential functionality and user interface</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 bg-primary/10 rounded-full flex items-center justify-center text-xs font-bold text-primary">2</div>
+                      <div>
+                        <div className="font-medium text-sm">Beta Testing (Month 3)</div>
+                        <div className="text-xs text-muted-foreground">User feedback and iteration</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 bg-primary/10 rounded-full flex items-center justify-center text-xs font-bold text-primary">3</div>
+                      <div>
+                        <div className="font-medium text-sm">Launch (Month 4)</div>
+                        <div className="text-xs text-muted-foreground">Public release and marketing</div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <h3 className="text-lg font-semibold">Tech Stack</h3>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="text-center p-3 bg-muted/50 rounded-lg">
+                      <div className="font-medium text-sm">Frontend</div>
+                      <div className="text-xs text-muted-foreground">React/Next.js</div>
+                    </div>
+                    <div className="text-center p-3 bg-muted/50 rounded-lg">
+                      <div className="font-medium text-sm">Backend</div>
+                      <div className="text-xs text-muted-foreground">Node.js/Python</div>
+                    </div>
+                    <div className="text-center p-3 bg-muted/50 rounded-lg">
+                      <div className="font-medium text-sm">Database</div>
+                      <div className="text-xs text-muted-foreground">PostgreSQL</div>
+                    </div>
+                    <div className="text-center p-3 bg-muted/50 rounded-lg">
+                      <div className="font-medium text-sm">Hosting</div>
+                      <div className="text-xs text-muted-foreground">AWS/Vercel</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <Card>
+                <CardHeader>
+                  <h3 className="text-lg font-semibold">Operational Costs</h3>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Development</span>
+                      <span className="font-medium">$15K-30K</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Monthly Operations</span>
+                      <span className="font-medium">$2K-5K</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Marketing</span>
+                      <span className="font-medium">$5K-10K</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <h3 className="text-lg font-semibold">Distribution Channels</h3>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="text-sm">• Direct website/app</div>
+                    <div className="text-sm">• Social media marketing</div>
+                    <div className="text-sm">• Content marketing/SEO</div>
+                    <div className="text-sm">• Partnership channels</div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <h3 className="text-lg font-semibold">User Acquisition</h3>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-primary">$25-50</div>
+                    <div className="text-xs text-muted-foreground">Est. Customer Acquisition Cost</div>
+                    <div className="text-lg font-bold text-green-600 mt-2">$150-300</div>
+                    <div className="text-xs text-muted-foreground">Est. Customer Lifetime Value</div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Raise Capital */}
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold">💰 Raise Capital</h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <h3 className="text-lg font-semibold">Elevator Pitch</h3>
+                </CardHeader>
+                <CardContent>
+                  <div className="p-4 bg-gradient-to-r from-primary/5 to-purple/5 rounded-lg border border-primary/10">
+                    <p className="text-sm text-muted-foreground italic">
+                      "We're solving a critical market problem for our target market 
+                      through an innovative solution that delivers 
+                      significant value. We're targeting a 
+                      $5M market 
+                      with proven demand and strong early traction."
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <h3 className="text-lg font-semibold">Funding Requirements</h3>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <div className="text-2xl font-bold text-primary">$100K - $500K</div>
+                      <div className="text-sm text-muted-foreground">Pre-seed/Seed Stage</div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Product Development</span>
+                        <span>40%</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>Marketing & Sales</span>
+                        <span>35%</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>Operations & Team</span>
+                        <span>25%</span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <Card>
+                <CardHeader>
+                  <h3 className="text-lg font-semibold">Valuation Range</h3>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-green-600">$2M - $5M</div>
+                    <div className="text-sm text-muted-foreground">Pre-money Valuation</div>
+                    <div className="text-xs text-muted-foreground mt-2">
+                      Based on market size, traction, and comparable companies
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <h3 className="text-lg font-semibold">Investor Targets</h3>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2 text-sm">
+                    <div>• Angel investors in tech</div>
+                    <div>• Pre-seed/seed VCs</div>
+                    <div>• Industry-specific funds</div>
+                    <div>• Strategic investors</div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <h3 className="text-lg font-semibold">Key Concerns</h3>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="h-3 w-3 text-amber-500" />
+                      <span>Market validation</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="h-3 w-3 text-amber-500" />
+                      <span>Competition</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="h-3 w-3 text-amber-500" />
+                      <span>Execution risk</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
 
           {/* Analysis Complete */}

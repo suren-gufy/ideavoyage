@@ -24,8 +24,8 @@ After creating the app, you'll see:
 Add these to your Vercel project environment variables:
 
 ```bash
-REDDIT_CLIENT_ID=your_client_id_here
-REDDIT_CLIENT_SECRET=your_client_secret_here  
+REDDIT_CLIENT_ID=V93rUHm8yKO2o777inmHrQ
+REDDIT_CLIENT_SECRET=kqdKhZX2wK1YIHCMp4T2-TCIY-wBow
 REDDIT_REDIRECT_URI=https://ideavoyage.vercel.app/api/reddit/callback
 ```
 

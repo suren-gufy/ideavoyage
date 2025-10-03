@@ -80,8 +80,8 @@ app.use((req, res, next) => {
   
   console.log('🔍 About to start server on port:', port);
   
-  // Try using app.listen with explicit localhost binding
-  const appServer = app.listen(port, '127.0.0.1', () => {
+  // Try using app.listen directly instead of server.listen
+  const appServer = app.listen(port, () => {
     log(`serving on port ${port}`);
     console.log('✅ App listening callback executed successfully');
     console.log('🔍 App server address:', appServer.address());
