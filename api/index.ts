@@ -636,17 +636,11 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
   console.log('🔍 Analyzing idea for relevant communities:', input.idea);
   
   // Extract key concepts from the idea
-  const ideaLower = input.idea.toLowerCase();
-  const problemDomain = extractProblemDomain(ideaLower, tokens);
-  const targetAudience = extractTargetAudience(ideaLower, tokens);
-  const solutionType = extractSolutionType(ideaLower, tokens);
-  
-  console.log('🎯 Problem Domain:', problemDomain);
-  console.log('👥 Target Audience:', targetAudience);
-  console.log('💡 Solution Type:', solutionType);
+  const ideaLowerForDynamic = input.idea.toLowerCase();
+  const dynamicTokens = ideaLowerForDynamic.split(/[^a-z0-9]+/).filter((t: string) => t.length > 2);
   
   // Dynamic analysis functions
-  function extractProblemDomain(idea, tokens) {
+  const extractProblemDomain = (idea: string, tokens: string[]): string => {
     const domains = {
       'pets': ['pet','pets','cat','cats','dog','dogs','animal','animals','collar','leash','wildlife','bird','birds','hunting','vet','training'],
       'plants': ['plant','plants','houseplant','houseplants','garden','gardening','disease','fungi','leaf','leaves','soil','water','grow','care'],
@@ -669,7 +663,7 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
     return 'general';
   }
   
-  function extractTargetAudience(idea, tokens) {
+  const extractTargetAudience = (idea: string, tokens: string[]): string => {
     const audiences = {
       'seniors': ['senior','elderly','old','aging','retirement','grandparent','dementia','alzheimer','caregiver'],
       'parents': ['parent','mom','dad','mother','father','baby','child','children','family','kid','toddler'],
@@ -689,46 +683,43 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
     return 'general';
   }
   
-  function extractSolutionType(idea, tokens) {
-    if (tokens.some(t => ['app','mobile','smartphone','ios','android'].includes(t))) return 'mobile_app';
-    if (tokens.some(t => ['web','website','platform','saas','dashboard'].includes(t))) return 'web_platform';
-    if (tokens.some(t => ['ai','artificial','intelligence','machine','learning','automation'].includes(t))) return 'ai_solution';
-    if (tokens.some(t => ['device','hardware','sensor','iot','smart','wearable'].includes(t))) return 'hardware';
-    if (tokens.some(t => ['service','consulting','coaching','training','education'].includes(t))) return 'service';
+  const extractSolutionType = (idea: string, tokens: string[]): string => {
+    if (tokens.some((t: string) => ['app','mobile','smartphone','ios','android'].includes(t))) return 'mobile_app';
+    if (tokens.some((t: string) => ['web','website','platform','saas','dashboard'].includes(t))) return 'web_platform';
+    if (tokens.some((t: string) => ['ai','artificial','intelligence','machine','learning','automation'].includes(t))) return 'ai_solution';
+    if (tokens.some((t: string) => ['device','hardware','sensor','iot','smart','wearable'].includes(t))) return 'hardware';
+    if (tokens.some((t: string) => ['service','consulting','coaching','training','education'].includes(t))) return 'service';
     return 'software';
   }
   
-  // INTELLIGENT SUBREDDIT SELECTION based on extracted concepts
-  subreddits = selectRelevantSubreddits(problemDomain, targetAudience, solutionType, tokens, ideaLower);
-  
-  function selectRelevantSubreddits(domain, audience, solution, tokens, idea) {
-    let selectedSubreddits = [];
+  const selectRelevantSubreddits = (domain: string, audience: string, solution: string, tokens: string[], idea: string): string[] => {
+    let selectedSubreddits: string[] = [];
     
     // Domain-specific communities (most specific)
     const domainSubreddits = {
-      'pets': tokens.some(t => ['cat','cats'].includes(t)) ? ['cats', 'CatAdvice', 'cattraining'] :
-              tokens.some(t => ['dog','dogs'].includes(t)) ? ['dogs', 'DogTraining', 'puppy101'] :
+      'pets': tokens.some((t: string) => ['cat','cats'].includes(t)) ? ['cats', 'CatAdvice', 'cattraining'] :
+              tokens.some((t: string) => ['dog','dogs'].includes(t)) ? ['dogs', 'DogTraining', 'puppy101'] :
               ['pets', 'animals', 'AskVet', 'petcare'],
-      'plants': tokens.some(t => ['houseplant','indoor'].includes(t)) ? ['houseplants', 'IndoorGarden', 'plantclinic'] :
-                tokens.some(t => ['garden','outdoor'].includes(t)) ? ['gardening', 'vegetablegardening', 'landscaping'] :
+      'plants': tokens.some((t: string) => ['houseplant','indoor'].includes(t)) ? ['houseplants', 'IndoorGarden', 'plantclinic'] :
+                tokens.some((t: string) => ['garden','outdoor'].includes(t)) ? ['gardening', 'vegetablegardening', 'landscaping'] :
                 ['plants', 'plantclinic', 'whatsthisplant'],
-      'health': tokens.some(t => ['mental','therapy','depression','anxiety'].includes(t)) ? ['mentalhealth', 'therapy', 'depression', 'anxiety'] :
-                tokens.some(t => ['fitness','exercise','workout'].includes(t)) ? ['fitness', 'loseit', 'bodyweightfitness'] :
+      'health': tokens.some((t: string) => ['mental','therapy','depression','anxiety'].includes(t)) ? ['mentalhealth', 'therapy', 'depression', 'anxiety'] :
+                tokens.some((t: string) => ['fitness','exercise','workout'].includes(t)) ? ['fitness', 'loseit', 'bodyweightfitness'] :
                 ['Health', 'medical', 'AskDocs'],
-      'finance': tokens.some(t => ['crypto','bitcoin','ethereum'].includes(t)) ? ['CryptoCurrency', 'Bitcoin', 'ethereum'] :
-                 tokens.some(t => ['invest','investment','portfolio'].includes(t)) ? ['investing', 'SecurityAnalysis', 'ValueInvesting'] :
+      'finance': tokens.some((t: string) => ['crypto','bitcoin','ethereum'].includes(t)) ? ['CryptoCurrency', 'Bitcoin', 'ethereum'] :
+                 tokens.some((t: string) => ['invest','investment','portfolio'].includes(t)) ? ['investing', 'SecurityAnalysis', 'ValueInvesting'] :
                  ['personalfinance', 'financialindependence', 'budgeting'],
-      'education': tokens.some(t => ['programming','coding','developer'].includes(t)) ? ['learnprogramming', 'cscareerquestions', 'webdev'] :
-                   tokens.some(t => ['language','languages'].includes(t)) ? ['languagelearning', 'Spanish', 'French'] :
+      'education': tokens.some((t: string) => ['programming','coding','developer'].includes(t)) ? ['learnprogramming', 'cscareerquestions', 'webdev'] :
+                   tokens.some((t: string) => ['language','languages'].includes(t)) ? ['languagelearning', 'Spanish', 'French'] :
                    ['education', 'studying', 'GetStudying'],
-      'work': tokens.some(t => ['remote','coworking','virtual'].includes(t)) ? ['remotework', 'digitalnomad', 'WorkFromHome'] :
-              tokens.some(t => ['productivity','task','project'].includes(t)) ? ['productivity', 'GetMotivated', 'getdisciplined'] :
+      'work': tokens.some((t: string) => ['remote','coworking','virtual'].includes(t)) ? ['remotework', 'digitalnomad', 'WorkFromHome'] :
+              tokens.some((t: string) => ['productivity','task','project'].includes(t)) ? ['productivity', 'GetMotivated', 'getdisciplined'] :
               ['jobs', 'careerguidance', 'careerchange'],
-      'food': tokens.some(t => ['restaurant','chef','kitchen'].includes(t)) ? ['KitchenConfidential', 'restaurateur', 'Chefit'] :
-              tokens.some(t => ['recipe','cooking','meal'].includes(t)) ? ['recipes', 'cooking', 'MealPrepSunday'] :
+      'food': tokens.some((t: string) => ['restaurant','chef','kitchen'].includes(t)) ? ['KitchenConfidential', 'restaurateur', 'Chefit'] :
+              tokens.some((t: string) => ['recipe','cooking','meal'].includes(t)) ? ['recipes', 'cooking', 'MealPrepSunday'] :
               ['food', 'nutrition', 'HealthyFood'],
-      'music': tokens.some(t => ['piano'].includes(t)) ? ['piano', 'WeAreTheMusicMakers', 'musictheory'] :
-               tokens.some(t => ['guitar'].includes(t)) ? ['Guitar', 'WeAreTheMusicMakers', 'guitarlessons'] :
+      'music': tokens.some((t: string) => ['piano'].includes(t)) ? ['piano', 'WeAreTheMusicMakers', 'musictheory'] :
+               tokens.some((t: string) => ['guitar'].includes(t)) ? ['Guitar', 'WeAreTheMusicMakers', 'guitarlessons'] :
                ['WeAreTheMusicMakers', 'musicians', 'musicproduction'],
       'travel': ['travel', 'solotravel', 'backpacking', 'digitalnomad'],
       'fitness': ['fitness', 'bodyweightfitness', 'running', 'weightlifting'],
@@ -752,13 +743,13 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
     };
     
     // Start with domain-specific subreddits (highest priority)
-    if (domainSubreddits[domain]) {
-      selectedSubreddits = [...domainSubreddits[domain]];
+    if (domainSubreddits[domain as keyof typeof domainSubreddits]) {
+      selectedSubreddits = [...domainSubreddits[domain as keyof typeof domainSubreddits]];
     }
     
     // Add audience-specific subreddits if relevant
-    if (audienceSubreddits[audience] && audience !== 'general') {
-      selectedSubreddits = [...selectedSubreddits, ...audienceSubreddits[audience].slice(0, 2)];
+    if (audienceSubreddits[audience as keyof typeof audienceSubreddits] && audience !== 'general') {
+      selectedSubreddits = [...selectedSubreddits, ...audienceSubreddits[audience as keyof typeof audienceSubreddits].slice(0, 2)];
     }
     
     // Add solution-type specific subreddits
@@ -770,12 +761,12 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
       'service': ['consulting', 'freelance', 'smallbusiness', 'Entrepreneur']
     };
     
-    if (solutionSubreddits[solution]) {
-      selectedSubreddits = [...selectedSubreddits, ...solutionSubreddits[solution].slice(0, 1)];
+    if (solutionSubreddits[solution as keyof typeof solutionSubreddits]) {
+      selectedSubreddits = [...selectedSubreddits, ...solutionSubreddits[solution as keyof typeof solutionSubreddits].slice(0, 1)];
     }
     
     // Remove duplicates and limit to 6 most relevant
-    selectedSubreddits = [...new Set(selectedSubreddits)].slice(0, 6);
+    selectedSubreddits = Array.from(new Set(selectedSubreddits)).slice(0, 6);
     
     // Always include some general business/startup communities as fallback
     if (selectedSubreddits.length < 4) {
@@ -783,7 +774,18 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
     }
     
     return selectedSubreddits;
-  }
+  };
+  
+  const problemDomain = extractProblemDomain(ideaLowerForDynamic, dynamicTokens);
+  const targetAudience = extractTargetAudience(ideaLowerForDynamic, dynamicTokens);
+  const solutionType = extractSolutionType(ideaLowerForDynamic, dynamicTokens);
+  
+  console.log('🎯 Problem Domain:', problemDomain);
+  console.log('👥 Target Audience:', targetAudience);
+  console.log('💡 Solution Type:', solutionType);
+  
+  // INTELLIGENT SUBREDDIT SELECTION based on extracted concepts
+  subreddits = selectRelevantSubreddits(problemDomain, targetAudience, solutionType, dynamicTokens, ideaLowerForDynamic);
   
   console.log('🎯 Selected subreddits for analysis:', subreddits);
   
@@ -1019,6 +1021,12 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
   
   // Industry-specific enrichment
   const domainKeywords: string[] = [];
+  const ideaLowerForKeywords = input.idea.toLowerCase();
+  const isAI = ideaLowerForKeywords.includes('ai') || ideaLowerForKeywords.includes('artificial') || ideaLowerForKeywords.includes('machine learning');
+  const isFitness = ideaLowerForKeywords.includes('fitness') || ideaLowerForKeywords.includes('health') || ideaLowerForKeywords.includes('exercise');
+  const isEdu = ideaLowerForKeywords.includes('education') || ideaLowerForKeywords.includes('learning') || ideaLowerForKeywords.includes('teaching');
+  const isFin = ideaLowerForKeywords.includes('finance') || ideaLowerForKeywords.includes('money') || ideaLowerForKeywords.includes('investment');
+  
   if (isAI) domainKeywords.push('artificial', 'intelligence', 'machine', 'learning', 'algorithm');
   if (isFitness) domainKeywords.push('fitness', 'health', 'exercise', 'workout', 'nutrition');
   if (isEdu) domainKeywords.push('education', 'learning', 'course', 'teaching', 'student');
