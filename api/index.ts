@@ -1148,7 +1148,7 @@ Focus on depth over breadth - better to have 2 deeply researched competitors tha
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: 'llama-3.1-sonar-small-128k-online',
+          model: 'sonar',
           messages: [
             { role: 'system', content: system },
             { role: 'user', content: userPrompt }
