@@ -632,142 +632,162 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
   // Enhanced context-aware subreddit selection with market intelligence
   let subreddits: string[] = [];
   
-  // Advanced industry and market pattern detection with NICHE-SPECIFIC targeting
+  // DYNAMIC SUBREDDIT DETECTION - Analyze ANY idea intelligently
+  console.log('🔍 Analyzing idea for relevant communities:', input.idea);
   
-  // NICHE DETECTION - Specific communities
-  const isPets = tokens.some(t => ['pet','pets','cat','cats','dog','dogs','collar','leash','animal','animals','wildlife','bird','birds','hunting'].includes(t));
-  const isPlants = tokens.some(t => ['plant','plants','houseplant','houseplants','garden','gardening','disease','fungi','leaf','leaves','soil','water','indoor','outdoor','clinic'].includes(t));
-  const isADHD = tokens.some(t => ['adhd','attention','focus','concentration','distraction','hyperactivity','productivity','procrastination','body','doubling'].includes(t));
-  const isSeniors = tokens.some(t => ['senior','seniors','elderly','dementia','alzheimer','alzheimers','medication','reminder','family','caregiver','aging'].includes(t));
-  const isMusicians = tokens.some(t => ['music','musician','musicians','practice','instrument','piano','guitar','violin','drum','noise','apartment','studio','booking'].includes(t));
-  const isMentalHealth = tokens.some(t => ['mental','health','therapy','depression','anxiety','mood','tracking','wellbeing','mindfulness','counseling'].includes(t));
-  const isCrypto = tokens.some(t => ['crypto','cryptocurrency','bitcoin','ethereum','portfolio','rebalancing','tax','optimization','defi','trading'].includes(t));
-  const isCoding = tokens.some(t => ['coding','programming','bootcamp','learn','developer','code','javascript','python','interactive','personalized'].includes(t));
+  // Extract key concepts from the idea
+  const ideaLower = input.idea.toLowerCase();
+  const problemDomain = extractProblemDomain(ideaLower, tokens);
+  const targetAudience = extractTargetAudience(ideaLower, tokens);
+  const solutionType = extractSolutionType(ideaLower, tokens);
   
-  // BROAD CATEGORIES - General industries
-  const isRestaurant = tokens.some(t => ['restaurant','restaurants','food','dining','chef','menu','cafe','bar','kitchen','hospitality'].includes(t));
-  const isPhoto = tokens.some(t => ['photo','photos','image','images','photography','picture','pictures','editing','visual','editor','camera','lens'].includes(t));
-  const isFitness = tokens.some(t => ['fitness','health','workout','exercise','gym','wellness','yoga','nutrition','training','muscle'].includes(t));
-  const isEdu = tokens.some(t => ['edu','education','learning','course','tutor','school','teach','student','university','study'].includes(t));
-  const isFin = tokens.some(t => ['fintech','finance','trading','invest','stock','crypto','money','accounting','bookkeeping','tax','invoice','payroll','banking','payment'].includes(t));
-  const isDropshipping = tokens.some(t => ['dropshipping','dropship','ecommerce','shopify','amazon','fba','online','store','selling'].includes(t));
-  const isIndia = tokens.some(t => ['india','indian','mumbai','delhi','bangalore','chennai','gst','rupee','desi'].includes(t));
-  const isScheduling = tokens.some(t => ['schedule','meeting','calendar','time','booking','appointment','event','planning'].includes(t));
-  const isAI = tokens.some(t => ['ai','artificial','intelligence','machine','ml','gpt','neural','algorithm','automation','chatbot'].includes(t));
-  const isSaaS = tokens.some(t => ['saas','software','platform','dashboard','api','integration','subscription','cloud'].includes(t));
-  const isProductivity = tokens.some(t => ['productivity','efficient','organize','manage','task','workflow','remote','collaboration'].includes(t));
-  const isDesign = tokens.some(t => ['design','ui','ux','interface','prototype','figma','creative','brand'].includes(t));
-  const isMarketing = tokens.some(t => ['marketing','social','media','brand','advertising','seo','content','influencer'].includes(t));
-  const isRealEstate = tokens.some(t => ['real','estate','property','rent','lease','apartment','house','landlord'].includes(t));
-  const isMobile = tokens.some(t => ['mobile','app','ios','android','smartphone','device'].includes(t));
+  console.log('🎯 Problem Domain:', problemDomain);
+  console.log('👥 Target Audience:', targetAudience);
+  console.log('💡 Solution Type:', solutionType);
   
-  const categories = { isPets, isPlants, isADHD, isSeniors, isMusicians, isMentalHealth, isCrypto, isCoding, isRestaurant, isPhoto, isFitness, isEdu, isFin, isDropshipping, isIndia, isScheduling, isAI, isSaaS, isProductivity, isDesign, isMarketing, isRealEstate, isMobile };
-  console.log('🎯 Detected categories:', categories);
-  console.log('🎯 Tokens for detection:', tokens);
-  
-  // Enhanced multi-category logic for better community targeting
-  // NICHE-FIRST TARGETING - Specific communities get priority
-  if (isPets && tokens.some(t => ['cat','cats','collar','hunting','bird','birds','wildlife'].includes(t))) {
-    console.log('✅ Matched: Cat/Pet Tech + Wildlife niche');
-    subreddits = ['cats', 'CatAdvice', 'wildlifephotography', 'birding', 'conservation', 'pets'];
-  } else if (isPlants && tokens.some(t => ['disease','diagnosis','camera','smartphone','app','detection'].includes(t))) {
-    console.log('✅ Matched: Plant Disease Detection niche');
-    subreddits = ['houseplants', 'plantclinic', 'gardening', 'IndoorGarden', 'PlantBasedDiet', 'whatsthisplant'];
-  } else if (isADHD && tokens.some(t => ['remote','work','coworking','virtual','body','doubling'].includes(t))) {
-    console.log('✅ Matched: ADHD Remote Work niche');
-    subreddits = ['ADHD', 'productivity', 'remotework', 'WorkFromHome', 'GetStudying', 'adhdwomen'];
-  } else if (isSeniors && tokens.some(t => ['dementia','alzheimer','medication','reminder','family'].includes(t))) {
-    console.log('✅ Matched: Senior Care/Dementia niche');
-    subreddits = ['dementia', 'Alzheimers', 'CaregiverSupport', 'eldercare', 'AgingParents', 'MemoryCare'];
-  } else if (isMusicians && tokens.some(t => ['practice','room','booking','noise','apartment','urban'].includes(t))) {
-    console.log('✅ Matched: Urban Musician Practice niche');
-    subreddits = ['WeAreTheMusicMakers', 'piano', 'Guitar', 'violinist', 'musicians', 'edmproduction'];
-  } else if (isMentalHealth && tokens.some(t => ['mood','prediction','therapy','tracking','ai'].includes(t))) {
-    console.log('✅ Matched: AI Mental Health niche');
-    subreddits = ['mentalhealth', 'therapy', 'depression', 'anxiety', 'BettermentBookClub', 'getmotivated'];
-  } else if (isCrypto && tokens.some(t => ['portfolio','rebalancing','tax','optimization','automated'].includes(t))) {
-    console.log('✅ Matched: Crypto Portfolio Management niche');
-    subreddits = ['CryptoCurrency', 'Bitcoin', 'ethereum', 'CryptoMarkets', 'defi', 'personalfinance'];
-  } else if (isCoding && tokens.some(t => ['bootcamp','learning','personalized','interactive','career'].includes(t))) {
-    console.log('✅ Matched: Coding Education niche');
-    subreddits = ['learnprogramming', 'cscareerquestions', 'webdev', 'javascript', 'python', 'coding'];
-  } else if (isPets) {
-    console.log('✅ Matched: General Pet Tech');
-    subreddits = ['pets', 'dogs', 'cats', 'DogTraining', 'AskVet', 'puppy101'];
-  } else if (isPlants) {
-    console.log('✅ Matched: General Plant Care');
-    subreddits = ['houseplants', 'gardening', 'plantclinic', 'IndoorGarden', 'succulents', 'plants'];
-  } else if (isFin && isDropshipping && isIndia) {
-    console.log('✅ Matched: Finance + Dropshipping + India combo');
-    subreddits = ['personalfinance', 'IndiaInvestments', 'dropshipping', 'Entrepreneur', 'business', 'india'];
-  } else if (isAI && isSaaS && isDesign) {
-    console.log('✅ Matched: AI + SaaS + Design combo');
-    subreddits = ['MachineLearning', 'SaaS', 'userexperience', 'webdev', 'Entrepreneur', 'ArtificialIntelligence'];
-  } else if (isRealEstate && isMobile) {
-    console.log('✅ Matched: Real Estate + Mobile combo');
-    subreddits = ['RealEstate', 'realestateinvesting', 'mobiledev', 'Entrepreneur', 'business', 'androiddev'];
-  } else if (isMarketing && isSaaS) {
-    console.log('✅ Matched: Marketing + SaaS combo');
-    subreddits = ['marketing', 'SaaS', 'digitalmarketing', 'Entrepreneur', 'startups', 'business'];
-  } else if (isFin && isDropshipping) {
-    console.log('✅ Matched: Finance + Dropshipping combo');
-    subreddits = ['personalfinance', 'dropshipping', 'ecommerce', 'Entrepreneur', 'business', 'financialindependence'];
-  } else if (isRestaurant && isPhoto) {
-    console.log('✅ Matched: Restaurant + Photo combo');
-    subreddits = ['restaurateur', 'KitchenConfidential', 'photography', 'smallbusiness', 'Entrepreneur', 'business'];
-  } else if (isFitness && isMobile) {
-    console.log('✅ Matched: Fitness + Mobile combo');
-    subreddits = ['fitness', 'loseit', 'mobiledev', 'androiddev', 'Entrepreneur', 'bodyweightfitness'];
-  } else if (isProductivity && isSaaS) {
-    console.log('✅ Matched: Productivity + SaaS combo');
-    subreddits = ['productivity', 'SaaS', 'getmotivated', 'Entrepreneur', 'startups', 'remotework'];
-  } else if (isAI && isDesign) {
-    console.log('✅ Matched: AI + Design combo');
-    subreddits = ['MachineLearning', 'userexperience', 'Design', 'ArtificialIntelligence', 'webdev', 'Entrepreneur'];
-  } else if (isRestaurant) {
-    console.log('✅ Matched: Restaurant industry');
-    subreddits = ['restaurateur', 'KitchenConfidential', 'Restaurant', 'smallbusiness', 'Entrepreneur', 'business'];
-  } else if (isPhoto && !isAI) {
-    console.log('✅ Matched: Photography');
-    subreddits = ['photography', 'photocritique', 'PhotoshopRequest', 'smallbusiness', 'Entrepreneur', 'business'];
-  } else if (isPhoto && isAI) {
-    console.log('✅ Matched: AI Photography');
-    subreddits = ['photography', 'photocritique', 'MachineLearning', 'smallbusiness', 'Entrepreneur', 'ArtificialIntelligence'];
-  } else if (isScheduling || isProductivity) {
-    console.log('✅ Matched: Productivity/Scheduling');
-    subreddits = ['productivity', 'GetStudying', 'remotework', 'Entrepreneur', 'SideProject', 'business'];
-  } else if (isFitness) {
-    console.log('✅ Matched: Fitness');
-    subreddits = ['fitness', 'bodyweightfitness', 'homeworkouts', 'PersonalTrainerTips', 'loseit', 'getmotivated'];
-  } else if (isEdu) {
-    console.log('✅ Matched: Education');
-    subreddits = ['education', 'teachers', 'studytips', 'learnprogramming', 'OnlineEducation', 'edtech'];
-  } else if (isFin) {
-    console.log('✅ Matched: Finance');
-    subreddits = ['personalfinance', 'investing', 'financialindependence', 'fintech', 'startups', 'Entrepreneur'];
-  } else if (isAI) {
-    console.log('✅ Matched: AI/ML');
-    subreddits = ['MachineLearning', 'ArtificialIntelligence', 'ChatGPT', 'startups', 'Entrepreneur', 'technology'];
-  } else if (isSaaS) {
-    console.log('✅ Matched: SaaS');
-    subreddits = ['SaaS', 'Entrepreneur', 'startups', 'webdev', 'business', 'technology'];
-  } else if (isDesign) {
-    console.log('✅ Matched: Design');
-    subreddits = ['userexperience', 'Design', 'web_design', 'Entrepreneur', 'startups', 'business'];
-  } else if (isMarketing) {
-    console.log('✅ Matched: Marketing');
-    subreddits = ['marketing', 'digitalmarketing', 'socialmedia', 'Entrepreneur', 'business', 'startups'];
-  } else if (isRealEstate) {
-    console.log('✅ Matched: Real Estate');
-    subreddits = ['RealEstate', 'realestateinvesting', 'landlord', 'Entrepreneur', 'business', 'investing'];
-  } else if (isMobile) {
-    console.log('✅ Matched: Mobile Development');
-    subreddits = ['mobiledev', 'androiddev', 'iOSProgramming', 'Entrepreneur', 'startups', 'technology'];
-  } else {
-    // General business/startup subreddits with broader appeal
-    console.log('✅ Matched: General business');
-    subreddits = ['startups', 'Entrepreneur', 'smallbusiness', 'SideProject', 'business', 'productivity'];
+  // Dynamic analysis functions
+  function extractProblemDomain(idea, tokens) {
+    const domains = {
+      'pets': ['pet','pets','cat','cats','dog','dogs','animal','animals','collar','leash','wildlife','bird','birds','hunting','vet','training'],
+      'plants': ['plant','plants','houseplant','houseplants','garden','gardening','disease','fungi','leaf','leaves','soil','water','grow','care'],
+      'health': ['health','medical','disease','symptom','diagnosis','treatment','therapy','mental','physical','wellness','medicine','doctor'],
+      'finance': ['money','finance','financial','bank','banking','payment','invest','investment','budget','tax','crypto','trading','portfolio'],
+      'education': ['learn','learning','education','study','student','teacher','course','tutorial','skill','knowledge','training','school'],
+      'work': ['work','job','career','productivity','office','remote','meeting','collaboration','task','project','workplace','professional'],
+      'food': ['food','restaurant','cooking','recipe','meal','nutrition','diet','chef','kitchen','dining','eat','hunger'],
+      'music': ['music','musician','instrument','song','audio','sound','practice','perform','band','studio','recording','concert'],
+      'travel': ['travel','trip','vacation','hotel','flight','transportation','tourism','destination','booking','journey'],
+      'fitness': ['fitness','exercise','workout','gym','health','muscle','weight','training','sport','activity','movement'],
+      'home': ['home','house','apartment','room','furniture','cleaning','maintenance','repair','decoration','organization'],
+      'tech': ['technology','software','app','mobile','web','programming','coding','development','ai','automation','digital'],
+      'social': ['social','community','friend','relationship','dating','family','communication','network','connection']
+    };
+    
+    for (const [domain, keywords] of Object.entries(domains)) {
+      if (keywords.some(keyword => idea.includes(keyword) || tokens.includes(keyword))) return domain;
+    }
+    return 'general';
   }
+  
+  function extractTargetAudience(idea, tokens) {
+    const audiences = {
+      'seniors': ['senior','elderly','old','aging','retirement','grandparent','dementia','alzheimer','caregiver'],
+      'parents': ['parent','mom','dad','mother','father','baby','child','children','family','kid','toddler'],
+      'students': ['student','college','university','school','graduate','academic','study','exam','homework'],
+      'professionals': ['professional','business','corporate','office','manager','executive','consultant','freelancer'],
+      'developers': ['developer','programmer','coder','engineer','software','tech','coding','programming'],
+      'artists': ['artist','creative','designer','musician','writer','photographer','painter','maker'],
+      'entrepreneurs': ['entrepreneur','startup','founder','business','company','venture','investor'],
+      'gamers': ['gamer','gaming','game','player','esports','streaming','twitch','xbox','playstation'],
+      'fitness': ['athlete','fitness','gym','trainer','runner','cyclist','bodybuilder','weightlifter'],
+      'medical': ['doctor','nurse','medical','healthcare','patient','clinic','hospital','therapist']
+    };
+    
+    for (const [audience, keywords] of Object.entries(audiences)) {
+      if (keywords.some(keyword => idea.includes(keyword) || tokens.includes(keyword))) return audience;
+    }
+    return 'general';
+  }
+  
+  function extractSolutionType(idea, tokens) {
+    if (tokens.some(t => ['app','mobile','smartphone','ios','android'].includes(t))) return 'mobile_app';
+    if (tokens.some(t => ['web','website','platform','saas','dashboard'].includes(t))) return 'web_platform';
+    if (tokens.some(t => ['ai','artificial','intelligence','machine','learning','automation'].includes(t))) return 'ai_solution';
+    if (tokens.some(t => ['device','hardware','sensor','iot','smart','wearable'].includes(t))) return 'hardware';
+    if (tokens.some(t => ['service','consulting','coaching','training','education'].includes(t))) return 'service';
+    return 'software';
+  }
+  
+  // INTELLIGENT SUBREDDIT SELECTION based on extracted concepts
+  subreddits = selectRelevantSubreddits(problemDomain, targetAudience, solutionType, tokens, ideaLower);
+  
+  function selectRelevantSubreddits(domain, audience, solution, tokens, idea) {
+    let selectedSubreddits = [];
+    
+    // Domain-specific communities (most specific)
+    const domainSubreddits = {
+      'pets': tokens.some(t => ['cat','cats'].includes(t)) ? ['cats', 'CatAdvice', 'cattraining'] :
+              tokens.some(t => ['dog','dogs'].includes(t)) ? ['dogs', 'DogTraining', 'puppy101'] :
+              ['pets', 'animals', 'AskVet', 'petcare'],
+      'plants': tokens.some(t => ['houseplant','indoor'].includes(t)) ? ['houseplants', 'IndoorGarden', 'plantclinic'] :
+                tokens.some(t => ['garden','outdoor'].includes(t)) ? ['gardening', 'vegetablegardening', 'landscaping'] :
+                ['plants', 'plantclinic', 'whatsthisplant'],
+      'health': tokens.some(t => ['mental','therapy','depression','anxiety'].includes(t)) ? ['mentalhealth', 'therapy', 'depression', 'anxiety'] :
+                tokens.some(t => ['fitness','exercise','workout'].includes(t)) ? ['fitness', 'loseit', 'bodyweightfitness'] :
+                ['Health', 'medical', 'AskDocs'],
+      'finance': tokens.some(t => ['crypto','bitcoin','ethereum'].includes(t)) ? ['CryptoCurrency', 'Bitcoin', 'ethereum'] :
+                 tokens.some(t => ['invest','investment','portfolio'].includes(t)) ? ['investing', 'SecurityAnalysis', 'ValueInvesting'] :
+                 ['personalfinance', 'financialindependence', 'budgeting'],
+      'education': tokens.some(t => ['programming','coding','developer'].includes(t)) ? ['learnprogramming', 'cscareerquestions', 'webdev'] :
+                   tokens.some(t => ['language','languages'].includes(t)) ? ['languagelearning', 'Spanish', 'French'] :
+                   ['education', 'studying', 'GetStudying'],
+      'work': tokens.some(t => ['remote','coworking','virtual'].includes(t)) ? ['remotework', 'digitalnomad', 'WorkFromHome'] :
+              tokens.some(t => ['productivity','task','project'].includes(t)) ? ['productivity', 'GetMotivated', 'getdisciplined'] :
+              ['jobs', 'careerguidance', 'careerchange'],
+      'food': tokens.some(t => ['restaurant','chef','kitchen'].includes(t)) ? ['KitchenConfidential', 'restaurateur', 'Chefit'] :
+              tokens.some(t => ['recipe','cooking','meal'].includes(t)) ? ['recipes', 'cooking', 'MealPrepSunday'] :
+              ['food', 'nutrition', 'HealthyFood'],
+      'music': tokens.some(t => ['piano'].includes(t)) ? ['piano', 'WeAreTheMusicMakers', 'musictheory'] :
+               tokens.some(t => ['guitar'].includes(t)) ? ['Guitar', 'WeAreTheMusicMakers', 'guitarlessons'] :
+               ['WeAreTheMusicMakers', 'musicians', 'musicproduction'],
+      'travel': ['travel', 'solotravel', 'backpacking', 'digitalnomad'],
+      'fitness': ['fitness', 'bodyweightfitness', 'running', 'weightlifting'],
+      'home': ['homeimprovement', 'organization', 'InteriorDesign', 'DIY'],
+      'tech': ['technology', 'programming', 'MachineLearning', 'webdev'],
+      'social': ['socialskills', 'relationship_advice', 'dating_advice', 'MakeNewFriendsHere']
+    };
+    
+    // Audience-specific communities
+    const audienceSubreddits = {
+      'seniors': ['dementia', 'Alzheimers', 'CaregiverSupport', 'eldercare', 'AgingParents'],
+      'parents': ['Parenting', 'Mommit', 'daddit', 'beyondthebump', 'toddlers'],
+      'students': ['college', 'university', 'GetStudying', 'StudentLoans', 'GradSchool'],
+      'professionals': ['careerguidance', 'jobs', 'ITCareerQuestions', 'careerchange'],
+      'developers': ['programming', 'webdev', 'cscareerquestions', 'learnprogramming'],
+      'artists': ['Art', 'WeAreTheMusicMakers', 'photography', 'writing'],
+      'entrepreneurs': ['Entrepreneur', 'startups', 'smallbusiness', 'business'],
+      'gamers': ['gaming', 'pcgaming', 'GameDev', 'truegaming'],
+      'fitness': ['fitness', 'bodybuilding', 'running', 'weightlifting'],
+      'medical': ['medicine', 'nursing', 'medicalschool', 'healthcare']
+    };
+    
+    // Start with domain-specific subreddits (highest priority)
+    if (domainSubreddits[domain]) {
+      selectedSubreddits = [...domainSubreddits[domain]];
+    }
+    
+    // Add audience-specific subreddits if relevant
+    if (audienceSubreddits[audience] && audience !== 'general') {
+      selectedSubreddits = [...selectedSubreddits, ...audienceSubreddits[audience].slice(0, 2)];
+    }
+    
+    // Add solution-type specific subreddits
+    const solutionSubreddits = {
+      'mobile_app': ['androiddev', 'iOSProgramming', 'reactnative', 'flutter'],
+      'web_platform': ['webdev', 'javascript', 'reactjs', 'SaaS'],
+      'ai_solution': ['MachineLearning', 'ArtificialIntelligence', 'deeplearning'],
+      'hardware': ['arduino', 'raspberry_pi', 'electronics', 'DIY'],
+      'service': ['consulting', 'freelance', 'smallbusiness', 'Entrepreneur']
+    };
+    
+    if (solutionSubreddits[solution]) {
+      selectedSubreddits = [...selectedSubreddits, ...solutionSubreddits[solution].slice(0, 1)];
+    }
+    
+    // Remove duplicates and limit to 6 most relevant
+    selectedSubreddits = [...new Set(selectedSubreddits)].slice(0, 6);
+    
+    // Always include some general business/startup communities as fallback
+    if (selectedSubreddits.length < 4) {
+      selectedSubreddits = [...selectedSubreddits, 'Entrepreneur', 'startups', 'business'].slice(0, 6);
+    }
+    
+    return selectedSubreddits;
+  }
+  
+  console.log('🎯 Selected subreddits for analysis:', subreddits);
+  
+
   
   // Limit to 6 subreddits for focused analysis and ensure we have at least some subreddits
   subreddits = subreddits.slice(0, 6);
@@ -1093,6 +1113,16 @@ ${postAnalysis.length > 0 ? postAnalysis.map((p, i) =>
   `POST ${i+1} [${p.community}]: "${p.title}" | ${p.engagement} | Signal: ${p.signals}${p.content ? ` | Content: "${p.content}..."` : ''}`
 ).join('\n') : 'No real Reddit data - analyze based on market knowledge'}
 
+🚨 CRITICAL PAIN POINT EXTRACTION REQUIREMENTS:
+- Extract pain points ONLY from the actual Reddit post titles and content provided above
+- Use the EXACT language and phrases that users wrote in their posts
+- DO NOT create generic business descriptions - use authentic user voice
+- Each pain point must be traceable to specific Reddit posts/discussions
+- Include direct quotes from Reddit posts as examples
+- Pain point frequency should reflect how many actual posts mention this issue
+- Look for emotional language like "frustrated", "can't find", "hate that", "wish there was"
+- Use first-person language when users express personal problems
+
 REQUIRED COMPREHENSIVE ANALYSIS (JSON format):
 
 {
@@ -1111,10 +1141,10 @@ REQUIRED COMPREHENSIVE ANALYSIS (JSON format):
   ],
   "pain_points": [
     {
-      "title": "Specific User Frustration (use their exact words)",
-      "frequency": 90,
+      "title": "EXACT quote from Reddit posts - user's actual frustrated language, not business terms",
+      "frequency": "Count of actual Reddit posts mentioning this specific problem",
       "urgency": "critical",
-      "examples": ["Direct quote from user", "Specific complaint pattern"],
+      "examples": ["Direct quotes from the Reddit posts provided above", "Verbatim user complaints from specific posts"],
       "current_solutions": ["How they solve it now", "Workarounds they use"],
       "willingness_to_pay": "high",
       "market_size_indicator": "thousands mention this daily"
