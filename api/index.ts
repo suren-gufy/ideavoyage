@@ -632,7 +632,19 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
   // Enhanced context-aware subreddit selection with market intelligence
   let subreddits: string[] = [];
   
-  // Advanced industry and market pattern detection
+  // Advanced industry and market pattern detection with NICHE-SPECIFIC targeting
+  
+  // NICHE DETECTION - Specific communities
+  const isPets = tokens.some(t => ['pet','pets','cat','cats','dog','dogs','collar','leash','animal','animals','wildlife','bird','birds','hunting'].includes(t));
+  const isPlants = tokens.some(t => ['plant','plants','houseplant','houseplants','garden','gardening','disease','fungi','leaf','leaves','soil','water','indoor','outdoor','clinic'].includes(t));
+  const isADHD = tokens.some(t => ['adhd','attention','focus','concentration','distraction','hyperactivity','productivity','procrastination','body','doubling'].includes(t));
+  const isSeniors = tokens.some(t => ['senior','seniors','elderly','dementia','alzheimer','alzheimers','medication','reminder','family','caregiver','aging'].includes(t));
+  const isMusicians = tokens.some(t => ['music','musician','musicians','practice','instrument','piano','guitar','violin','drum','noise','apartment','studio','booking'].includes(t));
+  const isMentalHealth = tokens.some(t => ['mental','health','therapy','depression','anxiety','mood','tracking','wellbeing','mindfulness','counseling'].includes(t));
+  const isCrypto = tokens.some(t => ['crypto','cryptocurrency','bitcoin','ethereum','portfolio','rebalancing','tax','optimization','defi','trading'].includes(t));
+  const isCoding = tokens.some(t => ['coding','programming','bootcamp','learn','developer','code','javascript','python','interactive','personalized'].includes(t));
+  
+  // BROAD CATEGORIES - General industries
   const isRestaurant = tokens.some(t => ['restaurant','restaurants','food','dining','chef','menu','cafe','bar','kitchen','hospitality'].includes(t));
   const isPhoto = tokens.some(t => ['photo','photos','image','images','photography','picture','pictures','editing','visual','editor','camera','lens'].includes(t));
   const isFitness = tokens.some(t => ['fitness','health','workout','exercise','gym','wellness','yoga','nutrition','training','muscle'].includes(t));
@@ -649,12 +661,43 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
   const isRealEstate = tokens.some(t => ['real','estate','property','rent','lease','apartment','house','landlord'].includes(t));
   const isMobile = tokens.some(t => ['mobile','app','ios','android','smartphone','device'].includes(t));
   
-  const categories = { isRestaurant, isPhoto, isFitness, isEdu, isFin, isDropshipping, isIndia, isScheduling, isAI, isSaaS, isProductivity, isDesign, isMarketing, isRealEstate, isMobile };
+  const categories = { isPets, isPlants, isADHD, isSeniors, isMusicians, isMentalHealth, isCrypto, isCoding, isRestaurant, isPhoto, isFitness, isEdu, isFin, isDropshipping, isIndia, isScheduling, isAI, isSaaS, isProductivity, isDesign, isMarketing, isRealEstate, isMobile };
   console.log('🎯 Detected categories:', categories);
   console.log('🎯 Tokens for detection:', tokens);
   
   // Enhanced multi-category logic for better community targeting
-  if (isFin && isDropshipping && isIndia) {
+  // NICHE-FIRST TARGETING - Specific communities get priority
+  if (isPets && tokens.some(t => ['cat','cats','collar','hunting','bird','birds','wildlife'].includes(t))) {
+    console.log('✅ Matched: Cat/Pet Tech + Wildlife niche');
+    subreddits = ['cats', 'CatAdvice', 'wildlifephotography', 'birding', 'conservation', 'pets'];
+  } else if (isPlants && tokens.some(t => ['disease','diagnosis','camera','smartphone','app','detection'].includes(t))) {
+    console.log('✅ Matched: Plant Disease Detection niche');
+    subreddits = ['houseplants', 'plantclinic', 'gardening', 'IndoorGarden', 'PlantBasedDiet', 'whatsthisplant'];
+  } else if (isADHD && tokens.some(t => ['remote','work','coworking','virtual','body','doubling'].includes(t))) {
+    console.log('✅ Matched: ADHD Remote Work niche');
+    subreddits = ['ADHD', 'productivity', 'remotework', 'WorkFromHome', 'GetStudying', 'adhdwomen'];
+  } else if (isSeniors && tokens.some(t => ['dementia','alzheimer','medication','reminder','family'].includes(t))) {
+    console.log('✅ Matched: Senior Care/Dementia niche');
+    subreddits = ['dementia', 'Alzheimers', 'CaregiverSupport', 'eldercare', 'AgingParents', 'MemoryCare'];
+  } else if (isMusicians && tokens.some(t => ['practice','room','booking','noise','apartment','urban'].includes(t))) {
+    console.log('✅ Matched: Urban Musician Practice niche');
+    subreddits = ['WeAreTheMusicMakers', 'piano', 'Guitar', 'violinist', 'musicians', 'edmproduction'];
+  } else if (isMentalHealth && tokens.some(t => ['mood','prediction','therapy','tracking','ai'].includes(t))) {
+    console.log('✅ Matched: AI Mental Health niche');
+    subreddits = ['mentalhealth', 'therapy', 'depression', 'anxiety', 'BettermentBookClub', 'getmotivated'];
+  } else if (isCrypto && tokens.some(t => ['portfolio','rebalancing','tax','optimization','automated'].includes(t))) {
+    console.log('✅ Matched: Crypto Portfolio Management niche');
+    subreddits = ['CryptoCurrency', 'Bitcoin', 'ethereum', 'CryptoMarkets', 'defi', 'personalfinance'];
+  } else if (isCoding && tokens.some(t => ['bootcamp','learning','personalized','interactive','career'].includes(t))) {
+    console.log('✅ Matched: Coding Education niche');
+    subreddits = ['learnprogramming', 'cscareerquestions', 'webdev', 'javascript', 'python', 'coding'];
+  } else if (isPets) {
+    console.log('✅ Matched: General Pet Tech');
+    subreddits = ['pets', 'dogs', 'cats', 'DogTraining', 'AskVet', 'puppy101'];
+  } else if (isPlants) {
+    console.log('✅ Matched: General Plant Care');
+    subreddits = ['houseplants', 'gardening', 'plantclinic', 'IndoorGarden', 'succulents', 'plants'];
+  } else if (isFin && isDropshipping && isIndia) {
     console.log('✅ Matched: Finance + Dropshipping + India combo');
     subreddits = ['personalfinance', 'IndiaInvestments', 'dropshipping', 'Entrepreneur', 'business', 'india'];
   } else if (isAI && isSaaS && isDesign) {
