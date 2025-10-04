@@ -650,7 +650,7 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
     const domains = {
       'pets': ['pet','pets','cat','cats','dog','dogs','animal','animals','collar','leash','wildlife','bird','birds','hunting','vet','training'],
       'plants': ['plant','plants','houseplant','houseplants','garden','gardening','disease','fungi','leaf','leaves','soil','water','grow','care'],
-      'health': ['health','medical','disease','symptom','diagnosis','treatment','therapy','mental','physical','wellness','medicine','doctor'],
+      'health': ['health','medical','disease','symptom','diagnosis','treatment','therapy','mental','physical','wellness','medicine','doctor','dementia','alzheimer','medication','seniors','elderly','caregiver'],
       'finance': ['money','finance','financial','bank','banking','payment','invest','investment','budget','tax','crypto','trading','portfolio'],
       'education': ['learn','learning','education','study','student','teacher','course','tutorial','skill','knowledge','training','school'],
       'work': ['work','job','career','productivity','office','remote','meeting','collaboration','task','project','workplace','professional'],
@@ -660,7 +660,7 @@ async function performRealAnalysis(input: { idea: string; industry?: string; tar
       'fitness': ['fitness','exercise','workout','gym','health','muscle','weight','training','sport','activity','movement'],
       'home': ['home','house','apartment','room','furniture','cleaning','maintenance','repair','decoration','organization'],
       'tech': ['technology','software','app','mobile','web','programming','coding','development','ai','automation','digital'],
-      'social': ['social','community','friend','relationship','dating','family','communication','network','connection']
+      'social': ['social','community','friend','relationship','dating','family','communication','network','connection','introvert','extrovert','friendship','meet','people']
     };
     
     for (const [domain, keywords] of Object.entries(domains)) {
